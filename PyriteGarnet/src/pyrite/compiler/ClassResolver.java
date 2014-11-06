@@ -344,7 +344,8 @@ public class ClassResolver
 	//   (< 多重継承を見越して、クラスとインターフェースはフラットに扱う)
 	// 6. 当クラスでメソッド解決できない場合、スーパークラスのメソッドに遡って解決を試みる
 	//   (このとき、Javaではメソッド定義に一番近いものが選択されるが、Pyriteでは自クラスのクラス階層に近いものが選択される)
-	//   (例、スーパークラスで m(String)、自クラスで m(Object)が定義されている場合、m(String p)はJavaではm(String)、Pyriteではm(Object)が選択される
+	//   (例、スーパークラスで m(String)、自クラスで m(Object)が定義されている場合、
+	//     m(String p)はJavaではスーパークラスのm(String)、Pyriteでは自クラスのm(Object)が選択される
 	//   (Javaにあわせるか?)
 	// よって、
 	// それぞれの引数について、引数に指定されたクラスを基準に、クラス階層を遡って引数のクラスの組み合わせを作成する。
@@ -787,8 +788,9 @@ public class ClassResolver
 			}
 
 			VarType[]	returnTypes;
-			if (returnTypeClass.getName().equals("pyritet.compiler.type.JVMReturnType"))
+			if (returnTypeClass.getName().equals("pyrite.compiler.type.JVMReturnType"))
 			{
+				// Pyriteの型であれば、解析して複数の帰り値型として解決する
 				throw new RuntimeException("not implemented yet");	// TODO
 			}
 			else

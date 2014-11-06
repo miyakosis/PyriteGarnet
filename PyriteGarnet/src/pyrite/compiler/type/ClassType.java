@@ -50,14 +50,14 @@ public class ClassType extends VarType
 	@Override
 	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
 	{
-		ClassResolver	cd = cgv._cr;
+		ClassResolver	cr = cgv._cr;
 		ConstantPoolManager	cpm = cgv._cpm;
 		MethodCodeDeclation	methodDeclaretion = cgv._currentMethodCodeDeclation;
 
 		VarType	varType;
 		String	packageClassName = StringUtil.concat(_packageName, _className);
 
-		varType = cd.dispatchVariableC(packageClassName, id);
+		varType = cr.dispatchVariableC(packageClassName, id);
 		if (varType != null)
 		{	// クラス変数
 
@@ -69,7 +69,6 @@ public class ClassType extends VarType
 //				cgv.setLeftExpressionVarType(3, -1, packageClassName, id);
 
 				return	new AssignLeftExpressionType(varType, 3, -1, packageClassName, id);
-
 			}
 			else
 			{
@@ -80,7 +79,7 @@ public class ClassType extends VarType
 			return	varType;
 		}
 
-		varType = cd.dispatchMethodC(packageClassName, id);
+		varType = cr.dispatchMethodC(packageClassName, id);
 		if (varType != null)
 		{	// クラスメソッド
 			return	varType;

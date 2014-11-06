@@ -42,7 +42,7 @@ public class PackageType extends VarType
 	@Override
 	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
 	{
-		ClassResolver	cd = cgv._cr;
+		ClassResolver	cr = cgv._cr;
 		ImportDeclarationManager	idm = cgv._idm;
 
 		String[]	packageClassName = idm.resolveClassName(_package, id);
@@ -51,7 +51,7 @@ public class PackageType extends VarType
 			return	ClassType.getType(packageClassName[0], packageClassName[1]);
 		}
 
-		if (cd.isPackage(_package, id))
+		if (cr.isPackage(_package, id))
 		{
 			return	PackageType.getType(_package, id);
 		}

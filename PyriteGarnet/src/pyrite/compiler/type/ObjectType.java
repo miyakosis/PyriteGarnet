@@ -49,7 +49,7 @@ public class ObjectType extends VarType
 	@Override
 	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
 	{
-		ClassResolver	cd = cgv._cr;
+		ClassResolver	cr = cgv._cr;
 		ConstantPoolManager	cpm = cgv._cpm;
 		MethodCodeDeclation	methodDeclaretion = cgv._currentMethodCodeDeclation;
 
@@ -59,7 +59,7 @@ public class ObjectType extends VarType
 			// assign()で値設定するため、ここでコードは作成しない。
 			// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
 
-			varType = cd.dispatchVariableI(_packageClassName, id);
+			varType = cr.dispatchVariableI(_packageClassName, id);
 			if (varType != null)
 			{
 //				cgv.setLeftExpressionVarType(2, -1, _packageClassName, id);
@@ -67,7 +67,7 @@ public class ObjectType extends VarType
 				return	new AssignLeftExpressionType(varType, 2, -1, _packageClassName, id);
 			}
 
-			varType = cd.dispatchVariableC(_packageClassName, id);
+			varType = cr.dispatchVariableC(_packageClassName, id);
 			if (varType != null)
 			{
 //				cgv.setLeftExpressionVarType(3, -1, _packageClassName, id);
@@ -77,7 +77,7 @@ public class ObjectType extends VarType
 		}
 		else
 		{
-			varType = cd.dispatchVariableI(_packageClassName, id);
+			varType = cr.dispatchVariableI(_packageClassName, id);
 			if (varType != null)
 			{
 				methodDeclaretion.addCodeOp(BC.GETFIELD);
@@ -86,7 +86,7 @@ public class ObjectType extends VarType
 				return	varType;
 			}
 
-			varType = cd.dispatchVariableC(_packageClassName, id);
+			varType = cr.dispatchVariableC(_packageClassName, id);
 			if (varType != null)
 			{
 				methodDeclaretion.addCodeOp(BC.GETSTATIC);
@@ -96,7 +96,7 @@ public class ObjectType extends VarType
 			}
 		}
 
-		varType = cd.dispatchMethodIC(_packageClassName, id);
+		varType = cr.dispatchMethodIC(_packageClassName, id);
 		if (varType != null)
 		{
 			return	varType;

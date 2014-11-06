@@ -1,5 +1,7 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.CodeGenerationVisitor;
+
 // Javaとのインターフェースをとるためのクラス
 // jvmExpression : pyriteType = N : 1 の関係である。
 // そのため、jvmExpression でhashCode を決定することができる。
@@ -85,22 +87,34 @@ public class JVMType extends VarType
 		{
 			type = JVMType.getType(VarType.STR, "java.lang.String");
 		}
-		else if (typeStr.charAt(0) == 'L')
-		{
-			typeStr = typeStr.substring(1, typeStr.length() - 1);
-			type = JVMType.getType(VarType.OBJ, typeStr);
-		}
 		else
 		{
-			type = JVMType.getType(VarType.OBJ, typeStr);
+			if (typeStr.charAt(0) == 'L')
+			{
+				typeStr = typeStr.substring(1, typeStr.length() - 1);
+			}
+			type = JVMType.getType(ObjectType.getType(typeStr), typeStr);
 		}
 
 		if (nArrayLevel == 0)
 		{
 			return	type;
 		}
-
-		return	ArrayType.getType(type, nArrayLevel);
+		else
+		{
+			return	ArrayType.getType(type, nArrayLevel);
+		}
 	}
 
+	// (自分の型, 続く型)
+	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
+	//       (クラス, クラス変数 | クラスメソッド),
+	//       (クラス, クラス),
+	//       (パッケージ, クラス)
+	//       (パッケージ, パッケージ)
+	@Override
+	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
+	{
+		return	_pyriteType.resolveTrailerType(cgv, id);
+	}
 }

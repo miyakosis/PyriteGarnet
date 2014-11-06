@@ -41,7 +41,7 @@ public class PartialIdType extends VarType
 	@Override
 	public VarType	resolveType(CodeGenerationVisitor cgv)
 	{
-		ClassResolver	cd = cgv._cr;
+		ClassResolver	cr = cgv._cr;
 		ConstantPoolManager	cpm = cgv._cpm;
 		ImportDeclarationManager	idm = cgv._idm;
 		MethodCodeDeclation	methodDeclaretion = cgv._currentMethodCodeDeclation;
@@ -162,7 +162,7 @@ public class PartialIdType extends VarType
 				return	ClassType.getType(packageClassName[0], packageClassName[1]);
 			}
 
-			if (cd.isPackage("", _id))
+			if (cr.isPackage("", _id))
 			{	// package name
 				return	PackageType.getType("", _id);
 			}
