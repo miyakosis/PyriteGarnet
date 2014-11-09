@@ -26,6 +26,8 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// version 0.0-1
+
 // refer Java1.7.g4
 grammar Pyrite;
 
@@ -243,7 +245,7 @@ inputParameters
     ;
 
 inputParameter
-    :   type Identifier
+    :   Identifier ':' typeOrArray
     ;
 
 outputParameters
@@ -251,7 +253,7 @@ outputParameters
     ;
 
 outputParameter
-    :   type Identifier?
+    :   (Identifier ':')? typeOrArray
     ;
 
 
@@ -288,7 +290,7 @@ constructorDeclaration
 //		    ;
 
 fieldDeclaration
-    :   classInstanceModifier? type Identifier ('=' variableInitializer)? ';'
+    :   classInstanceModifier? 'var' variableDeclarationStatement ';'
     ;
 
 
@@ -342,32 +344,48 @@ fieldDeclaration
 //	    :   Identifier ('[' ']')*
 //	    ;
 
-variableInitializer
-    :   arrayInitializer
-    |   expression
-    ;
+//	variableInitializer
+//	    :   arrayInitializer
+//	    |   expression
+//	    ;
 
-arrayInitializer
-    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
-    ;
+//	arrayInitializer
+//	    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
+//	    ;
 
 //	enumConstantName
 //	    :   Identifier
 //	    ;
 
-type
-    :   primitiveType ('[' ']')*		# TypePrimitiveType
-    |	classOrInterfaceType ('[' ']')*	# TypeClassType
+typeOrArray
+    :   type
+    |   array
     ;
+
+type
+    :   primitiveType
+    |   qualifiedName
+    ;
+
+array
+    :   '[' arraySpec ']'
+    ;
+
+arraySpec
+    :   type			# ArraySpecType		// not used
+    |   type ':' type	# ArraySpecAssoc
+    |   array			# ArraySpecArray	// not used
+    ;
+
 
 //	type
 //	    :   classOrInterfaceType ('[' ']')*
 //	    |   primitiveType ('[' ']')*
 //	    ;
 
-classOrInterfaceType
-    :   Identifier ('.' Identifier)*
-    ;
+//	classOrInterfaceType
+//	    :   Identifier ('.' Identifier)*
+//	    ;
 
 //	classOrInterfaceType
 //	    :   Identifier typeArguments? ('.' Identifier typeArguments? )*
@@ -375,7 +393,6 @@ classOrInterfaceType
 
 primitiveType
     :   'obj'
-    |   'var'
     |   'num'
     |   'int'
     |   'flt'
@@ -534,13 +551,12 @@ literal
 // STATEMENTS / BLOCKS
 
 block
-    :   '{' blockStatement* '}'
+    :   '{' statement* '}'
     ;
 
-blockStatement
-    :   localVariableDeclarationStatement
-    |   statement
-    ;
+//	block
+//	    :   '{' blockStatement* '}'
+//	    ;
 
 //	blockStatement
 //	    :   localVariableDeclarationStatement
@@ -548,13 +564,9 @@ blockStatement
 //	    |   typeDeclaration
 //	    ;
 
-localVariableDeclarationStatement
-    :    localVariableDeclaration ';'
-    ;
-
-localVariableDeclaration
-    :   type Identifier ('=' variableInitializer)?
-    ;
+//	localVariableDeclarationStatement
+//	    :    localVariableDeclaration ';'
+//	    ;
 
 //	localVariableDeclaration
 //	    :   variableModifier* type variableDeclarators
@@ -565,23 +577,28 @@ statement
     |   ';'									# StatementEmpty	// not used
     |   expression ';'						# StatementExpression	// not used
     |   'return' expressionList? ';'		# StatementReturn
-    |   ifStatement							# StatementIf		// not used
+    |   'if' ifStatement							# StatementIf		// not used
     |   label 'while' parExpression block			# StatementWhile
     |   label 'for' '(' forControl ')' block		# StatementFor
     |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'	# StatementSwitch
     |   'break' label ';'				# StatementBreak
     |   'continue' label ';'			# StatementContinue
+    |   'var' variableDeclarationStatement ';' 			# StatementVar
     ;
-//TODO:try-catch, synchronized, throw
+
+variableDeclarationStatement
+	:	Identifier (':' typeOrArray)? ('=' expression)?
+	;
 
 label
     :    Identifier?
     ;
 
 ifStatement
-    :   'if' parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
+    :	parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
     ;
 
+//TODO:try-catch, synchronized, throw
 
 //	statement
 //	    :   block
@@ -641,7 +658,7 @@ ifStatement
  */
 
 switchBlockStatementGroup
-    :   switchLabel+ blockStatement+ (fallthrough='fallthrough' ';')?	// switchLabel+ blockStatement+ ('fallthrough' ';')?
+    :   switchLabel+ statement+ (fallthrough='fallthrough' ';')?	// switchLabel+ blockStatement+ ('fallthrough' ';')?
     ;
 
 //	switchBlockStatementGroup
@@ -662,8 +679,8 @@ switchLabel
 
 
 forControl
-    :   type Identifier ':' expression				# ForControlIterator
-    |   forInit? ';' expression? ';' forUpdate?		# ForControlICU	// ICU=Init, Control, Update
+    :   'var' Identifier ':' typeOrArray 'in' expression		# ForControlIterator
+    |   forInit? ';' expression? ';' forUpdate?					# ForControlICU	// ICU=Init, Control, Update
     ;
 
 //	forControl
@@ -672,9 +689,15 @@ forControl
 //	    ;
 
 forInit
-    :   localVariableDeclaration
-    |   expressionList
+    :   forInitSpec+
     ;
+
+forInitSpec
+	:	'var' variableDeclarationStatement
+	|	expression
+	;
+
+// TODO:forInit orig exists?
 
 //	enhancedForControl
 //	    :   type variableDeclaratorId ':' expression
@@ -801,7 +824,8 @@ primary
 //	    ;
 
 creator
-    :   createdName (arrayCreatorRest | arguments)
+    :   qualifiedName arguments
+    |   array '(' ')'
     ;
 
 //	creator
@@ -809,10 +833,10 @@ creator
 //	    |   createdName (arrayCreatorRest | classCreatorRest)
 //	    ;
 
-createdName
-    :   Identifier ('.' Identifier)*		# CreatedNameIdentifer
-    |   primitiveType						# CreatedNamePrimitiveType
-    ;
+//	createdName
+//	    :   Identifier ('.' Identifier)*		# CreatedNameIdentifer
+//	    |   primitiveType						# CreatedNamePrimitiveType
+//	    ;
 
 //	createdName
 //	    :   Identifier typeArgumentsOrDiamond? ('.' Identifier typeArgumentsOrDiamond?)*
@@ -827,12 +851,12 @@ createdName
 //	    :   Identifier nonWildcardTypeArgumentsOrDiamond? classCreatorRest
 //	    ;
 
-arrayCreatorRest
-    :   '['
-        (   ']' ('[' ']')* arrayInitializer
-        |   expression ']' ('[' expression ']')* ('[' ']')*
-        )
-    ;
+//	arrayCreatorRest
+//    :   '['
+//        (   ']' ('[' ']')* arrayInitializer
+//        |   expression ']' ('[' expression ']')* ('[' ']')*
+//        )
+//    ;
 
 //	classCreatorRest
 //	    :   arguments classBody?
@@ -873,7 +897,6 @@ arrayCreatorRest
 arguments
     :   '(' expressionList? ')'
     ;
-
 
 
 
@@ -1100,7 +1123,7 @@ booleanLiteral
 characterLiteral
     :    CharacterLiteral
     ;
-    
+
 CharacterLiteral
     :   '\'' SingleCharacter '\''
     |   '\'' EscapeSequence '\''
@@ -1121,7 +1144,7 @@ SingleCharacter
 stringLiteral
     :    StringLiteral
     ;
-    
+
 StringLiteral
     :   '"' StringCharacters? '"'
     ;
@@ -1232,8 +1255,8 @@ VOID          : 'void';
 //	VOLATILE      : 'volatile';
 WHILE         : 'while';
 
-OBJ : 'obj';
 VAR : 'var';
+OBJ : 'obj';
 NUM : 'num';
 INT : 'int';
 FLT : 'flt';
@@ -1241,6 +1264,8 @@ STR : 'str';
 CHR : 'chr';
 BOL : 'bol';
 BYT : 'byt';
+
+IN : 'in';
 
 
 // §3.11 Separators

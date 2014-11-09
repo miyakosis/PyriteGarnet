@@ -56,6 +56,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitStringLiteral(@NotNull PyriteParser.StringLiteralContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitType(@NotNull PyriteParser.TypeContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#forUpdate}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -98,6 +105,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#forInitSpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForInitSpec(@NotNull PyriteParser.ForInitSpecContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#outputParameter}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -138,13 +152,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpressionEqual(@NotNull PyriteParser.ExpressionEqualContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#CreatedNamePrimitiveType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreatedNamePrimitiveType(@NotNull PyriteParser.CreatedNamePrimitiveTypeContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBitOr}.
@@ -210,6 +217,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitForControlIterator(@NotNull PyriteParser.ForControlIteratorContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecAssoc}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecAssoc(@NotNull PyriteParser.ArraySpecAssocContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#StatementEmpty}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -231,18 +245,18 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitClassBodyDeclaration(@NotNull PyriteParser.ClassBodyDeclarationContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecType(@NotNull PyriteParser.ArraySpecTypeContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#typeList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitTypeList(@NotNull PyriteParser.TypeListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#localVariableDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLocalVariableDeclaration(@NotNull PyriteParser.LocalVariableDeclarationContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralDecimal}.
@@ -257,6 +271,20 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIntegerLiteralOctal(@NotNull PyriteParser.IntegerLiteralOctalContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArray(@NotNull PyriteParser.ArrayContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#variableDeclarationStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#ExpressionAddSub}.
@@ -280,18 +308,11 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitExpressionBolAnd(@NotNull PyriteParser.ExpressionBolAndContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#classOrInterfaceType}.
+	 * Visit a parse tree produced by {@link PyriteParser#typeOrArray}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitClassOrInterfaceType(@NotNull PyriteParser.ClassOrInterfaceTypeContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#variableInitializer}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVariableInitializer(@NotNull PyriteParser.VariableInitializerContext ctx);
+	T visitTypeOrArray(@NotNull PyriteParser.TypeOrArrayContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#block}.
@@ -308,13 +329,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitExpressionMulDiv(@NotNull PyriteParser.ExpressionMulDivContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#blockStatement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBlockStatement(@NotNull PyriteParser.BlockStatementContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#creator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -322,18 +336,18 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitCreator(@NotNull PyriteParser.CreatorContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#StatementVar}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementVar(@NotNull PyriteParser.StatementVarContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#primaryIdentifier}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitPrimaryIdentifier(@NotNull PyriteParser.PrimaryIdentifierContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#localVariableDeclarationStatement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLocalVariableDeclarationStatement(@NotNull PyriteParser.LocalVariableDeclarationStatementContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#StatementBreak}.
@@ -385,13 +399,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitExpressionInvokeMethod(@NotNull PyriteParser.ExpressionInvokeMethodContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#TypePrimitiveType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypePrimitiveType(@NotNull PyriteParser.TypePrimitiveTypeContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#methodDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -406,25 +413,11 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#TypeClassType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeClassType(@NotNull PyriteParser.TypeClassTypeContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#constructorDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#CreatedNameIdentifer}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreatedNameIdentifer(@NotNull PyriteParser.CreatedNameIdentiferContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#qualifiedName}.
@@ -483,6 +476,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitNullLiteral(@NotNull PyriteParser.NullLiteralContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecArray}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecArray(@NotNull PyriteParser.ArraySpecArrayContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#arguments}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -509,13 +509,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCharacterLiteral(@NotNull PyriteParser.CharacterLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#arrayInitializer}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArrayInitializer(@NotNull PyriteParser.ArrayInitializerContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralHex}.
@@ -565,13 +558,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForInit(@NotNull PyriteParser.ForInitContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#arrayCreatorRest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArrayCreatorRest(@NotNull PyriteParser.ArrayCreatorRestContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#ExpressionAssign}.

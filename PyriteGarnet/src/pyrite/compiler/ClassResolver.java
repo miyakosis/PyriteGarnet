@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.type.ClassType;
 import pyrite.compiler.type.JVMType;
 import pyrite.compiler.type.MethodType;
@@ -26,6 +27,7 @@ import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapMap;
 import pyrite.compiler.util.StringUtil;
 
+//クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 public class ClassResolver
 {
 	private Map<String, ClassFieldMember>	_classCache = new HashMap<String, ClassFieldMember>();	// key:クラス名 value:ClassFieldMember
@@ -148,20 +150,26 @@ public class ClassResolver
 //		System.out.println(packageName + " / " + packageClassFile._className);
 	}
 
+	// コンパイル単位に存在する、クラス名
+	// クラスパスエントリより優先して指定する
+	public void	addSourceFileClass(FQCN className, String filePathName, long fileLastModified)
+	{
+		PackageClassFile	packageClassFile = new PackageClassFile("", className._className);
+		packageClassFile.addClassFileInfo(filePathName, fileLastModified);
+		// 既存の登録情報を上書き
+		_packageMapMap.put(className._packageName, className._className, packageClassFile);
+	}
 
 	// パッケージに含まれるクラス名のリストを返す
 	public List<String>	getPackageMemberClassName(String packageName)
 	{
-		List<String>	classNameList = new ArrayList<String>();
-
-//		packageName = packageName.replace('.', '/');
 		Map<String, PackageClassFile>	classNameMap = _packageMapMap.get(packageName);
+		assert(classNameMap != null);
+
+		List<String>	classNameList = new ArrayList<String>();
 		for (PackageClassFile packageClassFile : classNameMap.values())
-		{	// classファイルがあるもののみインポートとする
-			if (packageClassFile._isClassFileExist)
-			{
-				classNameList.add(packageClassFile._className);
-			}
+		{
+			classNameList.add(packageClassFile._className);
 		}
 
 		return	classNameList;
@@ -190,11 +198,9 @@ public class ClassResolver
 		return Package.getPackage(packageName) != null;
 	}
 
-
-	public boolean isClass(String packageName, String className)
+	public boolean isClass(FQCN fqcn)
 	{
-		String	packageClassName = StringUtil.concat(packageName, className);
-		return	(getClassFieldMember(packageClassName) != null);
+		return	_packageMapMap.get(fqcn._packageName, fqcn._className) != null;
 	}
 
 
@@ -439,7 +445,7 @@ public class ClassResolver
 						cls = cls._superCFM)
 				{
 					// 引数オブジェクトを型階層に追加
-					addInterfaceClassHierarchyRecursive(cls._fqcn, level, paramClassHierarchyList);
+					addInterfaceClassHierarchyRecursive(cls._fqcnStr, level, paramClassHierarchyList);
 					level += 1;
 				}
 				break;
@@ -688,7 +694,7 @@ public class ClassResolver
 	// クラスのフィールド定義・メソッド定義を保持する
 	public static class	ClassFieldMember
 	{
-		public String	_fqcn;
+		public final String	_fqcnStr;
 
 		public ClassFieldMember	_superCFM;
 
@@ -702,19 +708,20 @@ public class ClassResolver
 
 		public Set<String>	_interfaceSet = new HashSet<String>();	// key:name
 
-		public ClassFieldMember()
+		public ClassFieldMember(String fqcnStr)
 		{
+			_fqcnStr = fqcnStr;
 		}
 
-		public ClassFieldMember(String packageClassName, Class<?> c, ClassResolver cr)
+		public ClassFieldMember(String fqcnStr, Class<?> c, ClassResolver cr)
 		{
-			_fqcn = packageClassName;
+			_fqcnStr = fqcnStr;
 			Class<?>	superClass = c.getSuperclass();
 			if (superClass != null)
 			{
 				_superCFM = cr.getClassFieldMember(superClass.getName());
 			}
-			else if (packageClassName.equals("java.lang.Object") == false)
+			else if (fqcnStr.equals("java.lang.Object") == false)
 			{
 				_superCFM = cr.getClassFieldMember("java.lang.Object");
 			}
@@ -751,7 +758,7 @@ public class ClassResolver
 				int	modifier = m.getModifiers();
 				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addMethodType(createMethodType(packageClassName, methodName, paramTypeClasses, returnTypeClass, isStatic));
+				addMethodType(createMethodType(fqcnStr, methodName, paramTypeClasses, returnTypeClass, isStatic));
 
 //				MethodType	type = createMethodType(packageClassName, methodName, paramTypeClasses, returnTypeClass, isStatic);
 //				System.out.println("\t" + packageClassName + " . " + methodName + ":" + type._methodSignature);
@@ -766,7 +773,7 @@ public class ClassResolver
 				int	modifier = cn.getModifiers();
 				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addConstructorType(createMethodType(packageClassName, methodName, paramTypeClasses, c, isStatic));
+				addConstructorType(createMethodType(fqcnStr, methodName, paramTypeClasses, c, isStatic));
 			}
 
 			for (Class<?> interfaceClass : c.getInterfaces())

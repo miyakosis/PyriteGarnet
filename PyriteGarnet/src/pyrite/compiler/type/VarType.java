@@ -10,7 +10,7 @@ import pyrite.compiler.CodeGenerationVisitor;
  */
 public class VarType
 {
-	public enum	TYPE {NULL, VOID, OBJ, NUM, INT, FLT, STR, CHR, BOL, BYT, ARRAY, JVM_TYPE, PACKAGE, CLASS, METHOD, PARTIALID};
+	public enum	TYPE {NULL, VOID, OBJ, NUM, INT, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC, JVM_TYPE, PACKAGE, CLASS, METHOD, PARTIALID};
 
 	public static VarType	NULL = new VarType(TYPE.NULL);
 	public static VarType	VOID = new VarType(TYPE.VOID);

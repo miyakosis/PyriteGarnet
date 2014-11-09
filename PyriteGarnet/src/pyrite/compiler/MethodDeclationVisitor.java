@@ -6,6 +6,7 @@ import java.util.List;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import pyrite.compiler.ClassResolver.ClassFieldMember;
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
@@ -16,22 +17,20 @@ import pyrite.compiler.util.StringUtil;
 public class MethodDeclationVisitor extends GrammarCommonVisitor
 {
 	private ConstantPoolManager _cpm;
-	private ClassResolver	_cr;
+	private FQCN	_fqcn;
 
 	// このファイルで定義しているメンバー
-	private ClassFieldMember	_declaredMember = new ClassFieldMember();
-
-	public String	_packageName;
-	public String	_className;
+	private ClassFieldMember	_declaredMember;
 	private VarType	_superClass;
 	private List<VarType>	_interfaceTypeList;
 
 
-	public MethodDeclationVisitor(ConstantPoolManager cpm, ClassResolver cr)
+	public MethodDeclationVisitor(ClassResolver cr, ConstantPoolManager cpm, ImportDeclarationManager idm, FQCN fqcn)
 	{
-		super(new ImportDeclarationManager(cr));
+		super(cr, idm);
 		_cpm = cpm;
-		_cr = cr;
+		_fqcn = fqcn;
+		_declaredMember = new ClassFieldMember(fqcn._fqcnStr);
 	}
 
 	public ImportDeclarationManager	getImportDeclarationManager()
@@ -54,39 +53,20 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		return	_interfaceTypeList;
 	}
 
-	public String getFQCN()
-	{
-		if (_packageName != null)
-		{
-			return	_packageName + "." + _className;
-		}
-		else
-		{
-			return	_className;
-		}
-	}
-
-
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
 	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
 	{
-		// package
-		if (ctx.packageDeclaration() != null)
-		{
-			visit(ctx.packageDeclaration());
-		}
-
 		// import
-		List<String>	importDeclartionStrList = new ArrayList<String>();
-		importDeclartionStrList.add("java.lang.*");		// デフォルトでインポートされる型
-// TODO		importDeclartionStrList.add("pyrite.lang.*");	// デフォルトでインポートされる型
+		_idm.addImportDeclaretionStr("java.lang.*");		// デフォルトでインポートされる型
+// TODO		_idm.addImportDeclaretionStr("pyrite.lang.*");		// デフォルトでインポートされる型
 		for (PyriteParser.ImportDeclarationContext idctx : ctx.importDeclaration())
-		{
-			importDeclartionStrList.add((String)visit(idctx));
+		{	// とりあえず文字列を収集
+			_idm.addImportDeclaretionStr((String)visit(idctx));
 		}
 
-		_idm.checkImportDeclaretion(importDeclartionStrList);
+		// import文で指定されたクラスの存在チェック
+		_idm.checkImportDeclaretion();
 
 		// class
 		visit(ctx.classDeclaration());
@@ -94,19 +74,11 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// 'package' qualifiedName ';'
-	@Override
-	public Object visitPackageDeclaration(@NotNull PyriteParser.PackageDeclarationContext ctx)
-	{
-		_packageName = ctx.qualifiedName().getText();
-		return	null;
-	}
-
-
 	// 'import' qualifiedName ('.' '*')? ';'
 	@Override
 	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
 	{
+		// 文字列を返す
 		String	packageClassName = ctx.qualifiedName().getText();
 		String	astStr = (ctx.ast != null) ? ".*" : "";
 		return	packageClassName + astStr;
@@ -116,8 +88,6 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
 	{
-		_className = ctx.Identifier().getText();
-		_declaredMember._fqcn = _className;	// TODO:public access を修正
 		if (ctx.type() != null)
 		{
 			_superClass = (VarType)visit(ctx.type());

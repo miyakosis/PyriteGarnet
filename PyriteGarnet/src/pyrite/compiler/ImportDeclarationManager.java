@@ -1,17 +1,21 @@
 package pyrite.compiler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import pyrite.compiler.type.ImportDeclaration;
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.util.StringUtil;
 
 public class ImportDeclarationManager
 {
 	private ClassResolver _cr;
+
+	// import文を保持する
+	private List<String>	_importDeclartionStrList = new ArrayList<String>();
 
 	//	public HashMapMap<String, String, String>	_importMap = new HashMapMap<String, String, String>();	// key:class name value:full class name full class name
 	private Map<String, ImportDeclaration>	_importMap = new HashMap<String, ImportDeclaration>();	// key:class name value:ImportDeclaration
@@ -21,17 +25,24 @@ public class ImportDeclarationManager
 		_cr = cr;
 	}
 
-	public void	checkImportDeclaretion(List<String> importDeclartionStrList)
+	// import文を保持する
+	public void	addImportDeclaretionStr(String importDeclaretionStr)
+	{
+		_importDeclartionStrList.add(importDeclaretionStr);
+	}
+
+	// import指定を解析し、クラス名をキーとする_importMapを作成する
+	public void	checkImportDeclaretion()
 	{
 		Set<String>	packageNameSet = new HashSet<String>();
 		Set<String>	packageClassNameSet = new HashSet<String>();
 
-		// パッケージ全指定かどうかで振り分ける
-		for (String importDeclaretionStr : importDeclartionStrList)
+		// パッケージ指定かどうかで振り分ける
+		for (String importDeclaretionStr : _importDeclartionStrList)
 		{
 			if (importDeclaretionStr.endsWith(".*"))
 			{
-				String	packageName = importDeclaretionStr.substring(0, importDeclaretionStr.length() - 2);
+				String	packageName = importDeclaretionStr.substring(0, importDeclaretionStr.length() - 2);	// remove ".*"
 				packageNameSet.add(packageName);
 			}
 			else
@@ -40,7 +51,7 @@ public class ImportDeclarationManager
 			}
 		}
 
-		// パッケージ全指定を先に解決
+		// パッケージ指定を先に解決
 		for (String packageName : packageNameSet)
 		{
 			if (_cr.isPackage(packageName) == false)
@@ -56,28 +67,25 @@ public class ImportDeclarationManager
 					importDeclaration = new ImportDeclaration();
 					_importMap.put(className, importDeclaration);
 				}
-				importDeclaration.addPackageClassName(packageName + "." + className, true);
+				importDeclaration.addFqcn(packageName + "." + className, false);
 			}
 		}
-		// クラス直指定を解決
-		for (String packageClassName : packageClassNameSet)
+		// FQCN指定を解決
+		for (String fqcnStr : packageClassNameSet)
 		{
-			String[]	element = StringUtil.splitLastElement(packageClassName, '.');
-			String	packageName = element[0];
-			String	className = element[1];
-
-			if (_cr.isClass(packageName, className) == false)
+			FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
+			if (_cr.isClass(fqcn) == false)
 			{
 				throw new PyriteSyntaxException("class not found.");
 			}
 
-			ImportDeclaration	importDeclaration = _importMap.get(className);
+			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
 			if (importDeclaration == null)
 			{
 				importDeclaration = new ImportDeclaration();
-				_importMap.put(className, importDeclaration);
+				_importMap.put(fqcn._className, importDeclaration);
 			}
-			importDeclaration.addPackageClassName(packageClassName, false);
+			importDeclaration.addFqcn(fqcn._fqcnStr, false);
 		}
 	}
 
@@ -104,5 +112,41 @@ public class ImportDeclarationManager
 			}
 		}
 		return	null;
+	}
+
+
+	public static class ImportDeclaration
+	{
+		private Set<String>	_fqcnSet = new HashSet<String>();
+
+		// true:現在クラス名まで指定された import を保持している false:.* で終わる import を保持している
+		private boolean	_isFqcn = false;
+
+		/**
+		 *
+		 * @param fqcnStr
+		 * @param isFqcn	true:import文で指定されたfqcn false:packageの末尾が.*で指定されたため、パッケージ名から展開されたfqcn
+		 */
+		public void addFqcn(String fqcnStr, boolean isFqcn)
+		{
+			if (_isFqcn == false && isFqcn)
+			{	// 現在、.* で終わる import を保持しており、クラス名まで指定された import が指定された
+				// .* で終わる import 内容をクリアして、今後はクラス名まで指定された import 内容のみを保持する
+				_fqcnSet.clear();
+				_isFqcn = true;
+			}
+			_fqcnSet.add(fqcnStr);
+		}
+
+		public boolean isDuplicatedDeclaration()
+		{
+			return	_fqcnSet.size() > 1;
+		}
+
+		public String	getFQCN()
+		{
+			assert	(_fqcnSet.size() == 1);
+			return	_fqcnSet.iterator().next();
+		}
 	}
 }

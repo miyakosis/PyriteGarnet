@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteLexer;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
@@ -32,21 +33,16 @@ public class SourceFile
 
 	private ClassResolver	_cr;
 	private ConstantPoolManager	_cpm;
-	private ImportDeclarationManager	_idm;
-	private ClassResolver.ClassFieldMember	_declaredMember;
 
-	public String	_className;
-	public String	_srcPath;
+	private String	_srcFilePathName;
+	private String	_classFilePathName;
 
 	public SourceFile(String srcFilePathName, ClassResolver cr) throws IOException
 	{
+		_srcFilePathName = srcFilePathName;
 		_cr = cr;
 
 		File	f = new File(srcFilePathName);
-		File	srcPath = f.getParentFile();
-		String	srcFileName = f.getName();
-		_srcPath = srcPath.getName();
-
 		InputStream	is = new FileInputStream(f);
 
 		ANTLRInputStream input = new ANTLRInputStream(is);
@@ -67,17 +63,50 @@ public class SourceFile
 		_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
 	}
 
+	private FQCN	_className;
+
+	/**
+	 *
+	 * @return	true:コンパイル対象 false:それ以外
+	 */
+	public boolean	parseClassName()
+	{
+		// クラス名の解析
+		ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
+		classNameVisitor.visit(_tree);
+		_className = classNameVisitor.getClassName();
+
+		File	f = new File(_srcFilePathName);
+		File	srcPathFile = f.getParentFile();
+		String	srcPath = srcPathFile.getName();
+		_classFilePathName = srcPath + "/" + _className + ".class";
+
+		File	classFile = new File(_classFilePathName);
+		if (f.lastModified() < classFile.lastModified())
+		{	// ソースファイルが前回コンパイル時から更新されていないため、コンパイル対象外
+			return	false;
+		}
+
+		// コンパイルソースファイルのクラス情報をリゾルバに追加
+		_cr.addSourceFileClass(_className, _srcFilePathName, f.lastModified());
+		return	true;
+	}
+
+
+	private ImportDeclarationManager	_idm;
+	private ClassResolver.ClassFieldMember	_declaredMember;
+
 	private MethodDeclationVisitor	_methodDeclationVisitor;
 	private MethodCodeDeclation	_defaultConstractor = null;
 	public void	parseMethodDeclaration()
 	{
-		// メソッド定義の処理
-		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cpm, _cr);
+		_idm = new ImportDeclarationManager(_cr);
+		// メソッド定義の解析
+		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cr, _cpm, _idm, _className);
 		methodDeclationVisitor.visit(_tree);
-		_idm = methodDeclationVisitor.getImportDeclarationManager();
 
 		_declaredMember = methodDeclationVisitor.getDeclaredMember();
-		_className = methodDeclationVisitor._className;
+
 		if (_declaredMember._constructorMap.size() == 0)
 		{	// コンストラクタが定義されていないため、コンストラクタを作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
@@ -121,8 +150,7 @@ public class SourceFile
 	public void	createClassFile() throws IOException
 	{
 		_cpm.setFrozen(true);
-		String	classFilePathName =_srcPath + "/" + _className + ".class";
-		ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(classFilePathName)));
+		ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName)));
 		createClassFile(os,
 				_className,
 				_methodDeclationVisitor.getSuperClass(),
