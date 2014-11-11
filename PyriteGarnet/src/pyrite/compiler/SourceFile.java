@@ -63,7 +63,7 @@ public class SourceFile
 		_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
 	}
 
-	private FQCN	_className;
+	private FQCN	_fqcn;
 
 	/**
 	 *
@@ -74,12 +74,12 @@ public class SourceFile
 		// クラス名の解析
 		ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
 		classNameVisitor.visit(_tree);
-		_className = classNameVisitor.getClassName();
+		_fqcn = classNameVisitor.getClassName();
 
 		File	f = new File(_srcFilePathName);
 		File	srcPathFile = f.getParentFile();
 		String	srcPath = srcPathFile.getName();
-		_classFilePathName = srcPath + "/" + _className + ".class";
+		_classFilePathName = srcPath + "/" + _fqcn + ".class";
 
 		File	classFile = new File(_classFilePathName);
 		if (f.lastModified() < classFile.lastModified())
@@ -88,7 +88,7 @@ public class SourceFile
 		}
 
 		// コンパイルソースファイルのクラス情報をリゾルバに追加
-		_cr.addSourceFileClass(_className, _srcFilePathName, f.lastModified());
+		_cr.addSourceFileClass(_fqcn, _srcFilePathName, f.lastModified());
 		return	true;
 	}
 
@@ -102,7 +102,7 @@ public class SourceFile
 	{
 		_idm = new ImportDeclarationManager(_cr);
 		// メソッド定義の解析
-		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cr, _cpm, _idm, _className);
+		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cr, _cpm, _idm, _fqcn);
 		methodDeclationVisitor.visit(_tree);
 
 		_declaredMember = methodDeclationVisitor.getDeclaredMember();
@@ -110,19 +110,19 @@ public class SourceFile
 		if (_declaredMember._constructorMap.size() == 0)
 		{	// コンストラクタが定義されていないため、コンストラクタを作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
-			VarType[]	outParamType = new VarType[]{ObjectType.getType(_className)};
+			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
 
-			MethodType	constructorType = (MethodType)MethodType.getType(_className, _className, inParamType, outParamType, false);
+			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn._fqcnStr, _fqcn._className, inParamType, outParamType, false);
 			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);
 
 			// コンストラクタの実装も作成しておく
-			_defaultConstractor = createDefaultConstractor(_cpm, _className);
+			_defaultConstractor = createDefaultConstractor(_cpm, _fqcn);
 		}
 
 		// TODO:インターフェースのメソッド実装チェック
 
 
-		_cr.putClassFieldMember(methodDeclationVisitor.getFQCN(), _declaredMember);	// このクラスのメンバーを登録
+		_cr.putClassFieldMember(_fqcn._fqcnStr, _declaredMember);	// このクラスのメンバーを登録
 
 		// 定義されているメソッドのコンスタントプールを作成
 		createConstructorConstantPool(_declaredMember._constructorMap.values(), _cpm);
@@ -136,7 +136,7 @@ public class SourceFile
 	public void	parseCodeGeneration()
 	{
 		// コード生成
-		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cpm, _cr, _className, _idm, _declaredMember);
+		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cpm, _cr, _fqcn, _idm, _declaredMember);
 		visitor.visit(_tree);	// parse
 		List<MethodCodeDeclation>	methodCodeDeclationList = visitor.getMethodCodeDeclationList();
 		if (_defaultConstractor != null)
@@ -152,7 +152,7 @@ public class SourceFile
 		_cpm.setFrozen(true);
 		ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName)));
 		createClassFile(os,
-				_className,
+				_fqcn,
 				_methodDeclationVisitor.getSuperClass(),
 				_methodDeclationVisitor.getInterfaceTypeList(),
 				_cpm,

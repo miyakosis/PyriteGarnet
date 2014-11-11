@@ -78,11 +78,21 @@ public class Compiler
 		}
 	}
 
-	//	指定ソースファイルのメソッド定義のみ解決しておく
-	public void	compile(String fileName) throws IOException
+	//	指定ソースファイルのクラス名のみ解決する
+	public void	compileClassName(String fileName)
 	{
-		SourceFile	sf = new SourceFile(fileName, _cr);
-		sf.parseMethodDeclaration();
+		try
+		{
+			SourceFile	sf = new SourceFile(fileName, _cr);
+			if (sf.parseClassName())
+			{	// コンパイル対象の場合は追加
+				_sourceFileList.add(sf);
+			}
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException("IOException:" + e.getMessage());
+		}
 	}
 
 	// コンパイルがすべて正常終わったので、クラスファイルを作成する

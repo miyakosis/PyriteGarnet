@@ -12,7 +12,6 @@ import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
-import pyrite.compiler.util.StringUtil;
 
 public class MethodDeclationVisitor extends GrammarCommonVisitor
 {
@@ -113,20 +112,34 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 
 	//fieldDeclaration
-    //	:   classInstanceModifier? type Identifier ('=' variableInitializer)? ';'
+    //	:   classInstanceModifier? 'var' variableDeclarationStatement ';'
     //	;
 	@Override
 	public Object visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx)
 	{
 		boolean	isStatic = (ctx.classInstanceModifier() != null);
 
-		VarType	type = (VarType)visit(ctx.type());
-		String	name = ctx.Identifier().getText();
-
-		_declaredMember.addFieldType(new VarTypeName(type, name), isStatic);
+		VarTypeName	varTypeName = (VarTypeName)visit(ctx.variableDeclarationStatement());
+		if (_declaredMember._classFieldMap.containsKey(varTypeName._name) ||
+				_declaredMember._instanceFieldMap.containsKey(varTypeName._name))
+		{
+			throw new PyriteSyntaxException("field declation duplicated.");
+		}
+		_declaredMember.addFieldType(varTypeName, isStatic);
 
 		return	null;
 	}
+
+	// Identifier (':' typeOrArray)? ('=' expression)?
+	@Override
+	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
+	{
+		String	name = ctx.Identifier().getText();
+		VarType	type = (VarType)visit(ctx.typeOrArray());
+
+		return	new VarTypeName(type, name);
+	}
+
 
 	//	constructorDeclaration
 	//    :   Identifier inputParameters
@@ -135,16 +148,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx)
 	{
-		String id = ctx.Identifier().getText();
-		String[]	element = StringUtil.splitLastElement(id, '.');
-		String	packageName = element[0];
-		String	className = element[1];
+		String className = ctx.Identifier().getText();
 
-		if (packageName.equals("") == false && packageName.equals(_packageName) == false)
-		{	// コンストラクタのパッケージ部分と、ファイルのパッケージ宣言に食い違いがある
-			throw new PyriteSyntaxException("constructor name is not matched to package name.");
-		}
-		else if (className.equals(_className) == false)
+		if (className.equals(_fqcn._className) == false)
 		{
 			throw new PyriteSyntaxException("constructor name is not matched to class name.");
 		}
@@ -158,10 +164,10 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 			paramTypes[i] = inParamList.get(i)._type;
 		}
 
-		VarType[] returnTypes = {ObjectType.getType(_className)};
+		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_className, className, paramTypes, returnTypes , false);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, className, paramTypes, returnTypes , false);
 
 		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
@@ -201,7 +207,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_className, id, paramTypes, returnTypes, isStatic);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, id, paramTypes, returnTypes, isStatic);
 
 		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
@@ -238,18 +244,4 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	{
 		return	super.visitOutputParameter(ctx);
 	}
-
-	@Override
-	public Object visitTypePrimitiveType(@NotNull PyriteParser.TypePrimitiveTypeContext ctx)
-	{
-		return	super.visitTypePrimitiveType(ctx);
-	}
-
-	@Override
-	public Object visitTypeClassType(@NotNull PyriteParser.TypeClassTypeContext ctx)
-	{
-		return	super.visitTypeClassType(ctx);
-	}
-
-
 }

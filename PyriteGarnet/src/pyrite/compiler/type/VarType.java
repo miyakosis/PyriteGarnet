@@ -24,7 +24,7 @@ public class VarType
 	public static VarType	BYT = new VarType(TYPE.BYT);
 
 
-	protected static Map<Integer, VarType>	__varTypeMap = new HashMap<Integer, VarType>();
+	protected static Map<Integer, VarType>	__varTypeMap = new HashMap<Integer, VarType>();	// key:hashCode
 
 	static
 	{
@@ -68,6 +68,7 @@ public class VarType
 		return	sb.toString().hashCode();
 	}
 
+	// TODO:要見直し
 	protected static String	createJVMExpression(TYPE type)
 	{
 		StringBuilder	sb = new StringBuilder();
@@ -127,6 +128,7 @@ public class VarType
 	// for VOID, INT, STR, BOL, OBJECT
 	public String	_jvmExpression;
 
+	public String	_pyriteTypeExpression;
 
 //	// for PARTIALID
 //	protected String	_id;
@@ -138,6 +140,7 @@ public class VarType
 //	// for METHOD
 //	protected String	_method;
 
+	// constructor for sub classes
 	protected VarType()
 	{
 	}

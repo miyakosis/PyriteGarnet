@@ -44,4 +44,13 @@ public class HashMapMap<TK, TVK, TVV>
 			map.clear();
 		}
 	}
+
+	public void remove(TK key, TVK valueKey)
+	{
+		Map<TVK, TVV>	map = _map.get(key);
+		if (map != null)
+		{
+			map.remove(valueKey);
+		}
+	}
 }

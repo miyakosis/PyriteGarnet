@@ -198,9 +198,26 @@ public class ClassResolver
 		return Package.getPackage(packageName) != null;
 	}
 
+	// assertion: pahese1ではこのメソッドは呼ばれない
 	public boolean isClass(FQCN fqcn)
 	{
-		return	_packageMapMap.get(fqcn._packageName, fqcn._className) != null;
+		PackageClassFile	pcf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+		if (pcf == null)
+		{
+			return	false;
+		}
+
+		if (pcf.isNeedCompile())
+		{
+			// コンパイルした結果、クラス情報が存在しない場合にクラス情報を残さないため、情報をクリアしておく
+			_packageMapMap.remove(fqcn._packageName, fqcn._className);
+			Compiler.getInstance().compileClassName(pcf.getSourcePathFile());
+
+			// オブジェクト取り直し
+			pcf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+		}
+
+		return	pcf.hasClassFile();
 	}
 
 
@@ -227,10 +244,10 @@ public class ClassResolver
 					return	null;
 				}
 
-				if (packageClassFile.needCompile())
+				if (packageClassFile.isNeedCompile())
 				{	// コンパイルが必要
 					try
-					{
+					{	// TODO:
 						Compiler.getInstance().compile(packageClassFile.getSourcePathFile());
 					}
 					catch (IOException e)
@@ -861,7 +878,7 @@ public class ClassResolver
 			_className = className;
 		}
 
-		public boolean needCompile()
+		public boolean isNeedCompile()
 		{
 			return	(_pyriteClassFileLastModified < _pyriteSourceFileLastModified);
 		}

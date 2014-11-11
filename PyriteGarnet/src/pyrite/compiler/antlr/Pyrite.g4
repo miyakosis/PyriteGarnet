@@ -587,8 +587,8 @@ statement
     ;
 
 variableDeclarationStatement
-	:	Identifier (':' typeOrArray)? ('=' expression)?
-	;
+    :   Identifier (':' typeOrArray)? ('=' expression)?
+    ;
 
 label
     :    Identifier?
