@@ -239,7 +239,7 @@ public class SourceFile
 		os.write2(cpm.getClassRef(className));
 
 //		u2 super_class;
-		String	superClassName = ((ObjectType)superClassType)._packageClassName;
+		String	superClassName = ((ObjectType)superClassType)._fqcn;
 		os.write2(cpm.getClassRef(superClassName));
 
 //		u2 interfaces_count;
@@ -247,7 +247,7 @@ public class SourceFile
 //		u2 interfaces[interfaces_count];
 		for (VarType interfaceType : interfaceTypeList)
 		{
-			String	interfaceClassName = ((ObjectType)interfaceType)._packageClassName;
+			String	interfaceClassName = ((ObjectType)interfaceType)._fqcn;
 			os.write2(cpm.getClassRef(interfaceClassName));
 		}
 

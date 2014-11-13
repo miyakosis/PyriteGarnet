@@ -1,7 +1,6 @@
 package pyrite.compiler.type;
 
 
-
 public class AssocType extends VarType
 {
 	public final VarType	_keyVarType;
@@ -9,41 +8,25 @@ public class AssocType extends VarType
 
 	public static VarType getType(VarType keyVarType, VarType valVarType)
 	{
-		int	hashCode = createHashCode(TYPE.ASSOC, keyVarType, valVarType);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("{").append(keyVarType._typeId).append(":").append(valVarType._typeId);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new AssocType(TYPE.ASSOC, keyVarType, valVarType);
-			__varTypeMap.put(hashCode, varType);
+			varType = new AssocType(typeId, keyVarType, valVarType);
+			__varTypeMap.put(typeId, varType);
 		}
 
 		return	varType;
 	}
 
-	protected static int	createHashCode(TYPE type, VarType keyVarType, VarType valVarType)
+	protected AssocType(String typeId, VarType keyVarType, VarType valVarType)
 	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(type).append(keyVarType.hashCode()).append(valVarType.hashCode());
-		return	sb.toString().hashCode();
-	}
-
-	protected static String	createJVMExpression(TYPE type, VarType keyVarType, VarType valVarType)
-	{
-		StringBuilder	sb = new StringBuilder();
-		throw new RuntimeException("not implemented");
-		// TODO
-//		return	sb.toString();
-	}
-
-	protected AssocType(TYPE type, VarType keyVarType, VarType valVarType)
-	{
-		super._type = type;
-		super._hashCode = createHashCode(TYPE.ASSOC, keyVarType, valVarType);
-		super._jvmExpression = createJVMExpression(TYPE.ASSOC, keyVarType, valVarType);
+		super(TYPE.ASSOC, "Lpyrite.lang.Assoc;", typeId);
 
 		_keyVarType = keyVarType;
 		_valVarType = valVarType;
 	}
-
-
 }

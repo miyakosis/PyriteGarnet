@@ -852,11 +852,11 @@ creator
 //	    ;
 
 //	arrayCreatorRest
-//    :   '['
-//        (   ']' ('[' ']')* arrayInitializer
-//        |   expression ']' ('[' expression ']')* ('[' ']')*
-//        )
-//    ;
+//	    :   '['
+//	        (   ']' ('[' ']')* arrayInitializer
+//	        |   expression ']' ('[' expression ']')* ('[' ']')*
+//	        )
+//	    ;
 
 //	classCreatorRest
 //	    :   arguments classBody?

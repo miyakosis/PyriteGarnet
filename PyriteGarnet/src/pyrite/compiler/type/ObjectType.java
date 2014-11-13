@@ -1,17 +1,40 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.BC;
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.ConstantPoolManager;
-import pyrite.compiler.MethodCodeDeclation;
+
 
 public class ObjectType extends VarType
 {
 	// for className
-	public String	_packageClassName;
+	public String	_fqcn;
 
-	public static VarType	getType(String packageClassName)
+	public static VarType getType(String fqcn)
+	{
+		StringBuilder	sb = new StringBuilder();
+		sb.append("L").append(fqcn).append(";");
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
+		if (varType == null)
+		{
+			varType = new ObjectType(typeId, fqcn);
+			__varTypeMap.put(typeId, varType);
+		}
+
+		return	varType;
+	}
+
+	protected ObjectType(String typeId, String fqcn)
+	{
+		super(TYPE.ASSOC, typeId, typeId);
+
+		_fqcn = fqcn;
+	}
+
+
+
+	// TODO:
+	/*
+	public static VarType	getType(String fqcn)
 	{
 		int	hashCode = createHashCode(TYPE.OBJ, packageClassName);
 		VarType	varType = __varTypeMap.get(hashCode);
@@ -104,4 +127,5 @@ public class ObjectType extends VarType
 
 		throw new RuntimeException("id is not declared." + id);
 	}
+	*/
 }

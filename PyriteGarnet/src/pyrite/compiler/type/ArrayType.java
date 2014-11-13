@@ -1,25 +1,26 @@
 package pyrite.compiler.type;
 
-
-
-
 public class ArrayType extends VarType
 {
 	public final VarType	_arrayVarType;
 
 	public static VarType getType(VarType arrayVarType)
 	{
-		int	hashCode = createHashCode(TYPE.ARRAY, arrayVarType);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("<").append(arrayVarType._typeId);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new ArrayType(TYPE.ARRAY, arrayVarType);
-			__varTypeMap.put(hashCode, varType);
+			varType = new ArrayType(typeId, arrayVarType);
+			__varTypeMap.put(typeId, varType);
 		}
 
 		return	varType;
 	}
 
+	/*
 	protected static int	createHashCode(TYPE type, VarType arrayVarType)
 	{
 		StringBuilder	sb = new StringBuilder();
@@ -30,18 +31,16 @@ public class ArrayType extends VarType
 	protected static String	createJVMExpression(TYPE type, VarType arrayVarType)
 	{
 		StringBuilder	sb = new StringBuilder();
-		// TODO:
+		sb.append("<");
 		sb.append(arrayVarType._jvmExpression);
 
 		return	sb.toString();
 	}
+	*/
 
-	protected ArrayType(TYPE type, VarType arrayVarType)
+	protected ArrayType(String typeId, VarType arrayVarType)
 	{
-		super._type = type;
-		super._hashCode = createHashCode(TYPE.ARRAY, arrayVarType);
-		super._jvmExpression = createJVMExpression(TYPE.ARRAY, arrayVarType);
-
+		super(TYPE.ARRAY, "Lpyrite.lang.Array;", typeId);
 		_arrayVarType = arrayVarType;
 	}
 }

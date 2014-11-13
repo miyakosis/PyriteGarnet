@@ -10,7 +10,10 @@ import pyrite.compiler.CodeGenerationVisitor;
  */
 public class VarType
 {
-	public enum	TYPE {NULL, VOID, OBJ, NUM, INT, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC, JVM_TYPE, PACKAGE, CLASS, METHOD, PARTIALID};
+	public enum	TYPE {NULL, VOID, OBJ, NUM, INT, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC,
+		PACKAGE, CLASS, METHOD, PARTIALID,
+		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
+		};
 
 	public static VarType	NULL = new VarType(TYPE.NULL);
 	public static VarType	VOID = new VarType(TYPE.VOID);
@@ -23,21 +26,41 @@ public class VarType
 	public static VarType	BOL = new VarType(TYPE.BOL);
 	public static VarType	BYT = new VarType(TYPE.BYT);
 
+	public static VarType	JVM_INT = new VarType(TYPE.JVM_INT);
+	public static VarType	JVM_LONG = new VarType(TYPE.JVM_LONG);
+	public static VarType	JVM_SHORT = new VarType(TYPE.JVM_SHORT);
+	public static VarType	JVM_FLOAT = new VarType(TYPE.JVM_FLOAT);
+	public static VarType	JVM_DOUBLE = new VarType(TYPE.JVM_DOUBLE);
+	public static VarType	JVM_CHAR = new VarType(TYPE.JVM_CHAR);
+	public static VarType	JVM_BYTE = new VarType(TYPE.JVM_BYTE);
+	public static VarType	JVM_BOOLEAN = new VarType(TYPE.JVM_BOOLEAN);
 
-	protected static Map<Integer, VarType>	__varTypeMap = new HashMap<Integer, VarType>();	// key:hashCode
+	protected static Map<String, VarType>	__varTypeMap = new HashMap<String, VarType>();	// key:_typeId
+	// _typeId は VarTypeを一意に識別できる文字列。
+	// パラメータをとらないType(INTなど)は、_jvmExpression,
+	// パラメータをとるType(Classなど)は、_jvmExpression + 識別子
 
 	static
 	{
-		__varTypeMap.put(NULL._hashCode, NULL);
-		__varTypeMap.put(VOID._hashCode, VOID);
-		__varTypeMap.put(OBJ._hashCode, OBJ);
-		__varTypeMap.put(NUM._hashCode, NUM);
-		__varTypeMap.put(INT._hashCode, INT);
-		__varTypeMap.put(FLT._hashCode, FLT);
-		__varTypeMap.put(STR._hashCode, STR);
-		__varTypeMap.put(CHR._hashCode, CHR);
-		__varTypeMap.put(BOL._hashCode, BOL);
-		__varTypeMap.put(BYT._hashCode, BYT);
+		__varTypeMap.put(NULL._typeId, NULL);
+		__varTypeMap.put(VOID._typeId, VOID);
+		__varTypeMap.put(OBJ._typeId, OBJ);
+		__varTypeMap.put(NUM._typeId, NUM);
+		__varTypeMap.put(INT._typeId, INT);
+		__varTypeMap.put(FLT._typeId, FLT);
+		__varTypeMap.put(STR._typeId, STR);
+		__varTypeMap.put(CHR._typeId, CHR);
+		__varTypeMap.put(BOL._typeId, BOL);
+		__varTypeMap.put(BYT._typeId, BYT);
+
+		__varTypeMap.put(JVM_INT._typeId, JVM_INT);
+		__varTypeMap.put(JVM_LONG._typeId, JVM_LONG);
+		__varTypeMap.put(JVM_SHORT._typeId, JVM_SHORT);
+		__varTypeMap.put(JVM_FLOAT._typeId, JVM_FLOAT);
+		__varTypeMap.put(JVM_DOUBLE._typeId, JVM_DOUBLE);
+		__varTypeMap.put(JVM_CHAR._typeId, JVM_CHAR);
+		__varTypeMap.put(JVM_BYTE._typeId, JVM_BYTE);
+		__varTypeMap.put(JVM_BOOLEAN._typeId, JVM_BOOLEAN);
 	}
 
 //	// static
@@ -55,7 +78,7 @@ public class VarType
 //	}
 
 
-
+/*
 	protected static int	createHashCode(TYPE type)
 	{
 		return	type.hashCode();
@@ -92,6 +115,7 @@ public class VarType
 
 		return	sb.toString();
 	}
+*/
 
 //	protected static String	createJVMExpression(TYPE type, int nArrayLevel)
 //	{
@@ -123,12 +147,8 @@ public class VarType
 
 // instance
 	public TYPE	_type;
-	protected int	_hashCode;
-
-	// for VOID, INT, STR, BOL, OBJECT
 	public String	_jvmExpression;
-
-	public String	_pyriteTypeExpression;
+	public String	_typeId;
 
 //	// for PARTIALID
 //	protected String	_id;
@@ -141,16 +161,75 @@ public class VarType
 //	protected String	_method;
 
 	// constructor for sub classes
-	protected VarType()
+	protected VarType(TYPE type, String jvmExpression, String typeId)
 	{
+		_type = type;
+		_jvmExpression = jvmExpression;
+		_typeId = typeId;
 	}
 
 	protected VarType(TYPE type)
 	{
 		_type = type;
-		_hashCode = createHashCode(type);
 
-		_jvmExpression = createJVMExpression(type);
+		switch (type)
+		{
+		case NULL:
+			_jvmExpression = "";	// なくてok
+			break;
+		case VOID:
+			_jvmExpression = "V";
+			break;
+		case NUM:
+			_jvmExpression = "Lpyrite.lang.Number;";
+			break;
+		case INT:
+			_jvmExpression = "Lpyrite.lang.Integer;";
+			break;
+		case FLT:
+			_jvmExpression = "Lpyrite.lang.Float;";
+			break;
+		case STR:
+			_jvmExpression = "Lpyrite.lang.String;";
+			break;
+		case CHR:
+			_jvmExpression = "Lpyrite.lang.Character;";
+			break;
+		case BOL:
+			_jvmExpression = "Lpyrite.lang.Boolean;";
+			break;
+		case BYT:
+			_jvmExpression = "Lpyrite.lang.Byte;";
+			break;
+
+		case JVM_INT:
+			_jvmExpression = "I";
+			break;
+		case JVM_LONG:
+			_jvmExpression = "J";
+			break;
+		case JVM_SHORT:
+			_jvmExpression = "S";
+			break;
+		case JVM_FLOAT:
+			_jvmExpression = "F";
+			break;
+		case JVM_DOUBLE:
+			_jvmExpression = "D";
+			break;
+		case JVM_CHAR:
+			_jvmExpression = "C";
+			break;
+		case JVM_BYTE:
+			_jvmExpression = "B";
+			break;
+		case JVM_BOOLEAN:
+			_jvmExpression = "Z";
+			break;
+		default:
+			throw new RuntimeException("assertion");
+		}
+		_typeId = _jvmExpression;
 	}
 
 //	protected VarType(TYPE type, int nArrayLevel, String id)
@@ -162,15 +241,15 @@ public class VarType
 //		_hashCode = createHashCode(type, nArrayLevel, id);
 //	}
 
-	public int	hashCode()
-	{
-		return	_hashCode;
-	}
-
-	public boolean	equals(Object o)
-	{
-		return	((VarType)o)._hashCode == _hashCode;
-	}
+//	public int	hashCode()
+//	{
+//		return	_hashCode;
+//	}
+//
+//	public boolean	equals(Object o)
+//	{
+//		return	((VarType)o)._hashCode == _hashCode;
+//	}
 
 	public String	toString()
 	{
