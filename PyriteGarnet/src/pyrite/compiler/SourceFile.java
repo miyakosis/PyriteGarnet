@@ -23,7 +23,7 @@ import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 
-public class SourceFile
+public class SourceFile extends ClassRelatedFile
 {
 //	public final String	_srcFilePathName;
 
@@ -35,61 +35,57 @@ public class SourceFile
 	private ConstantPoolManager	_cpm;
 
 	private String	_srcFilePathName;
-	private String	_classFilePathName;
-
-	public SourceFile(String srcFilePathName, ClassResolver cr) throws IOException
-	{
-		_srcFilePathName = srcFilePathName;
-		_cr = cr;
-
-		File	f = new File(srcFilePathName);
-		InputStream	is = new FileInputStream(f);
-
-		ANTLRInputStream input = new ANTLRInputStream(is);
-		PyriteLexer lexer = new PyriteLexer(input);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		PyriteParser parser = new PyriteParser(tokens);
-		_tree = parser.compilationUnit(); // parse
-
-		// create needed constants
-		_cpm = new ConstantPoolManager();
-
-		_cpm.getClassRef("java/lang/Object");
-		_cpm.getUtf8("<init>");
-		_cpm.getUtf8("()V");
-		_cpm.getUtf8("Code");
-		_cpm.getUtf8("main");
-		_cpm.getUtf8("([Ljava/lang/String;)V");
-		_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
-	}
-
 	private FQCN	_fqcn;
 
-	/**
-	 *
-	 * @return	true:コンパイル対象 false:それ以外
-	 */
-	public boolean	parseClassName()
+//	private String	_classFilePathName;
+
+	public SourceFile(String srcFilePathName, ClassResolver cr)
 	{
-		// クラス名の解析
-		ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
-		classNameVisitor.visit(_tree);
-		_fqcn = classNameVisitor.getClassName();
+		try
+		{
+			_srcFilePathName = srcFilePathName;
+			_cr = cr;
 
-		File	f = new File(_srcFilePathName);
-		File	srcPathFile = f.getParentFile();
-		String	srcPath = srcPathFile.getName();
-		_classFilePathName = srcPath + "/" + _fqcn + ".class";
+			File	f = new File(srcFilePathName);
+			InputStream	is = new FileInputStream(f);
 
-		File	classFile = new File(_classFilePathName);
-		if (f.lastModified() < classFile.lastModified())
-		{	// ソースファイルが前回コンパイル時から更新されていないため、コンパイル対象外
-			return	false;
+			ANTLRInputStream input = new ANTLRInputStream(is);
+			PyriteLexer lexer = new PyriteLexer(input);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			PyriteParser parser = new PyriteParser(tokens);
+			_tree = parser.compilationUnit(); // parse
+
+			// クラス名の解析
+			ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
+			classNameVisitor.visit(_tree);
+			_fqcn = classNameVisitor.getClassName();
+
+			/*
+			File	srcPathFile = f.getParentFile();
+			String	srcPath = srcPathFile.getName();
+			_classFilePathName = srcPath + "/" + _fqcn._className + ".class";
+			*/
+
+			// create needed constants
+			_cpm = new ConstantPoolManager();
+
+			_cpm.getClassRef("java/lang/Object");
+			_cpm.getUtf8("<init>");
+			_cpm.getUtf8("()V");
+			_cpm.getUtf8("Code");
+			_cpm.getUtf8("main");
+			_cpm.getUtf8("([Ljava/lang/String;)V");
+			_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
 		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
 
-		// コンパイルソースファイルのクラス情報をリゾルバに追加
-		_cr.addSourceFileClass(_fqcn, _srcFilePathName, f.lastModified());
-		return	true;
+	public FQCN	getFQCN()
+	{
+		return	_fqcn;
 	}
 
 
@@ -119,7 +115,7 @@ public class SourceFile
 			_defaultConstractor = createDefaultConstractor(_cpm, _fqcn);
 		}
 
-		// TODO:インターフェースのメソッド実装チェック
+		// TODO:インターフェースのメソッド実装チェック、はここではできないかも。全てのソースのメソッド定義が解決してから？
 
 
 		_cr.putClassFieldMember(_fqcn._fqcnStr, _declaredMember);	// このクラスのメンバーを登録
@@ -136,7 +132,7 @@ public class SourceFile
 	public void	parseCodeGeneration()
 	{
 		// コード生成
-		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cpm, _cr, _fqcn, _idm, _declaredMember);
+		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cr, _cpm, _idm, _fqcn, _declaredMember);
 		visitor.visit(_tree);	// parse
 		List<MethodCodeDeclation>	methodCodeDeclationList = visitor.getMethodCodeDeclationList();
 		if (_defaultConstractor != null)

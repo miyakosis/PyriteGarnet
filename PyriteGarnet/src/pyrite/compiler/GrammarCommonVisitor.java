@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import pyrite.compiler.antlr.PyriteBaseVisitor;
-import pyrite.compiler.antlr.PyriteLexer;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
@@ -125,11 +123,13 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return	(nArrayLevel == 0) ? type : ArrayType.getType(type, nArrayLevel);
 	}
 */
+	/*
 	private int	getArrayLevel(PyriteParser.TypeContext ctx)
 	{
 		List<TerminalNode> tokenList = ctx.getTokens(PyriteLexer.LBRACK);
 		return	(tokenList != null) ? tokenList.size() : 0;
 	}
+	*/
 
 	//  type (',' type)*
 	@Override

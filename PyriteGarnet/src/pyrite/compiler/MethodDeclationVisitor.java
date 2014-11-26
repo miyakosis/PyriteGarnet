@@ -15,8 +15,8 @@ import pyrite.compiler.type.VarTypeName;
 
 public class MethodDeclationVisitor extends GrammarCommonVisitor
 {
-	private ConstantPoolManager _cpm;
-	private FQCN	_fqcn;
+	public final ConstantPoolManager _cpm;
+	public final FQCN	_fqcn;
 
 	// このファイルで定義しているメンバー
 	private ClassFieldMember	_declaredMember;
@@ -24,7 +24,11 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	private List<VarType>	_interfaceTypeList;
 
 
-	public MethodDeclationVisitor(ClassResolver cr, ConstantPoolManager cpm, ImportDeclarationManager idm, FQCN fqcn)
+	public MethodDeclationVisitor(
+			ClassResolver cr,
+			ConstantPoolManager cpm,
+			ImportDeclarationManager idm,
+			FQCN fqcn)
 	{
 		super(cr, idm);
 		_cpm = cpm;
@@ -207,7 +211,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, id, paramTypes, returnTypes, isStatic);
+		MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, id, paramTypes, returnTypes, isStatic);
 
 		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている

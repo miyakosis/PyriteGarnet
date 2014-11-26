@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssignLeftExpressionType;
@@ -29,16 +30,14 @@ import pyrite.compiler.util.StringUtil;
 
 public class CodeGenerationVisitor extends GrammarCommonVisitor
 {
-	public ConstantPoolManager _cpm;
-	public ClassResolver	_cr;
-
-	public String	_className;	// 本来は本体解析中に設定される
+	public final ConstantPoolManager _cpm;
+	public final FQCN	_fqcn;
 
 //	// 現在解析中のメソッド。visitClassBodyDeclarationMethodDeclaration()で切り替わる。
 //	private MethodDeclation	_currentMethodDeclation;
 
 	// このクラスで定義しているメソッド・フィールド
-	public ClassResolver.ClassFieldMember	_thisClassFieldMember = null;
+	public final ClassResolver.ClassFieldMember	_thisClassFieldMember;
 
 //	// このファイルで定義しているメソッドのマップ
 //	private Map<MethodDeclation, MethodDeclation>	_methodDeclationMap;
@@ -62,16 +61,15 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	private ControlBlockManager	_controlBlockManager;
 
 	public CodeGenerationVisitor(
-			ConstantPoolManager cpm,
 			ClassResolver cr,
-			String className,
+			ConstantPoolManager cpm,
 			ImportDeclarationManager idm,
+			FQCN fqcn,
 			ClassResolver.ClassFieldMember thisClassFieldMember)
 	{
-		super(idm);
+		super(cr, idm);
 		_cpm = cpm;
-		_cr = cr;
-		_className = className;
+		_fqcn = fqcn;
 		_thisClassFieldMember = thisClassFieldMember;
 	}
 
@@ -144,7 +142,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		_currentMethodCodeDeclation = new MethodCodeDeclation();
 		_currentMethodCodeDeclation.setStatic(false);
-		_currentMethodCodeDeclation.setClassName(_className);
+		_currentMethodCodeDeclation.setClassName(_fqcn._className);
 		_currentMethodCodeDeclation.setMethodName("<init>");									// コード上では "<init>";
 
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
@@ -181,11 +179,33 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		_currentMethodCodeDeclation = new MethodCodeDeclation();
 		_currentMethodCodeDeclation.setStatic(isStatic);
-		_currentMethodCodeDeclation.setClassName(_className);
+		_currentMethodCodeDeclation.setClassName(_fqcn._className);
 		_currentMethodCodeDeclation.setMethodName(id);
 
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
 		List<VarTypeName>	outParamList = (List<VarTypeName>)visit(ctx.outputParameters());
+		// パラメータ名称重複チェック
+		for (VarTypeName varTypeName : inParamList)
+		{
+			if (_currentMethodCodeDeclation.isDuplicatedLocalVar(varTypeName._name))
+			{
+				throw new RuntimeException("duplicated local variable");
+			}
+			_currentMethodCodeDeclation.putLocalVar(varTypeName._name, varTypeName._type);
+
+		}
+		for (VarTypeName varTypeName : outParamList)
+		{
+			if (varTypeName._name != null)
+			{
+				if (_currentMethodCodeDeclation.isDuplicatedLocalVar(varTypeName._name))
+				{
+					throw new RuntimeException("duplicated local variable");
+				}
+				_currentMethodCodeDeclation.putLocalVar(varTypeName._name, varTypeName._type);
+			}
+		}
+
 		_currentMethodCodeDeclation.setInParamList(inParamList);
 		_currentMethodCodeDeclation.setOutParamList(outParamList);
 
@@ -199,76 +219,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		_methodCodeDeclationList.add(_currentMethodCodeDeclation);
 		return	null;
-	}
-
-
-	@Override
-	public Object visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx)
-	{
-		List<VarTypeName>	paramList = new ArrayList<VarTypeName>();
-		if (ctx.inputParameter() != null)
-		{
-			for (PyriteParser.InputParameterContext paramCtx : ctx.inputParameter())
-			{
-				VarTypeName	methodParam = (VarTypeName)visit(paramCtx);
-				if (_currentMethodCodeDeclation.isDuplicatedLocalVar(methodParam._name))
-				{
-					throw new RuntimeException("duplicated local variable");
-				}
-				_currentMethodCodeDeclation.putLocalVar(methodParam._name, methodParam._type);
-				paramList.add(methodParam);
-			}
-		}
-
-		return	paramList;
-	}
-
-	@Override
-	public Object visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx)
-	{
-		return	super.visitInputParameter(ctx);
-	}
-
-	@Override
-	public Object visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx)
-	{
-		List<VarTypeName>	paramList = new ArrayList<VarTypeName>();
-		if (ctx.outputParameter() != null)
-		{
-			for (PyriteParser.OutputParameterContext paramCtx : ctx.outputParameter())
-			{
-				VarTypeName	methodParam = (VarTypeName)visit(paramCtx);
-				if (methodParam._name != null)
-				{
-					if (_currentMethodCodeDeclation.isDuplicatedLocalVar(methodParam._name))
-					{
-						throw new RuntimeException("duplicated local variable");
-					}
-					_currentMethodCodeDeclation.putLocalVar(methodParam._name, methodParam._type);
-				}
-				paramList.add(methodParam);
-			}
-		}
-
-		return	paramList;
-	}
-
-	@Override
-	public Object visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx)
-	{
-		return	super.visitOutputParameter(ctx);
-	}
-
-	@Override
-	public Object visitTypePrimitiveType(@NotNull PyriteParser.TypePrimitiveTypeContext ctx)
-	{
-		return	super.visitTypePrimitiveType(ctx);
-	}
-
-	@Override
-	public Object visitTypeClassType(@NotNull PyriteParser.TypeClassTypeContext ctx)
-	{
-		return	super.visitTypeClassType(ctx);
 	}
 
 	// block

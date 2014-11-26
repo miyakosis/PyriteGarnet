@@ -30,21 +30,55 @@ import pyrite.compiler.util.StringUtil;
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 public class ClassResolver
 {
-	private Map<String, ClassFieldMember>	_classCache = new HashMap<String, ClassFieldMember>();	// key:クラス名 value:ClassFieldMember
-
 	private final static String	PROPERTY_KEY_CLASS_PATH = "java.class.path";
 	private final static String	PROPERTY_KEY_CLASS_PATH_SEPARATOR = "path.separator";
 	private final static String	PROPERTY_KEY_JAVA_HOME = "java.home";
 	private final static String	JAVA_LIB_PATH = "/lib/rt.jar";
 
-	private Set<String>	classPathEntrySet = new HashSet<String>();
+	private Set<String>	classPathEntrySet = new HashSet<String>();	// 同じクラスパスが複数回設定されている場合に、二重取り込みを回避するためのセット
 
-	private HashMapMap<String, String, PackageClassFile>	_packageMapMap = new HashMapMap<String, String, PackageClassFile>();	// key:パッケージ valueKey:クラス名 value:PackageClassFile
+	private HashMapMap<String, String, ClassRelatedFile>	_packageMapMap = new HashMapMap<String, String, ClassRelatedFile>();	// key:パッケージ valueKey:クラス名 value:ClassRelatedFile
+
+	private Map<String, ClassFieldMember>	_classCache = new HashMap<String, ClassFieldMember>();	// key:fqcn value:ClassFieldMember
+
 
 	// クラスパスエントリから、
 	// 　指定jarファイルを展開してクラスファイルを取得する。
 	// 　指定ディレクトリ配下のクラスファイルを取得する。
-	public ClassResolver() throws IOException
+	public ClassResolver()
+	{
+	}
+
+	// メソッド呼び出しのチェックに使用
+	private int	_phase = 0;
+	public void	setPhase(int phase)
+	{
+		_phase = phase;
+	}
+
+	// コンパイル対象ソースファイルに存在するクラス名を登録する
+	public void	addSourceFileClass(SourceFile sf)
+	{
+		FQCN	fqcn = sf.getFQCN();
+		ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+		if (crf != null)
+		{	// 同じクラスが存在する
+			throw new PyriteSyntaxException("same class exists.");
+		}
+		else
+		{
+			_packageMapMap.put(fqcn._packageName, fqcn._className, sf);
+		}
+	}
+
+	// コンパイルした結果、クラス名がソースファイル名と異なる場合に、
+	// ソースファイル名から取得したクラス情報を残さないため、情報をクリアする
+	public void	removeClassEntry(FQCN fqcn)
+	{
+		_packageMapMap.remove(fqcn._packageName, fqcn._className);
+	}
+
+	public void	resolveClasspath() throws IOException
 	{
 		String	separator = System.getProperty(PROPERTY_KEY_CLASS_PATH_SEPARATOR);
 		String	classPath = System.getProperty(PROPERTY_KEY_CLASS_PATH);
@@ -134,51 +168,48 @@ public class ClassResolver
 		packageName = packageName.replace('/', '.');
 		className = className.substring(0, className.indexOf('.'));
 
-		PackageClassFile	packageClassFile = _packageMapMap.get(packageName, className);
-		if (packageClassFile == null)
+		ClassRelatedFile	crf = _packageMapMap.get(packageName, className);
+		if (crf == null)
 		{
-			packageClassFile = new PackageClassFile(classPathEntry, className);
-			packageClassFile.addClassFileInfo(filePathName, fileLastModified);
-			_packageMapMap.put(packageName, className, packageClassFile);
+			ClassPathFile	cpf = new ClassPathFile(classPathEntry, className);
+			cpf.addClassFileInfo(filePathName, fileLastModified);
+			_packageMapMap.put(packageName, className, cpf);
 		}
-		else if (classPathEntry.equals(packageClassFile._classPathEntry))
-		{	// クラスパスエントリが同じであれば、追加情報を登録する
+		else if (crf instanceof ClassPathFile)
+		{
+			ClassPathFile	cpf = (ClassPathFile)crf;
+
+			// クラスパスエントリが同じであれば、追加情報を登録する
 			// そうではない場合、クラスパスの後の方に定義されているクラス情報であるため無視する
-			packageClassFile.addClassFileInfo(filePathName, fileLastModified);
+			if (classPathEntry.equals(cpf._classPathEntry))
+			{
+				cpf.addClassFileInfo(filePathName, fileLastModified);
+			}
 		}
 
 //		System.out.println(packageName + " / " + packageClassFile._className);
 	}
 
-	// コンパイル単位に存在する、クラス名
-	// クラスパスエントリより優先して指定する
-	public void	addSourceFileClass(FQCN className, String filePathName, long fileLastModified)
-	{
-		PackageClassFile	packageClassFile = new PackageClassFile("", className._className);
-		packageClassFile.addClassFileInfo(filePathName, fileLastModified);
-		// 既存の登録情報を上書き
-		_packageMapMap.put(className._packageName, className._className, packageClassFile);
-	}
-
 	// パッケージに含まれるクラス名のリストを返す
 	public List<String>	getPackageMemberClassName(String packageName)
 	{
-		Map<String, PackageClassFile>	classNameMap = _packageMapMap.get(packageName);
+		Map<String, ClassRelatedFile>	classNameMap = _packageMapMap.get(packageName);
 		assert(classNameMap != null);
 
 		List<String>	classNameList = new ArrayList<String>();
-		for (PackageClassFile packageClassFile : classNameMap.values())
+		for (ClassRelatedFile packageClassFile : classNameMap.values())
 		{
-			classNameList.add(packageClassFile._className);
+			classNameList.add(packageClassFile._fqcn._className);
 		}
 
 		return	classNameList;
 	}
+	// TODO:ファイル名とクラス名が異なる場合、import時に取得したクラス名が、メソッド定義解決時には存在しない可能性がある
 
 	// ClassFieldMember を追加する
-	public void putClassFieldMember(String className, ClassFieldMember declaredMember)
+	public void putClassFieldMember(String fqcnStr, ClassFieldMember declaredMember)
 	{
-		_classCache.put(className, declaredMember);
+		_classCache.put(fqcnStr, declaredMember);
 	}
 
 
@@ -201,23 +232,32 @@ public class ClassResolver
 	// assertion: pahese1ではこのメソッドは呼ばれない
 	public boolean isClass(FQCN fqcn)
 	{
-		PackageClassFile	pcf = _packageMapMap.get(fqcn._packageName, fqcn._className);
-		if (pcf == null)
+		assert(_phase > 1);
+		ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+		if (crf == null)
 		{
 			return	false;
 		}
 
-		if (pcf.isNeedCompile())
-		{
-			// コンパイルした結果、クラス情報が存在しない場合にクラス情報を残さないため、情報をクリアしておく
-			_packageMapMap.remove(fqcn._packageName, fqcn._className);
-			Compiler.getInstance().compileClassName(pcf.getSourcePathFile());
-
-			// オブジェクト取り直し
-			pcf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+		if (crf.isCompileTarget())
+		{	// コンパイル対象のクラス名は解析済みなので、クラス名は存在確定
+			return	true;
 		}
 
-		return	pcf.hasClassFile();
+		ClassPathFile	cpf = (ClassPathFile)crf;
+		if (cpf.isNeedCompile())
+		{
+			// クラス名のコンパイル実行
+			Compiler.getInstance().compileClassName(fqcn, cpf.getSourcePathFile());
+
+			// コンパイルによってクラス名が正常に解決できるなら、_packageMapMapにオブジェクトが登録されている
+			return	_packageMapMap.get(fqcn._packageName, fqcn._className) != null;
+		}
+		else
+		{	// クラスファイルが存在するかを返す
+			// ここでClassFieldMemberを取得すべき?
+			return	cpf.hasClassFile();
+		}
 	}
 
 
@@ -229,41 +269,42 @@ public class ClassResolver
 	}
 
 
-	public ClassFieldMember	getClassFieldMember(String packageClassName)
+	// assertion: pahese2ではこのメソッドは呼ばれない
+	public ClassFieldMember	getClassFieldMember(String fqcnStr)
 	{
+		assert(_phase > 2);
 		try
 		{
-			ClassFieldMember	cls = _classCache.get(packageClassName);
+			ClassFieldMember	cls = _classCache.get(fqcnStr);
 			if (cls == null)
 			{
-				String[]	elements = StringUtil.splitLastElement(packageClassName, '.');
-				PackageClassFile	packageClassFile = _packageMapMap.get(elements[0], elements[1]);
-				if (packageClassFile == null)
+				FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
+				ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+				if (crf == null)
 				{	// そのようなクラスは無い
-					_classCache.put(packageClassName, null);
 					return	null;
 				}
 
-				if (packageClassFile.isNeedCompile())
+				// このフェーズで、コンパイル対象で_classCacheに存在しないのはありえないはず
+				assert (crf.isCompileTarget() == false);
+
+				ClassPathFile	cpf = (ClassPathFile)crf;
+				if (cpf.isNeedCompile())
 				{	// コンパイルが必要
-					try
-					{	// TODO:
-						Compiler.getInstance().compile(packageClassFile.getSourcePathFile());
-					}
-					catch (IOException e)
-					{
-						throw new RuntimeException("lower file compiliation failed.");
-					}
+					// クラス名・メソッド定義のコンパイル実行
+					Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourcePathFile());
+
+					// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
+					return	_classCache.get(fqcnStr);
 				}
-				else if (packageClassFile.hasClassFile())
+				else if (cpf.hasClassFile())
 				{	// クラスファイルがある
-					Class<?>	c = Class.forName(packageClassName);
-					cls = new ClassFieldMember(packageClassName, c, this);
-					_classCache.put(packageClassName, cls);
+					Class<?>	c = Class.forName(fqcnStr);
+					cls = new ClassFieldMember(fqcnStr, c, this);
+					_classCache.put(fqcnStr, cls);
 				}
 				else
 				{	// クラスファイルが無いし、Pyriteコンパイルもできない
-					_classCache.put(packageClassName, null);
 					return	null;
 				}
 			}
@@ -859,59 +900,6 @@ public class ClassResolver
 	}
 
 
-	// クラスパスに含まれるクラス情報を保持する
-	public static class	PackageClassFile
-	{
-		private final String	_classPathEntry;
-		private final String	_className;
-
-		private boolean	_isClassFileExist = false;
-		private boolean	_isPyriteClassFileExist = false;
-		private boolean	_isPyriteSourceFileExist = false;
-		private long	_pyriteClassFileLastModified = 0;
-		private long	_pyriteSourceFileLastModified = 0;
-		private String	_pyriteSoutceFile;
-
-		public PackageClassFile(String classPathEntry, String className)
-		{
-			_classPathEntry = classPathEntry;
-			_className = className;
-		}
-
-		public boolean isNeedCompile()
-		{
-			return	(_pyriteClassFileLastModified < _pyriteSourceFileLastModified);
-		}
-
-		public boolean hasClassFile()
-		{
-			return _isClassFileExist;
-		}
-
-		public void addClassFileInfo(String filePathName, long fileLastModified)
-		{
-			if (filePathName.endsWith(".pyrc"))
-			{
-				_isPyriteClassFileExist = true;
-				_pyriteClassFileLastModified = fileLastModified;
-			}
-			else if (filePathName.endsWith(".pyr"))
-			{
-				_isPyriteSourceFileExist = true;
-				_pyriteSourceFileLastModified = fileLastModified;
-				_pyriteSoutceFile = filePathName;
-			}
-			else
-			{	// class
-				_isClassFileExist = true;
-			}
-		}
-
-		public String	getSourcePathFile()
-		{
-			return	_pyriteSoutceFile;
-		}
-	}
 
 	public static class	ClassHierarchy
 	{
