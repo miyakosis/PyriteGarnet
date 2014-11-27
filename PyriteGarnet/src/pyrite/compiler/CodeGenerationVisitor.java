@@ -19,7 +19,7 @@ import pyrite.compiler.type.AssignLeftExpressionType;
 import pyrite.compiler.type.ClassType;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
-import pyrite.compiler.type.PartialIdType;
+import pyrite.compiler.type.PackageType;
 import pyrite.compiler.type.SwitchBlock;
 import pyrite.compiler.type.SwitchCase;
 import pyrite.compiler.type.VarType;
@@ -108,25 +108,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 	//fieldDeclaration
-    //	:   classInstanceModifier? type Identifier ('=' variableInitializer)? ';'
+    //	:   classInstanceModifier? 'var' variableDeclarationStatement ';'
     //	;
 	@Override
 	public Object visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx)
 	{
 		boolean	isStatic = (ctx.classInstanceModifier() != null);
 
-		VarType	type = (VarType)visit(ctx.type());
-		String	name = ctx.Identifier().getText();
+		VarType	type = (VarType)visit(ctx.variableDeclarationStatement());
 
-		// TODO: コードをコンストラクタに追加するような仕組みが必要
-		if (ctx.variableInitializer() != null)
-		{
-//			VarType	rType = (VarType)visit(ctx.variableInitializer());
-
-			// assign
-//			createAssignCode(type, rType);
-		}
-
+		// TODO: コードをコンストラクタ/static初期化ブロックに追加するような仕組みが必要
 		return	null;
 	}
 
@@ -235,17 +226,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// expression
 
+	// expression
 	// expression '.' Identifier
 	@Override
 	public Object visitExpressionClassFieldRef(@NotNull PyriteParser.ExpressionClassFieldRefContext ctx)
 	{
 		VarType	expressionVarType = (VarType)visit(ctx.expression());
 		String id = ctx.Identifier().getText();
-
-		// expressionVarType は PartialIdType の可能性があるため、先に型解決する
-		expressionVarType = expressionVarType.resolveType(this);
 
 		// 続く要素を解決する
 		return	expressionVarType.resolveTrailerType(this, id);
@@ -1720,14 +1708,152 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public Object visitPrimaryIdentifier(@NotNull PyriteParser.PrimaryIdentifierContext ctx)
 	{
 		String id = ctx.Identifier().getText();
-		return	PartialIdType.getType(id);
-//		VarType	localVar = _localValMapStack.get(id);
-//		if (localVar == null)
-//		{
-//			throw new RuntimeException("not initialized variable");
-//		}
-//
-//		return	localVar;
+		VarType	varType;
+
+		if (isAssignLeftExpressionElement(id))
+		{	// left expression
+			// assign()で値設定するため、ここでコードは作成しない。
+			// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
+
+			VarTypeName	varTypeName = _currentMethodCodeDeclation.getLocalVar(id);
+			if (varTypeName != null)
+			{	// local variable
+				switch (varTypeName._type._type)
+				{
+				case INT:
+					break;
+				case BOL:
+					break;
+				case STR:
+					break;
+				case OBJ:
+					break;
+				default:
+					throw new RuntimeException("assert:");
+				}
+
+//				cgv.setLeftExpressionVarType(1, varTypeName._localVarNum, null, null);
+//				return	varTypeName._type;
+
+				return	new AssignLeftExpressionType(varTypeName._type, 1, varTypeName._localVarNum, null, null);
+			}
+
+			varType = _thisClassFieldMember._instanceFieldMap.get(id);
+			if (varType != null)
+			{	// instance field
+				if (_currentMethodCodeDeclation._isStatic)
+				{	// static メソッドで インスタンス変数は使用できない
+					throw new PyriteSyntaxException("'this' is not usable at static context. ");
+				}
+				_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
+//				cgv.setLeftExpressionVarType(2, -1, className, _id);
+//				return	varType;
+
+				return	new AssignLeftExpressionType(varType, 2, -1, _fqcn._fqcnStr, id);
+			}
+
+			varType = _thisClassFieldMember._classFieldMap.get(id);
+			if (varType != null)
+			{	// class field
+//				cgv.setLeftExpressionVarType(3, -1, className, _id);
+//				return	varType;
+
+				return	new AssignLeftExpressionType(varType, 3, -1, _fqcn._fqcnStr, id);
+			}
+		}
+		else
+		{
+			if (id.equals("this"))
+			{	// this
+				if (_currentMethodCodeDeclation._isStatic)
+				{	// static コンテキストで this キーワードは使用できない
+					throw new PyriteSyntaxException("'this' is not usable at static context. ");
+				}
+				_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
+
+				return	ObjectType.getType(_fqcn._fqcnStr);
+			}
+
+			VarTypeName	varTypeName = _currentMethodCodeDeclation.getLocalVar(id);
+			if (varTypeName != null)
+			{	// local variable
+				switch (varTypeName._type._type)
+				{
+				case OBJ:
+				case NUM:
+				case INT:
+				case FLT:
+				case STR:
+				case CHR:
+				case ARRAY:
+				case ASSOC:
+					_currentMethodCodeDeclation.addCodeOpALOAD(varTypeName._localVarNum);
+					break;
+				case BOL:
+					_currentMethodCodeDeclation.addCodeOpILOAD(varTypeName._localVarNum);
+					break;
+				case BYT:
+					throw new RuntimeException("not implemented.");
+				default:
+					throw new RuntimeException("assert:");
+					}
+				return	varTypeName._type;
+			}
+
+			varType = _thisClassFieldMember._instanceFieldMap.get(id);
+			if (varType != null)
+			{	// instance field
+				if (_currentMethodCodeDeclation._isStatic)
+				{	// static メソッドで インスタンス変数は使用できない
+					throw new PyriteSyntaxException("'this' is not usable at static context. ");
+				}
+
+				_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
+				_currentMethodCodeDeclation.addCodeOp(BC.GETFIELD);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+
+				return	varType;
+			}
+
+			varType = _thisClassFieldMember._classFieldMap.get(id);
+			if (varType != null)
+			{	// class field
+				_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+				return	varType;
+			}
+
+			String[]	packageClassName = _idm.resolveClassName("", id);
+			if (packageClassName != null)
+			{	// class name
+				return	ClassType.getType(packageClassName[0], packageClassName[1]);
+			}
+
+			if (_cr.isPackage("", id))
+			{	// package name
+				return	PackageType.getType("", id);
+			}
+
+			// 同名のクラスメソッド・インスタンスメソッドが存在しないので、順不同
+			varType = _thisClassFieldMember._classMethodNameMap.get(id);
+			if (varType != null)
+			{	// class method
+				return	varType;
+			}
+
+			varType = _thisClassFieldMember._instanceMethodNameMap.get(id);
+			if (varType != null)
+			{	// instance method
+				if (_currentMethodCodeDeclation._isStatic)
+				{	// static メソッドで インスタンスメソッドは使用できない
+					throw new RuntimeException("this is not usable at static context. ");
+				}
+				_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
+				return	varType;
+			}
+		}
+
+		throw new PyriteSyntaxException("id is not declared. id:" + id);
 	}
 
 	// IntegerLiteral
@@ -1816,6 +1942,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		throw new RuntimeException("not implemented");
 	}
 
+
+	//	CharacterLiteral
+    //	:   '\'' SingleCharacter '\''
+    //	|   '\'' EscapeSequence '\''
 	@Override
 	public Object visitCharacterLiteral(@NotNull PyriteParser.CharacterLiteralContext ctx)
 	{

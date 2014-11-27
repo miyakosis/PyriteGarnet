@@ -33,7 +33,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		super(cr, idm);
 		_cpm = cpm;
 		_fqcn = fqcn;
-		_declaredMember = new ClassFieldMember(fqcn._fqcnStr);
+		_declaredMember = new ClassFieldMember(fqcn);
 	}
 
 	public ImportDeclarationManager	getImportDeclarationManager()
@@ -171,9 +171,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, className, paramTypes, returnTypes , false);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes , false);
 
-		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
+		if (_declaredMember._constructorMap.containsKey(type._typeId))
 		{	// 同じ定義のメソッドがすでに登録されている
 			throw new RuntimeException("method declation duplicated");
 		}
@@ -211,9 +211,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義を作成
-		MethodType	type = (MethodType)MethodType.getType(_fqcn._fqcnStr, id, paramTypes, returnTypes, isStatic);
+		MethodType	type = (MethodType)MethodType.getType(_fqcn, id, paramTypes, returnTypes, isStatic);
 
-		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
+		if (_declaredMember._classMethodMap.containsKey(type._typeId) || _declaredMember._instanceMethodMap.containsKey(type._typeId))
 		{	// 同じ定義のメソッドがすでに登録されている
 			throw new RuntimeException("method declation duplicated");
 		}

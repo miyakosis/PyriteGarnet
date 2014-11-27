@@ -1,38 +1,36 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.ImportDeclarationManager;
 import pyrite.compiler.util.StringUtil;
 
 
 public class PackageType extends VarType
 {
-	// for METHOD, CLASS, PACKAGE
-	protected String	_package;
+	public final String	_package;
 
 	public static VarType	getType(String packageName1, String packageName2)
 	{
-		String	id = StringUtil.concat(packageName1, packageName2);
-		int	hashCode = createHashCode(TYPE.PACKAGE, id);
-		VarType	varType = __varTypeMap.get(hashCode);
+		String	packageName = StringUtil.concat(packageName1, packageName2);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("PACKAGE:").append(packageName);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new PackageType(TYPE.PACKAGE, id);
-			__varTypeMap.put(hashCode, varType);
+			varType = new PackageType(typeId, packageName);
 		}
 
 		return	varType;
 	}
 
-	protected PackageType(TYPE type, String packageName)
+	protected PackageType(String typeId, String packageName)
 	{
-		super._type = type;
-		super._hashCode = createHashCode(type, packageName);
+		super(TYPE.PACKAGE, typeId, null);
 
 		_package = packageName;
 	}
 
+	/*
 	// (自分の型, 続く型)
 	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
 	//       (クラス, クラス変数 | クラスメソッド),
@@ -58,4 +56,5 @@ public class PackageType extends VarType
 
 		throw new RuntimeException("id is not declared." + id);
 	}
+	*/
 }

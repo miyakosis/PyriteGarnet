@@ -1,46 +1,37 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.BC;
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.ConstantPoolManager;
-import pyrite.compiler.MethodCodeDeclation;
-import pyrite.compiler.util.StringUtil;
+import pyrite.compiler.FQCNParser;
+import pyrite.compiler.FQCNParser.FQCN;
 
 
 public class ClassType extends VarType
 {
-	// for METHOD, CLASS, PACKAGE
-	public String	_packageName;
-	// for METHOD, CLASS
-	public String	_className;
-
-	public String	_packageClassName;
-
+	public final FQCN	_fqcn;
 
 	public static VarType	getType(String packageName, String className)
 	{
-		String	fqcn = StringUtil.concat(packageName, className);
-		int	hashCode = createHashCode(TYPE.CLASS, fqcn);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("CLASS:").append(packageName).append(".").append(className);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new ClassType(TYPE.CLASS, packageName, className);
+			FQCN	fqcn = FQCNParser.getFQCN(packageName, className);
+			varType = new ClassType(typeId, fqcn);
 		}
 
 		return	varType;
 	}
 
-	protected ClassType(TYPE type, String packageName, String className)
+	protected ClassType(String typeId, FQCN fqcn)
 	{
-		super._type = type;
-		super._hashCode = createHashCode(type, StringUtil.concat(packageName,  className));
+		super(TYPE.CLASS, typeId, null);
 
-		_packageName = packageName;
-		_className = className;
-		_packageClassName = StringUtil.concat(packageName, className);
+		_fqcn = fqcn;
 	}
 
+	/*
 	// (自分の型, 続く型)
 	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
 	//       (クラス, クラス変数 | クラスメソッド),
@@ -88,6 +79,7 @@ public class ClassType extends VarType
 		// TODO:クラス.クラスはとりあえず未サポート
 		throw new RuntimeException("id is not declared. " + id);
 	}
+	*/
 
 //	// TODO:メソッドの存在を確認する
 //	// 配列次元数の差分の型を返す

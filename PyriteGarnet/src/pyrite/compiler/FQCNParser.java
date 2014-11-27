@@ -9,13 +9,16 @@ public class FQCNParser
 {
 	private static Map<String, FQCN>	__fqcnMap = new HashMap<String, FQCN>();	// K:fqcnStr, V:FQCN
 
-	public static FQCN	getFQCN(String packageName, String classNameStr)
+	public static FQCN	getFQCN(String packageName, String className)
 	{
-		String	fqcnStr = packageName + "." + classNameStr;
+		StringBuilder	sb = new StringBuilder();
+		sb.append(packageName).append(".").append(className);
+
+		String	fqcnStr = sb.toString();
 		FQCN	fqcn = __fqcnMap.get(fqcnStr);
 		if (fqcn == null)
 		{
-			fqcn = new FQCN(fqcnStr, packageName, classNameStr);
+			fqcn = new FQCN(fqcnStr, packageName, className);
 			__fqcnMap.put(fqcnStr, fqcn);
 		}
 		return	fqcn;

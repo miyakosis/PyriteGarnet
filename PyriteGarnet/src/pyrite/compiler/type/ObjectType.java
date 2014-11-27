@@ -1,29 +1,32 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.FQCNParser;
+import pyrite.compiler.FQCNParser.FQCN;
+
 
 
 public class ObjectType extends VarType
 {
 	// for className
-	public String	_fqcn;
+	public FQCN	_fqcn;
 
-	public static VarType getType(String fqcn)
+	public static VarType getType(String fqcnStr)
 	{
 		StringBuilder	sb = new StringBuilder();
-		sb.append("L").append(fqcn).append(";");
+		sb.append("L").append(fqcnStr).append(";");
 
 		String	typeId = sb.toString();
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
+			FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
 			varType = new ObjectType(typeId, fqcn);
-			__varTypeMap.put(typeId, varType);
 		}
 
 		return	varType;
 	}
 
-	protected ObjectType(String typeId, String fqcn)
+	protected ObjectType(String typeId, FQCN fqcn)
 	{
 		super(TYPE.ASSOC, typeId, typeId);
 

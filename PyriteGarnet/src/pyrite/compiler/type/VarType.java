@@ -37,11 +37,26 @@ public class VarType
 
 	protected static Map<String, VarType>	__varTypeMap = new HashMap<String, VarType>();	// key:_typeId
 	// _typeId は VarTypeを一意に識別できる文字列。
-	// パラメータをとらないType(INTなど)は、_jvmExpression,
-	// パラメータをとるType(Classなど)は、_jvmExpression + 識別子
+	// NULL:
+	// VOID:
+	// OBJ:
+	// NUM:
+	// INT:
+	// FLT:
+	// STR:
+	// CHR:
+	// BOL:
+	// BYT:
+	// ARRAY:
+	// ASSOC:
+	// PACKAGE:
+	// CLASS:
+	// METHOD, PARTIALID,
+	// JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY
 
 	static
 	{
+		/*
 		__varTypeMap.put(NULL._typeId, NULL);
 		__varTypeMap.put(VOID._typeId, VOID);
 		__varTypeMap.put(OBJ._typeId, OBJ);
@@ -61,6 +76,7 @@ public class VarType
 		__varTypeMap.put(JVM_CHAR._typeId, JVM_CHAR);
 		__varTypeMap.put(JVM_BYTE._typeId, JVM_BYTE);
 		__varTypeMap.put(JVM_BOOLEAN._typeId, JVM_BOOLEAN);
+		*/
 	}
 
 //	// static
@@ -146,9 +162,9 @@ public class VarType
 //	}
 
 // instance
-	public TYPE	_type;
-	public String	_jvmExpression;
-	public String	_typeId;
+	public final TYPE	_type;
+	public final String	_jvmExpression;
+	public final String	_typeId;
 
 //	// for PARTIALID
 //	protected String	_id;
@@ -161,14 +177,16 @@ public class VarType
 //	protected String	_method;
 
 	// constructor for sub classes
-	protected VarType(TYPE type, String jvmExpression, String typeId)
+	protected VarType(TYPE type, String typeId, String jvmExpression)
 	{
 		_type = type;
-		_jvmExpression = jvmExpression;
 		_typeId = typeId;
+		_jvmExpression = jvmExpression;
+
+		__varTypeMap.put(typeId, this);
 	}
 
-	protected VarType(TYPE type)
+	private VarType(TYPE type)
 	{
 		_type = type;
 
@@ -230,6 +248,8 @@ public class VarType
 			throw new RuntimeException("assertion");
 		}
 		_typeId = _jvmExpression;
+
+		__varTypeMap.put(_typeId, this);
 	}
 
 //	protected VarType(TYPE type, int nArrayLevel, String id)
@@ -278,6 +298,78 @@ public class VarType
 	{
 		throw new RuntimeException("not implemented");
 	}
+
+
+	// Javaのインターフェース定義からPyriteコンパイル時の型を作成する
+	public static VarType	parseJavaTypeName(String typeStr)
+	{
+		int	nArrayLevel = 0;
+		for (nArrayLevel = 0; nArrayLevel < typeStr.length(); ++nArrayLevel)
+		{
+			if (typeStr.charAt(nArrayLevel) != '[')
+			{
+				break;
+			}
+		}
+
+		typeStr = typeStr.substring(nArrayLevel);	// 配列指定部分を除外
+
+		VarType	type;
+		if (typeStr.equals("void") || typeStr.charAt(0) == 'V')
+		{
+			type = VarType.VOID;
+		}
+		else if (typeStr.equals("int") || typeStr.charAt(0) == 'I')
+		{
+			type = VarType.JVM_INT;
+		}
+		else if (typeStr.equals("long") || typeStr.charAt(0) == 'J')
+		{
+			type = VarType.JVM_LONG;
+		}
+		else if (typeStr.equals("short") || typeStr.charAt(0) == 'S')
+		{
+			type = VarType.JVM_SHORT;
+		}
+		else if (typeStr.equals("float") || typeStr.charAt(0) == 'F')
+		{
+			type = VarType.JVM_FLOAT;
+		}
+		else if (typeStr.equals("double") || typeStr.charAt(0) == 'D')
+		{
+			type = VarType.JVM_DOUBLE;
+		}
+		else if (typeStr.equals("char") || typeStr.charAt(0) == 'C')
+		{
+			type = VarType.JVM_CHAR;
+		}
+		else if (typeStr.equals("byte") || typeStr.charAt(0) == 'B')
+		{
+			type = VarType.JVM_BYTE;
+		}
+		else if (typeStr.equals("boolean") || typeStr.charAt(0) == 'Z')
+		{
+			type = VarType.JVM_BOOLEAN;
+		}
+		else
+		{
+			if (typeStr.charAt(0) == 'L')
+			{
+				typeStr = typeStr.substring(1, typeStr.length() - 1);
+			}
+			type = ObjectType.getType(typeStr);
+		}
+
+		if (nArrayLevel == 0)
+		{
+			return	type;
+		}
+		else
+		{
+			return	JVMArrayType.getType(type, nArrayLevel);
+		}
+	}
+
 
 
 	// TODO このメソッドの存在を確認する

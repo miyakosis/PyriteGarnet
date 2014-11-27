@@ -273,49 +273,50 @@ public class ClassResolver
 	public ClassFieldMember	getClassFieldMember(String fqcnStr)
 	{
 		assert(_phase > 2);
-		try
+		ClassFieldMember	cls = _classCache.get(fqcnStr);
+		if (cls == null)
 		{
-			ClassFieldMember	cls = _classCache.get(fqcnStr);
-			if (cls == null)
-			{
-				FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
-				ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
-				if (crf == null)
-				{	// そのようなクラスは無い
-					return	null;
-				}
+			FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
+			ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
+			if (crf == null)
+			{	// そのようなクラスは無い
+				return	null;
+			}
 
-				// このフェーズで、コンパイル対象で_classCacheに存在しないのはありえないはず
-				assert (crf.isCompileTarget() == false);
+			// このフェーズで、コンパイル対象で_classCacheに存在しないのはありえないはず
+			assert (crf.isCompileTarget() == false);
 
-				ClassPathFile	cpf = (ClassPathFile)crf;
-				if (cpf.isNeedCompile())
-				{	// コンパイルが必要
-					// クラス名・メソッド定義のコンパイル実行
-					Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourcePathFile());
+			ClassPathFile	cpf = (ClassPathFile)crf;
+			if (cpf.isNeedCompile())
+			{	// コンパイルが必要
+				// クラス名・メソッド定義のコンパイル実行
+				Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourcePathFile());
 
-					// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
-					return	_classCache.get(fqcnStr);
-				}
-				else if (cpf.hasClassFile())
-				{	// クラスファイルがある
+				// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
+				return	_classCache.get(fqcnStr);
+			}
+			else if (cpf.hasClassFile())
+			{	// クラスファイルがある
+				try
+				{
 					Class<?>	c = Class.forName(fqcnStr);
-					cls = new ClassFieldMember(fqcnStr, c, this);
+					cls = new ClassFieldMember(fqcn, c, this);
 					_classCache.put(fqcnStr, cls);
+					return	cls;
 				}
-				else
-				{	// クラスファイルが無いし、Pyriteコンパイルもできない
-					return	null;
+				catch (ClassNotFoundException e)
+				{
+					throw new RuntimeException("must exist");
+					//						_classCache.put(packageClassName, null);
+					//						return	null;
 				}
 			}
-			return	cls;
+			else
+			{	// クラスファイルが無いし、Pyriteコンパイルもできない
+				return	null;
+			}
 		}
-		catch (ClassNotFoundException e)
-		{
-			throw new RuntimeException("must exist");
-//			_classCache.put(packageClassName, null);
-//			return	null;
-		}
+		return	cls;
 	}
 
 	// 該当クラスの該当クラスフィールドの返り値を返す
@@ -752,7 +753,7 @@ public class ClassResolver
 	// クラスのフィールド定義・メソッド定義を保持する
 	public static class	ClassFieldMember
 	{
-		public final String	_fqcnStr;
+		public final FQCN	_fqcn;
 
 		public ClassFieldMember	_superCFM;
 
@@ -766,26 +767,27 @@ public class ClassResolver
 
 		public Set<String>	_interfaceSet = new HashSet<String>();	// key:name
 
-		public ClassFieldMember(String fqcnStr)
+		public ClassFieldMember(FQCN fqcn)
 		{
-			_fqcnStr = fqcnStr;
+			_fqcn = fqcn;
 		}
 
-		public ClassFieldMember(String fqcnStr, Class<?> c, ClassResolver cr)
+		public ClassFieldMember(FQCN fqcn, Class<?> c, ClassResolver cr)
 		{
-			_fqcnStr = fqcnStr;
+			_fqcn = fqcn;
+
 			Class<?>	superClass = c.getSuperclass();
-			if (superClass != null)
-			{
-				_superCFM = cr.getClassFieldMember(superClass.getName());
+			if (_fqcn._fqcnStr.equals("java.lang.Object"))
+			{	// 自クラスが java.lang.Object なら基底クラス無し
+				_superCFM = null;
 			}
-			else if (fqcnStr.equals("java.lang.Object") == false)
-			{
+			else if (superClass == null)
+			{	// 基底クラス定義が取得できなければ、基底クラスは "java.lang.Object"
 				_superCFM = cr.getClassFieldMember("java.lang.Object");
 			}
 			else
-			{
-				_superCFM = null;
+			{	// 基底クラス定義がある場合は、再帰的に取得
+				_superCFM = cr.getClassFieldMember(superClass.getName());
 			}
 
 			Field[]	fields = c.getDeclaredFields();
@@ -816,7 +818,7 @@ public class ClassResolver
 				int	modifier = m.getModifiers();
 				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addMethodType(createMethodType(fqcnStr, methodName, paramTypeClasses, returnTypeClass, isStatic));
+				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, isStatic));
 
 //				MethodType	type = createMethodType(packageClassName, methodName, paramTypeClasses, returnTypeClass, isStatic);
 //				System.out.println("\t" + packageClassName + " . " + methodName + ":" + type._methodSignature);
@@ -831,7 +833,7 @@ public class ClassResolver
 				int	modifier = cn.getModifiers();
 				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addConstructorType(createMethodType(fqcnStr, methodName, paramTypeClasses, c, isStatic));
+				addConstructorType(createMethodType(fqcn, methodName, paramTypeClasses, c, isStatic));
 			}
 
 			for (Class<?> interfaceClass : c.getInterfaces())
@@ -840,7 +842,7 @@ public class ClassResolver
 			}
 		}
 
-		public MethodType	createMethodType(String packageClassName,
+		public MethodType	createMethodType(FQCN fqcn,
 				String	methodName,
 				Class<?>[]	paramTypeClasses,
 				Class<?>	returnTypeClass,
@@ -849,7 +851,7 @@ public class ClassResolver
 			VarType[]	paramTypes = new VarType[paramTypeClasses.length];
 			for (int i = 0; i < paramTypeClasses.length; ++i)
 			{
-				paramTypes[i] = JVMType.parseJavaTypeName(paramTypeClasses[i].getName());
+				paramTypes[i] = VarType.parseJavaTypeName(paramTypeClasses[i].getName());
 			}
 
 			VarType[]	returnTypes;
@@ -861,27 +863,27 @@ public class ClassResolver
 			else
 			{
 				returnTypes = new VarType[1];
-				returnTypes[0] = JVMType.parseJavaTypeName(returnTypeClass.getName());
+				returnTypes[0] = VarType.parseJavaTypeName(returnTypeClass.getName());
 			}
 
-			return	(MethodType)MethodType.getType(packageClassName, methodName, paramTypes, returnTypes, isStatic);
+			return	(MethodType)MethodType.getType(fqcn, methodName, paramTypes, returnTypes, isStatic);
 		}
 
 		public void	addConstructorType(MethodType type)
 		{
-			_constructorMap.put(type._methodSignature, type);
+			_constructorMap.put(type._typeId, type);
 		}
 
 		public void	addMethodType(MethodType type)
 		{
 			if (type._isStatic)
 			{
-				_classMethodMap.put(type._methodSignature, type);
+				_classMethodMap.put(type._typeId, type);
 				_classMethodNameMap.put(type._methodName, type);
 			}
 			else
 			{
-				_instanceMethodMap.put(type._methodSignature, type);
+				_instanceMethodMap.put(type._typeId, type);
 				_instanceMethodNameMap.put(type._methodName, type);
 			}
 		}

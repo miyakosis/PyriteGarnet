@@ -1,13 +1,9 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.BC;
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.ConstantPoolManager;
-import pyrite.compiler.ImportDeclarationManager;
-import pyrite.compiler.MethodCodeDeclation;
 
 
+// not used?
+/*
 public class PartialIdType extends VarType
 {
 	// for PARTIALID
@@ -201,3 +197,4 @@ public class PartialIdType extends VarType
 		throw new RuntimeException("assertion::PartialIdType can not have trailer.");
 	}
 }
+*/

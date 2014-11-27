@@ -14,7 +14,6 @@ public class ArrayType extends VarType
 		if (varType == null)
 		{
 			varType = new ArrayType(typeId, arrayVarType);
-			__varTypeMap.put(typeId, varType);
 		}
 
 		return	varType;
@@ -40,7 +39,7 @@ public class ArrayType extends VarType
 
 	protected ArrayType(String typeId, VarType arrayVarType)
 	{
-		super(TYPE.ARRAY, "Lpyrite.lang.Array;", typeId);
+		super(TYPE.ARRAY, typeId, "Lpyrite.lang.Array;");
 		_arrayVarType = arrayVarType;
 	}
 }

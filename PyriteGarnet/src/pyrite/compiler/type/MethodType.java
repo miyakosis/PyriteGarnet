@@ -1,34 +1,91 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.CodeGenerationVisitor;
+import pyrite.compiler.FQCNParser.FQCN;
 
 
 
 public class MethodType extends VarType
 {
-	public String	_packageClassName;
-	public String	_methodName;
-	public VarType[]	_paramTypes;
-	public VarType[]	_returnTypes;
-	public boolean	_isStatic;
+	public final FQCN	_fqcn;
+	public final String	_methodName;
+	public final VarType[]	_paramTypes;
+	public final VarType[]	_returnTypes;
+	public final boolean	_isStatic;
 
-	public String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列
+//	public final String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列
 
-	public String	_jvmMethodParamExpression;	// メソッド引数のJVM表現
+	public final String	_jvmMethodParamExpression;	// メソッド引数のJVM表現
 
-	public static VarType	getType(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
+	public static VarType	getType(FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
 	{
-		int	hashCode = createHashCode(packageClassName, methodName, paramTypes, returnTypes, isStatic);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("METHOD:").append(fqcn._fqcnStr).append(".").append(methodName);
+		sb.append("(");
+		for (VarType param : paramTypes)
+		{
+			sb.append(param._typeId);
+		}
+		sb.append(")");
+		sb.append("(");
+		for (VarType param : returnTypes)
+		{
+			sb.append(param._typeId);
+		}
+		sb.append(")");
+		sb.append(isStatic);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new MethodType(TYPE.METHOD, packageClassName, methodName, paramTypes, returnTypes, isStatic);
-			__varTypeMap.put(hashCode, varType);
+			varType = new MethodType(typeId, fqcn, methodName, paramTypes, returnTypes, isStatic);
 		}
 
 		return	varType;
 	}
 
+	protected MethodType(String typeId, FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
+	{
+		super(TYPE.METHOD, typeId, null);
+
+		_fqcn = fqcn;
+		_methodName = methodName;
+		_paramTypes = paramTypes;
+		_returnTypes = returnTypes;
+		_isStatic = isStatic;
+
+//		_methodSignature = createMethodSignature(packageClassName, methodName, paramTypes);
+		_jvmMethodParamExpression = createJvmMethodParamExpression(paramTypes, returnTypes);
+	}
+
+	public static String createJvmMethodParamExpression(VarType[] paramTypes, VarType[] returnTypes)
+	{
+		StringBuilder	sb = new StringBuilder();
+		sb.append("(");
+		for (VarType param : paramTypes)
+		{
+			assert (param._jvmExpression != null);
+			sb.append(param._jvmExpression);
+		}
+		sb.append(")");
+
+		switch (returnTypes.length)
+		{
+		case 0:
+			sb.append("V");
+			break;
+		case 1:
+			sb.append(returnTypes[0]._jvmExpression);
+			break;
+		default:
+			sb.append("Lpyrite.type.JVMReturnType;");
+			break;
+		}
+
+		return	sb.toString();
+	}
+
+/*
 	protected static int	createHashCode(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
 	{
 		StringBuilder	sb = new StringBuilder();
@@ -77,33 +134,7 @@ public class MethodType extends VarType
 		return	createMethodSignature(packageClassName, methodName, sb.toString());
 	}
 
-	public static String createJvmMethodParamExpression(VarType[] paramTypes, VarType[] returnTypes)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append("(");
-		for (VarType param : paramTypes)
-		{
-			assert (param._jvmExpression != null);
-			sb.append(param._jvmExpression);
-		}
-		sb.append(")");
 
-		if (returnTypes.length > 1)
-		{
-			throw new RuntimeException("not supported yet");
-		}
-
-		if (returnTypes.length == 0)
-		{
-			sb.append("V");
-		}
-		else
-		{
-			sb.append(returnTypes[0]._jvmExpression);
-		}
-
-		return	sb.toString();
-	}
 
 	public String	createConstructorJvmMethodParamExpression()
 	{
@@ -120,19 +151,6 @@ public class MethodType extends VarType
 	}
 
 
-	protected MethodType(TYPE type, String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
-	{
-		_type = type;
-		_packageClassName = packageClassName;
-		_methodName = methodName;
-		_paramTypes = paramTypes;
-		_returnTypes = returnTypes;
-		_isStatic = isStatic;
-
-		_hashCode = createHashCode(packageClassName, methodName, paramTypes, returnTypes, isStatic);
-		_methodSignature = createMethodSignature(packageClassName, methodName, paramTypes);
-		_jvmMethodParamExpression = createJvmMethodParamExpression(paramTypes, returnTypes);
-	}
 
 
 	// 識別子解決の段階では、メソッド名に続く識別子は存在しないため、例外を発行
@@ -175,4 +193,6 @@ public class MethodType extends VarType
 			}
 		}
 	}
+
+	*/
 }

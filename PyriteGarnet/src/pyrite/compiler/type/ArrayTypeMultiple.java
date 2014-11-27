@@ -1,8 +1,7 @@
 package pyrite.compiler.type;
 
-
-
 // not used version 0.0.0
+/*
 public class ArrayTypeMultiple extends VarType
 {
 	public final VarType	_arrayVarType;
@@ -60,3 +59,4 @@ public class ArrayTypeMultiple extends VarType
 		return	(nextLevel == 0) ? _arrayVarType : getType(_arrayVarType, nArrayLevelDiff);
 	}
 }
+*/

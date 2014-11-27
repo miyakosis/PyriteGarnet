@@ -16,7 +16,6 @@ public class AssocType extends VarType
 		if (varType == null)
 		{
 			varType = new AssocType(typeId, keyVarType, valVarType);
-			__varTypeMap.put(typeId, varType);
 		}
 
 		return	varType;
@@ -24,7 +23,7 @@ public class AssocType extends VarType
 
 	protected AssocType(String typeId, VarType keyVarType, VarType valVarType)
 	{
-		super(TYPE.ASSOC, "Lpyrite.lang.Assoc;", typeId);
+		super(TYPE.ASSOC, typeId, "Lpyrite.lang.Assoc;");
 
 		_keyVarType = keyVarType;
 		_valVarType = valVarType;
