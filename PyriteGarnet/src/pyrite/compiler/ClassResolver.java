@@ -19,7 +19,6 @@ import java.util.zip.ZipFile;
 
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.type.ClassType;
-import pyrite.compiler.type.JVMType;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
@@ -431,7 +430,7 @@ public class ClassResolver
 		List<MethodParamSignature>	methodParamSignatureList = createMethodParamSignarureList(inputParamTypeList);
 
 		// クラス階層を遡ってメソッドが存在するかチェックする
-		for (ClassFieldMember cls = getClassFieldMember(methodType._packageClassName);
+		for (ClassFieldMember cls = getClassFieldMember(methodType._fqcn._fqcnStr);
 				cls != null;
 				cls = cls._superCFM)
 		{
@@ -441,7 +440,7 @@ public class ClassResolver
 			for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 			{
 				// すべてのメソッドパラメータシグネチャについて、メソッドに存在するかチェックする
-				String	methodSignature = MethodType.createMethodSignature(methodType._packageClassName, methodType._methodName, methodParamSignature._methodParamSignarure);
+				String	methodSignature = MethodType.createMethodSignature(methodType._fqcn._fqcnStr, methodType._methodName, methodParamSignature._methodParamSignarure);
 
 				MethodType	resultType = (MethodType)cls._classMethodMap.get(methodSignature);
 				if (resultType != null)
@@ -499,12 +498,12 @@ public class ClassResolver
 			case OBJ:
 				ObjectType	type = (ObjectType)inputParamType;
 				int	level = 0;
-				for (ClassFieldMember cls = getClassFieldMember(type._packageClassName);
+				for (ClassFieldMember cls = getClassFieldMember(type._fqcn._fqcnStr);
 						cls != null;
 						cls = cls._superCFM)
 				{
 					// 引数オブジェクトを型階層に追加
-					addInterfaceClassHierarchyRecursive(cls._fqcnStr, level, paramClassHierarchyList);
+					addInterfaceClassHierarchyRecursive(cls._fqcn._fqcnStr, level, paramClassHierarchyList);
 					level += 1;
 				}
 				break;
@@ -637,15 +636,15 @@ public class ClassResolver
 		return	minIdx;
 	}
 
-	public MethodType	dispatchConstractor(
+	public MethodType	dispatchConstructor(
 			ClassType classType,
 			List<VarType> inputParamTypeList)
 	{
-		String	methodSignature = MethodType.createMethodSignature(classType._packageClassName, classType._className, inputParamTypeList.toArray(new VarType[0]));
+		String	methodSignature = MethodType.createMethodSignature(classType._fqcn._fqcnStr, classType._fqcn._className, inputParamTypeList.toArray(new VarType[0]));
 
 		MethodType	resultType = null;
 
-		ClassFieldMember	cls = getClassFieldMember(classType._packageClassName);
+		ClassFieldMember	cls = getClassFieldMember(classType._fqcn._fqcnStr);
 		assert (cls != null);
 
 		resultType = (MethodType)cls._constructorMap.get(methodSignature);
@@ -796,7 +795,7 @@ public class ClassResolver
 				String	fieldName = f.getName();
 				String	typeName = f.getType().getName();
 				int	modifier = f.getModifiers();
-				VarType	type = JVMType.parseJavaTypeName(typeName);
+				VarType	type = VarType.parseJavaTypeName(typeName);
 
 				if ((modifier & Modifier.STATIC) != 0)
 				{

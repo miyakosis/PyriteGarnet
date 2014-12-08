@@ -1,6 +1,5 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.FQCNParser;
 import pyrite.compiler.FQCNParser.FQCN;
 
 
@@ -8,16 +7,15 @@ public class ClassType extends VarType
 {
 	public final FQCN	_fqcn;
 
-	public static VarType	getType(String packageName, String className)
+	public static VarType	getType(FQCN fqcn)
 	{
 		StringBuilder	sb = new StringBuilder();
-		sb.append("CLASS:").append(packageName).append(".").append(className);
+		sb.append("CLASS:").append(fqcn._fqcnStr);
 
 		String	typeId = sb.toString();
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			FQCN	fqcn = FQCNParser.getFQCN(packageName, className);
 			varType = new ClassType(typeId, fqcn);
 		}
 

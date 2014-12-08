@@ -85,29 +85,19 @@ public class MethodType extends VarType
 		return	sb.toString();
 	}
 
-/*
-	protected static int	createHashCode(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
+	public String	createConstructorJvmMethodParamExpression()
 	{
 		StringBuilder	sb = new StringBuilder();
-		sb.append(TYPE.METHOD).append(packageClassName).append(".").append(methodName);
-
 		sb.append("(");
-		for (VarType param : paramTypes)
+		for (VarType param : _paramTypes)
 		{
+			assert (param._jvmExpression != null);
 			sb.append(param._jvmExpression);
 		}
 		sb.append(")");
-		sb.append("(");
-		for (VarType param : returnTypes)
-		{
-			sb.append(param._jvmExpression);
-		}
-		sb.append(")");
-		sb.append(isStatic);
-
-		return	sb.toString().hashCode();
+		sb.append("V");
+		return	sb.toString();
 	}
-
 
 	public static String	createMethodSignature(String packageClassName, String methodName, String methodParamSignature)
 	{
@@ -133,39 +123,6 @@ public class MethodType extends VarType
 
 		return	createMethodSignature(packageClassName, methodName, sb.toString());
 	}
-
-
-
-	public String	createConstructorJvmMethodParamExpression()
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append("(");
-		for (VarType param : _paramTypes)
-		{
-			assert (param._jvmExpression != null);
-			sb.append(param._jvmExpression);
-		}
-		sb.append(")");
-		sb.append("V");
-		return	sb.toString();
-	}
-
-
-
-
-	// 識別子解決の段階では、メソッド名に続く識別子は存在しないため、例外を発行
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	@Override
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		throw new RuntimeException("id is not declared." + id);
-	}
-
 
 	public String getParamStr()
 	{
@@ -193,6 +150,53 @@ public class MethodType extends VarType
 			}
 		}
 	}
+
+/*
+	protected static int	createHashCode(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
+	{
+		StringBuilder	sb = new StringBuilder();
+		sb.append(TYPE.METHOD).append(packageClassName).append(".").append(methodName);
+
+		sb.append("(");
+		for (VarType param : paramTypes)
+		{
+			sb.append(param._jvmExpression);
+		}
+		sb.append(")");
+		sb.append("(");
+		for (VarType param : returnTypes)
+		{
+			sb.append(param._jvmExpression);
+		}
+		sb.append(")");
+		sb.append(isStatic);
+
+		return	sb.toString().hashCode();
+	}
+
+
+
+
+
+
+
+
+
+	// 識別子解決の段階では、メソッド名に続く識別子は存在しないため、例外を発行
+	// (自分の型, 続く型)
+	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
+	//       (クラス, クラス変数 | クラスメソッド),
+	//       (クラス, クラス),
+	//       (パッケージ, クラス)
+	//       (パッケージ, パッケージ)
+	@Override
+	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
+	{
+		throw new RuntimeException("id is not declared." + id);
+	}
+
+
+
 
 	*/
 }

@@ -252,6 +252,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	T visitArraySpecType(@NotNull PyriteParser.ArraySpecTypeContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#CreatorClass}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCreatorClass(@NotNull PyriteParser.CreatorClassContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#typeList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -327,13 +334,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpressionMulDiv(@NotNull PyriteParser.ExpressionMulDivContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#creator}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreator(@NotNull PyriteParser.CreatorContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#StatementVar}.
@@ -460,6 +460,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfStatement(@NotNull PyriteParser.IfStatementContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#CreatorArray}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCreatorArray(@NotNull PyriteParser.CreatorArrayContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBitAnd}.

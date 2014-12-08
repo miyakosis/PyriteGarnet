@@ -658,7 +658,7 @@ ifStatement
  */
 
 switchBlockStatementGroup
-    :   switchLabel+ statement+ (fallthrough='fallthrough' ';')?	// switchLabel+ blockStatement+ ('fallthrough' ';')?
+    :   switchLabel+ statement+ (fallthrough='fallthrough' ';')?	// switchLabel+ statement+ ('fallthrough' ';')?
     ;
 
 //	switchBlockStatementGroup
@@ -824,8 +824,8 @@ primary
 //	    ;
 
 creator
-    :   qualifiedName arguments
-    |   array '(' ')'
+    :   qualifiedName arguments	# CreatorClass
+    |   array '(' ')'			# CreatorArray
     ;
 
 //	creator

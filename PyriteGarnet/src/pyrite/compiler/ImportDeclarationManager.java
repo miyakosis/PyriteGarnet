@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import pyrite.compiler.FQCNParser.FQCN;
-import pyrite.compiler.util.StringUtil;
 
 public class ImportDeclarationManager
 {
@@ -89,6 +88,7 @@ public class ImportDeclarationManager
 		}
 	}
 
+	/*
 	public String[]	resolveClassName(String packageName, String className)
 	{
 		String	packageClassName = StringUtil.concat(packageName, className);
@@ -113,7 +113,40 @@ public class ImportDeclarationManager
 		}
 		return	null;
 	}
+	*/
 
+	/**
+	 * import節を考慮してクラス名を解決して返す
+	 * @param fqcnStr
+	 * @return	FQCN:存在するクラス名 null:クラス名が存在しない
+	 */
+	public FQCN	resolveClassName(String fqcnStr)
+	{
+		FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
+		if (_cr.isClass(fqcn))
+		{
+			return	fqcn;	// そのまま返す
+		}
+
+		if (fqcn._packageName.equals(""))
+		{	// クラス名の場合、import宣言されているか確認する
+			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
+			if (importDeclaration != null)
+			{
+				if (importDeclaration.isDuplicatedDeclaration())
+				{
+					throw new PyriteSyntaxException("class name is ambiguity");
+				}
+				String	importFqcnStr = importDeclaration.getFQCNStr();
+				FQCN	importFqcn = FQCNParser.getFQCN(importFqcnStr);
+				if (_cr.isClass(importFqcn))
+				{
+					return	importFqcn;	// そのまま返す
+				}
+			}
+		}
+		return	null;
+	}
 
 	public static class ImportDeclaration
 	{
@@ -143,7 +176,7 @@ public class ImportDeclarationManager
 			return	_fqcnSet.size() > 1;
 		}
 
-		public String	getFQCN()
+		public String	getFQCNStr()
 		{
 			assert	(_fqcnSet.size() == 1);
 			return	_fqcnSet.iterator().next();

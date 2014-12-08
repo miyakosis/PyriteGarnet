@@ -183,7 +183,7 @@ public class SourceFile extends ClassRelatedFile
 	{
 		for (MethodType method : methodTypes)
 		{	// 定義されているメソッドのコンスタントプールを作成
-			String	methodClassName = method._packageClassName.replace('.', '/');
+			String	methodClassName = method._fqcn._fqcnStr.replace('.', '/');
 			String	methodName = method._methodName;
 			String	paramStr = method.createConstructorJvmMethodParamExpression();
 			cpm.getMethodRef(methodClassName, methodName, paramStr);
@@ -195,7 +195,7 @@ public class SourceFile extends ClassRelatedFile
 	{
 		for (MethodType method : methodTypes)
 		{	// 定義されているメソッドのコンスタントプールを作成
-			String	methodClassName = method._packageClassName.replace('.', '/');
+			String	methodClassName = method._fqcn._fqcnStr.replace('.', '/');
 			String	methodName = method._methodName;
 			String	paramStr = method.getParamStr();
 			cpm.getMethodRef(methodClassName, methodName, paramStr);
@@ -235,7 +235,7 @@ public class SourceFile extends ClassRelatedFile
 		os.write2(cpm.getClassRef(className));
 
 //		u2 super_class;
-		String	superClassName = ((ObjectType)superClassType)._fqcn;
+		String	superClassName = ((ObjectType)superClassType)._fqcn._fqcnStr;
 		os.write2(cpm.getClassRef(superClassName));
 
 //		u2 interfaces_count;
@@ -243,7 +243,7 @@ public class SourceFile extends ClassRelatedFile
 //		u2 interfaces[interfaces_count];
 		for (VarType interfaceType : interfaceTypeList)
 		{
-			String	interfaceClassName = ((ObjectType)interfaceType)._fqcn;
+			String	interfaceClassName = ((ObjectType)interfaceType)._fqcn._fqcnStr;
 			os.write2(cpm.getClassRef(interfaceClassName));
 		}
 

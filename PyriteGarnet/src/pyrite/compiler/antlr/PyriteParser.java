@@ -3035,22 +3035,38 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class CreatorContext extends ParserRuleContext {
+		public CreatorContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_creator; }
+	 
+		public CreatorContext() { }
+		public void copyFrom(CreatorContext ctx) {
+			super.copyFrom(ctx);
+		}
+	}
+	public static class CreatorArrayContext extends CreatorContext {
+		public ArrayContext array() {
+			return getRuleContext(ArrayContext.class,0);
+		}
+		public CreatorArrayContext(CreatorContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitCreatorArray(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class CreatorClassContext extends CreatorContext {
 		public QualifiedNameContext qualifiedName() {
 			return getRuleContext(QualifiedNameContext.class,0);
 		}
 		public ArgumentsContext arguments() {
 			return getRuleContext(ArgumentsContext.class,0);
 		}
-		public ArrayContext array() {
-			return getRuleContext(ArrayContext.class,0);
-		}
-		public CreatorContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_creator; }
+		public CreatorClassContext(CreatorContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitCreator(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitCreatorClass(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -3062,6 +3078,7 @@ public class PyriteParser extends Parser {
 			setState(476);
 			switch (_input.LA(1)) {
 			case Identifier:
+				_localctx = new CreatorClassContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(469); qualifiedName();
@@ -3069,6 +3086,7 @@ public class PyriteParser extends Parser {
 				}
 				break;
 			case LBRACK:
+				_localctx = new CreatorArrayContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(472); array();
