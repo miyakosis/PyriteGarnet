@@ -97,7 +97,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 		else
 		{
-			_superClass = ObjectType.getType("java.lang.Object");
+			_superClass = ObjectType.getType("pyrite.lang.Object");
 		}
 
 		if (ctx.typeList() != null)

@@ -170,7 +170,8 @@ public class ClassResolver
 		ClassRelatedFile	crf = _packageMapMap.get(packageName, className);
 		if (crf == null)
 		{
-			ClassPathFile	cpf = new ClassPathFile(classPathEntry, className);
+			FQCN	fqcn = FQCNParser.getFQCN(packageName, className);
+			ClassPathFile	cpf = new ClassPathFile(classPathEntry, fqcn);
 			cpf.addClassFileInfo(filePathName, fileLastModified);
 			_packageMapMap.put(packageName, className, cpf);
 		}

@@ -11,10 +11,18 @@ public class FQCNParser
 
 	public static FQCN	getFQCN(String packageName, String className)
 	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(packageName).append(".").append(className);
+		String	fqcnStr;
+		if (packageName.equals(""))
+		{
+			fqcnStr = className;
+		}
+		else
+		{
+			StringBuilder	sb = new StringBuilder();
+			sb.append(packageName).append(".").append(className);
+			fqcnStr = sb.toString();
+		}
 
-		String	fqcnStr = sb.toString();
 		FQCN	fqcn = __fqcnMap.get(fqcnStr);
 		if (fqcn == null)
 		{
@@ -47,6 +55,11 @@ public class FQCNParser
 			_fqcnStr = fqcnStr;
 			_packageName = packageName;
 			_className = className;
+		}
+
+		public String	toString()
+		{
+			return	_fqcnStr;
 		}
 	}
 }

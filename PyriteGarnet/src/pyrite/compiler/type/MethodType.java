@@ -78,7 +78,7 @@ public class MethodType extends VarType
 			sb.append(returnTypes[0]._jvmExpression);
 			break;
 		default:
-			sb.append("Lpyrite.type.JVMReturnType;");
+			sb.append("Lpyrite.lang.JVMReturnType;");
 			break;
 		}
 

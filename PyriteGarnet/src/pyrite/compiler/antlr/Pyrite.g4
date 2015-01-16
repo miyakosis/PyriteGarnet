@@ -245,7 +245,7 @@ inputParameters
     ;
 
 inputParameter
-    :   Identifier ':' typeOrArray
+    :   'var'? Identifier ':' typeOrArray
     ;
 
 outputParameters
@@ -253,7 +253,7 @@ outputParameters
     ;
 
 outputParameter
-    :   (Identifier ':')? typeOrArray
+    :   ('var'? Identifier ':')? typeOrArray
     ;
 
 

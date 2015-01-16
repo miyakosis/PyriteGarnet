@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.misc.NotNull;
 
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteBaseVisitor;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
@@ -15,8 +16,8 @@ import pyrite.compiler.type.VarTypeName;
 
 public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 {
-	protected final ClassResolver	_cr;
-	protected final ImportDeclarationManager	_idm;
+	public final ClassResolver	_cr;
+	public final ImportDeclarationManager	_idm;
 
 	public GrammarCommonVisitor(ClassResolver cr, ImportDeclarationManager idm)
 	{
@@ -234,11 +235,12 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 	public Object visitQualifiedName(@NotNull PyriteParser.QualifiedNameContext ctx)
 	{
 		String	fqcnStr = ctx.getText();
-		if (_cr.isClass(FQCNParser.getFQCN(fqcnStr)) == false)
+		FQCN	fqcn = _idm.resolveClassName(fqcnStr);
+		if (_cr.isClass(fqcn) == false)
 		{
 			throw new PyriteSyntaxException("class not found.");
 		}
-		return	ObjectType.getType(fqcnStr);
+		return	ObjectType.getType(fqcn._fqcnStr);
 	}
 
 }

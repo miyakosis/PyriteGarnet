@@ -35,9 +35,8 @@ public class SourceFile extends ClassRelatedFile
 	private ConstantPoolManager	_cpm;
 
 	private String	_srcFilePathName;
-	private FQCN	_fqcn;
 
-//	private String	_classFilePathName;
+	private String	_classFilePathName;
 
 	public SourceFile(String srcFilePathName, ClassResolver cr)
 	{
@@ -60,11 +59,9 @@ public class SourceFile extends ClassRelatedFile
 			classNameVisitor.visit(_tree);
 			_fqcn = classNameVisitor.getClassName();
 
-			/*
 			File	srcPathFile = f.getParentFile();
 			String	srcPath = srcPathFile.getName();
 			_classFilePathName = srcPath + "/" + _fqcn._className + ".class";
-			*/
 
 			// create needed constants
 			_cpm = new ConstantPoolManager();
@@ -108,8 +105,8 @@ public class SourceFile extends ClassRelatedFile
 			VarType[]	inParamType = new VarType[0];
 			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
 
-			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn._fqcnStr, _fqcn._className, inParamType, outParamType, false);
-			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);
+			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, _fqcn._className, inParamType, outParamType, false);
+			_declaredMember._constructorMap.put(constructorType._jvmMethodParamExpression, constructorType);
 
 			// コンストラクタの実装も作成しておく
 			_defaultConstractor = createDefaultConstractor(_cpm, _fqcn);
@@ -148,7 +145,7 @@ public class SourceFile extends ClassRelatedFile
 		_cpm.setFrozen(true);
 		ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName)));
 		createClassFile(os,
-				_fqcn,
+				_fqcn._fqcnStr,
 				_methodDeclationVisitor.getSuperClass(),
 				_methodDeclationVisitor.getInterfaceTypeList(),
 				_cpm,
@@ -159,11 +156,11 @@ public class SourceFile extends ClassRelatedFile
 
 
 
-	private static MethodCodeDeclation createDefaultConstractor(ConstantPoolManager cpm, String className)
+	private static MethodCodeDeclation createDefaultConstractor(ConstantPoolManager cpm, FQCN fqcn)
 	{
 		MethodCodeDeclation	defaultConstractor = new MethodCodeDeclation();
 
-		defaultConstractor.setClassName(className);
+		defaultConstractor.setClassName(fqcn._fqcnStr);
 		defaultConstractor.setMethodName("<init>");
 		defaultConstractor.setStatic(false);
 		defaultConstractor.setInParamList(new ArrayList<VarTypeName>());

@@ -1,6 +1,11 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.BC;
+import pyrite.compiler.ClassResolver;
+import pyrite.compiler.CodeGenerationVisitor;
+import pyrite.compiler.ConstantPoolManager;
 import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.compiler.MethodCodeDeclation;
 
 
 public class ClassType extends VarType
@@ -29,7 +34,6 @@ public class ClassType extends VarType
 		_fqcn = fqcn;
 	}
 
-	/*
 	// (自分の型, 続く型)
 	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
 	//       (クラス, クラス変数 | クラスメソッド),
@@ -44,9 +48,7 @@ public class ClassType extends VarType
 		MethodCodeDeclation	methodDeclaretion = cgv._currentMethodCodeDeclation;
 
 		VarType	varType;
-		String	packageClassName = StringUtil.concat(_packageName, _className);
-
-		varType = cr.dispatchVariableC(packageClassName, id);
+		varType = cr.dispatchVariableC(_fqcn._fqcnStr, id);
 		if (varType != null)
 		{	// クラス変数
 
@@ -57,18 +59,18 @@ public class ClassType extends VarType
 				// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
 //				cgv.setLeftExpressionVarType(3, -1, packageClassName, id);
 
-				return	new AssignLeftExpressionType(varType, 3, -1, packageClassName, id);
+				return	new AssignLeftExpressionType(varType, 3, -1, _fqcn._fqcnStr, id);
 			}
 			else
 			{
 				methodDeclaretion.addCodeOp(BC.GETSTATIC);
-				methodDeclaretion.addCodeU2(cpm.getFieldRef(packageClassName, id, varType._jvmExpression));
+				methodDeclaretion.addCodeU2(cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
 			}
 
 			return	varType;
 		}
 
-		varType = cr.dispatchMethodC(packageClassName, id);
+		varType = cr.dispatchMethodC(_fqcn._fqcnStr, id);
 		if (varType != null)
 		{	// クラスメソッド
 			return	varType;
@@ -77,7 +79,6 @@ public class ClassType extends VarType
 		// TODO:クラス.クラスはとりあえず未サポート
 		throw new RuntimeException("id is not declared. " + id);
 	}
-	*/
 
 //	// TODO:メソッドの存在を確認する
 //	// 配列次元数の差分の型を返す

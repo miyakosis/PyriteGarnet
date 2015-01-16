@@ -15,6 +15,9 @@ public class VarType
 		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
 		};
 
+	// new VarType(TYPE) より先にMapを生成しておく必要がある
+	protected static Map<String, VarType>	__varTypeMap = new HashMap<String, VarType>();	// key:_typeId
+
 	public static VarType	NULL = new VarType(TYPE.NULL);
 	public static VarType	VOID = new VarType(TYPE.VOID);
 	public static VarType	OBJ = new VarType(TYPE.OBJ);
@@ -35,7 +38,6 @@ public class VarType
 	public static VarType	JVM_BYTE = new VarType(TYPE.JVM_BYTE);
 	public static VarType	JVM_BOOLEAN = new VarType(TYPE.JVM_BOOLEAN);
 
-	protected static Map<String, VarType>	__varTypeMap = new HashMap<String, VarType>();	// key:_typeId
 	// _typeId は VarTypeを一意に識別できる文字列。
 	// NULL:
 	// VOID:
@@ -198,6 +200,9 @@ public class VarType
 		case VOID:
 			_jvmExpression = "V";
 			break;
+		case OBJ:
+			_jvmExpression = "Lpyrite.lang.Object;";
+			break;
 		case NUM:
 			_jvmExpression = "Lpyrite.lang.Number;";
 			break;
@@ -296,7 +301,7 @@ public class VarType
 	//       (パッケージ, パッケージ)
 	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
 	{
-		throw new RuntimeException("not implemented");
+		throw new RuntimeException("assertion?");
 	}
 
 

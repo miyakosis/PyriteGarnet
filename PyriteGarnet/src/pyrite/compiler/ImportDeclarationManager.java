@@ -129,12 +129,12 @@ public class ImportDeclarationManager
 		}
 
 		if (fqcn._packageName.equals(""))
-		{	// クラス名の場合、import宣言されているか確認する
+		{	// パッケージ部分が無い意場合、import宣言されているクラスかどうか確認する
 			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
 			if (importDeclaration != null)
 			{
 				if (importDeclaration.isDuplicatedDeclaration())
-				{
+				{	// import宣言されているクラスが複数存在した
 					throw new PyriteSyntaxException("class name is ambiguity");
 				}
 				String	importFqcnStr = importDeclaration.getFQCNStr();

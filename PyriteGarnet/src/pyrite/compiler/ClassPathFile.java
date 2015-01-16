@@ -1,12 +1,13 @@
 package pyrite.compiler;
 
+import pyrite.compiler.FQCNParser.FQCN;
+
 //クラスパスに含まれるファイル情報を保持する
 public class ClassPathFile extends ClassRelatedFile
 {
 	private final static String	SOURCE_FILE_CLASSPATH_ENTRY = "<CompileTarget>";
 
 	public final String	_classPathEntry;
-	public final String	_className;
 
 	private boolean	_isClassFileExist = false;
 	private boolean	_isPyriteClassFileExist = false;
@@ -15,10 +16,10 @@ public class ClassPathFile extends ClassRelatedFile
 	private long	_pyriteSourceFileLastModified = 0;
 	private String	_pyriteSoutceFile;
 
-	public ClassPathFile(String classPathEntry, String className)
+	public ClassPathFile(String classPathEntry, FQCN fqcn)
 	{
+		_fqcn = fqcn;
 		_classPathEntry = classPathEntry;
-		_className = className;
 	}
 
 	public boolean isCompileTargetClass()

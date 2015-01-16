@@ -25,6 +25,8 @@ import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarType.TYPE;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.StringUtil;
+import pyrite.lang.Array;
+import pyrite.lang.Assoc;
 
 
 public class CodeGenerationVisitor extends GrammarCommonVisitor
@@ -484,7 +486,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		assert (methodType._returnTypes.length == 1);
 		return	methodType._returnTypes[0];
-
 	}
 
 	// array '(' ')'			# CreatorArray
@@ -494,18 +495,29 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		VarType	varType = (VarType)visit(ctx.array());
 		String	className;
 
-		// TODO: 引数情報をなんとかする
 		switch (varType._type)
 		{
 		case ARRAY:
-			className = "pyrite.lang.Array";
+			className = Array.CLASS_NAME;
 			break;
 		case ASSOC:
-			className = "pyrite.lang.Assoc";
+			className = Assoc.CLASS_NAME;
 			break;
 		default:
 			throw new RuntimeException("assert");
 		}
+
+		// オブジェクト生成
+		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(className));
+		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
+
+		// methodParameter
+		//   -> none
+
+		// invoke constructor
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(className, "<init>", "()V"));
 
 		return	varType;
 	}
@@ -688,15 +700,15 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionArrayAccess(@NotNull PyriteParser.ExpressionArrayAccessContext ctx)
 	{
+		// debug:
 		String s = ctx.getText() + " " + ctx.expression(0).getText() + " + " + ctx.expression(1).getText();
 
 		VarType	expressionType = (VarType)visit(ctx.expression(0));
 		VarType	indexType = (VarType)visit(ctx.expression(1));
 
-		ArrayType	arrayType = null;
-		AssocType	assocType = null;
 		if (expressionType._type == TYPE.ARRAY)
 		{
+			ArrayType	arrayType = null;
 			arrayType = (ArrayType)expressionType;
 			if (indexType._type != TYPE.INT)
 			{
@@ -709,13 +721,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 			else
 			{	// refer
-				// List.get()を呼び出す
-				// TODO
+				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, 1);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Array.CLASS_NAME, "get", "(I)Ljava.lang.Object;"));
 			}
 			return	arrayType._type;
 		}
 		else if (expressionType._type == TYPE.ASSOC)
 		{
+			AssocType	assocType = null;
 			assocType = (AssocType)expressionType;
 			if (indexType._type != assocType._keyVarType._type)
 			{	// TODO:オブジェクトの継承関係を考慮する必要あり
@@ -728,14 +741,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 			else
 			{	// refer
-				// Map.get()を呼び出す
-				// TODO
+				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, 1);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Assoc.CLASS_NAME, "get", "(Lpyrite.lang.String;)Ljava.lang.Object;"));
 			}
 			return	assocType._valVarType;
 		}
 		else
 		{
-			throw new RuntimeException("expression must array or assoc.");
+			throw new RuntimeException("assertion:expression must array or assoc.");
 		}
 
 /*
@@ -815,7 +828,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		// 親要素が代入か、条件判定の場合は値を残す必要がある
 		return	(ctx.parent instanceof PyriteParser.ExpressionAssignContext)
-				|| (ctx.parent instanceof PyriteParser.ParExpressionContext );
+				|| (ctx.parent instanceof PyriteParser.ParExpressionContext);
 	}
 
 	// 自分が代入要素の左辺式かどうかを返す
@@ -1965,7 +1978,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		throw new PyriteSyntaxException("id is not declared. id:" + id);
 	}
 
-	// TODO:to be object
 	// IntegerLiteral
 	@Override
 	public Object visitIntegerLiteralDecimal(@NotNull PyriteParser.IntegerLiteralDecimalContext ctx)
@@ -2008,9 +2020,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	protected Object	procInt(String value, int radix)
 	{
-		// BigIntegerオブジェクト生成
+		// オブジェクト生成
 		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef("java.math.BigInteger"));
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(pyrite.lang.Integer.CLASS_NAME));
 		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
 
 		// methodParameter
@@ -2020,7 +2032,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// invoke constructor
 		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef("java.math.BigInteger", "<init>", "Ljava.lang.String;I"));
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.Integer.CLASS_NAME, "<init>", "Ljava.lang.String;I"));
 
 		return	VarType.INT;
 	}
@@ -2049,9 +2061,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		String	literal = ctx.getText();
 		literal = StringUtil.removeUnderscore(literal);
 
-		// BigIntegerオブジェクト生成
+		// オブジェクト生成
 		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef("java.math.BigDecimal"));
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(pyrite.lang.DecimalFloat.CLASS_NAME));
 		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
 
 		// methodParameter
@@ -2059,7 +2071,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// invoke constructor
 		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef("java.math.BigDecimal", "<init>", "Ljava.lang.String;"));
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.DecimalFloat.CLASS_NAME, "<init>", "Ljava.lang.String;"));
 
 		return	VarType.FLT;
 	}
@@ -2083,7 +2095,20 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 		else
 		{
+			// 直値の場合
+//			addCodeIPush(c);
+
+			// オブジェクト生成
+			_currentMethodCodeDeclation.addCodeOp(BC.NEW);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(pyrite.lang.Character.CLASS_NAME));
+			_currentMethodCodeDeclation.addCodeOp(BC.DUP);
+
+			// methodParameter
 			addCodeIPush(c);
+
+			// invoke constructor
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.Character.CLASS_NAME, "<init>", "C"));
 		}
 
 		return	VarType.CHR;
@@ -2095,7 +2120,21 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		String	literal = ctx.StringLiteral().getText();
 		literal = StringUtil.strLiteral(literal);
+
+		// 直値の場合
+//		addCodeLDC(literal);
+
+		// オブジェクト生成
+		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(pyrite.lang.String.CLASS_NAME));
+		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
+
+		// methodParameter
 		addCodeLDC(literal);
+
+		// invoke constructor
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.String.CLASS_NAME, "<init>", "Ljava.lang.String;"));
 
 		return	VarType.STR;
 	}
@@ -2115,6 +2154,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 	}
 
+	// memo
+	// _currentMethodCodeDeclation に当メソッドを定義しない
+	// ldc を使う場合、_cpm へのアクセスが発生するため
 	protected void	addCodeIPush(int value)
 	{
 		// int をスタックに積む
