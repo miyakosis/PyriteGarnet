@@ -1,8 +1,7 @@
-// Generated from Pyrite.g4 by ANTLR 4.2.2
+// Generated from Pyrite.g4 by ANTLR 4.5.2
 
   package pyrite.compiler.antlr;
 
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**
@@ -20,661 +19,579 @@ public class PyriteBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementWhile(@NotNull PyriteParser.StatementWhileContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitCompilationUnit(PyriteParser.CompilationUnitContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFloatingPointLiteral(@NotNull PyriteParser.FloatingPointLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitPackageDeclaration(PyriteParser.PackageDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementIf(@NotNull PyriteParser.StatementIfContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitImportDeclaration(PyriteParser.ImportDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionList(@NotNull PyriteParser.ExpressionListContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitClassInstanceModifier(PyriteParser.ClassInstanceModifierContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementBlock(@NotNull PyriteParser.StatementBlockContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitClassDeclaration(PyriteParser.ClassDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStringLiteral(@NotNull PyriteParser.StringLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitTypeList(PyriteParser.TypeListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitType(@NotNull PyriteParser.TypeContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitClassBody(PyriteParser.ClassBodyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForUpdate(@NotNull PyriteParser.ForUpdateContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitClassBodyDeclaration(PyriteParser.ClassBodyDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionArrayAccess(@NotNull PyriteParser.ExpressionArrayAccessContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitMethodDeclaration(PyriteParser.MethodDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitInputParameters(PyriteParser.InputParametersContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitInputParameter(PyriteParser.InputParameterContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionShift(@NotNull PyriteParser.ExpressionShiftContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitOutputParameters(PyriteParser.OutputParametersContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitOutputParameter(PyriteParser.OutputParameterContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForInitSpec(@NotNull PyriteParser.ForInitSpecContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitConstructorDeclaration(PyriteParser.ConstructorDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitFieldDeclaration(PyriteParser.FieldDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSwitchLabelCaseInt(@NotNull PyriteParser.SwitchLabelCaseIntContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitTypeOrArray(PyriteParser.TypeOrArrayContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimaryLiteral(@NotNull PyriteParser.PrimaryLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitType(PyriteParser.TypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassBody(@NotNull PyriteParser.ClassBodyContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitArray(PyriteParser.ArrayContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitArraySpecType(PyriteParser.ArraySpecTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionEqual(@NotNull PyriteParser.ExpressionEqualContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitArraySpecAssoc(PyriteParser.ArraySpecAssocContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionBitOr(@NotNull PyriteParser.ExpressionBitOrContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitArraySpecArray(PyriteParser.ArraySpecArrayContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionBitExOr(@NotNull PyriteParser.ExpressionBitExOrContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitPrimitiveType(PyriteParser.PrimitiveTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPackageDeclaration(@NotNull PyriteParser.PackageDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitMethodBody(PyriteParser.MethodBodyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIntegerLiteralBinary(@NotNull PyriteParser.IntegerLiteralBinaryContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitConstructorBody(PyriteParser.ConstructorBodyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLabel(@NotNull PyriteParser.LabelContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitQualifiedName(PyriteParser.QualifiedNameContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementContinue(@NotNull PyriteParser.StatementContinueContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitLiteral(PyriteParser.LiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementSwitch(@NotNull PyriteParser.StatementSwitchContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitBlock(PyriteParser.BlockContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassInstanceModifier(@NotNull PyriteParser.ClassInstanceModifierContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementBlock(PyriteParser.StatementBlockContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForControlIterator(@NotNull PyriteParser.ForControlIteratorContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementEmpty(PyriteParser.StatementEmptyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArraySpecAssoc(@NotNull PyriteParser.ArraySpecAssocContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementExpression(PyriteParser.StatementExpressionContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementEmpty(@NotNull PyriteParser.StatementEmptyContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementReturn(PyriteParser.StatementReturnContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForControlICU(@NotNull PyriteParser.ForControlICUContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementIf(PyriteParser.StatementIfContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassBodyDeclaration(@NotNull PyriteParser.ClassBodyDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementWhile(PyriteParser.StatementWhileContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArraySpecType(@NotNull PyriteParser.ArraySpecTypeContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementFor(PyriteParser.StatementForContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCreatorClass(@NotNull PyriteParser.CreatorClassContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementSwitch(PyriteParser.StatementSwitchContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeList(@NotNull PyriteParser.TypeListContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementBreak(PyriteParser.StatementBreakContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIntegerLiteralDecimal(@NotNull PyriteParser.IntegerLiteralDecimalContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementContinue(PyriteParser.StatementContinueContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIntegerLiteralOctal(@NotNull PyriteParser.IntegerLiteralOctalContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStatementVar(PyriteParser.StatementVarContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArray(@NotNull PyriteParser.ArrayContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitVariableDeclarationStatement(PyriteParser.VariableDeclarationStatementContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitLabel(PyriteParser.LabelContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionAddSub(@NotNull PyriteParser.ExpressionAddSubContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitIfStatement(PyriteParser.IfStatementContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitSwitchBlockStatementGroup(PyriteParser.SwitchBlockStatementGroupContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionBolAnd(@NotNull PyriteParser.ExpressionBolAndContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitSwitchLabelCaseInt(PyriteParser.SwitchLabelCaseIntContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeOrArray(@NotNull PyriteParser.TypeOrArrayContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitSwitchLabelCaseStr(PyriteParser.SwitchLabelCaseStrContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBlock(@NotNull PyriteParser.BlockContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitSwitchLabelDefault(PyriteParser.SwitchLabelDefaultContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionMulDiv(@NotNull PyriteParser.ExpressionMulDivContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitForControlIterator(PyriteParser.ForControlIteratorContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementVar(@NotNull PyriteParser.StatementVarContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitForControlICU(PyriteParser.ForControlICUContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimaryIdentifier(@NotNull PyriteParser.PrimaryIdentifierContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitForInit(PyriteParser.ForInitContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementBreak(@NotNull PyriteParser.StatementBreakContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitForInitSpec(PyriteParser.ForInitSpecContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementReturn(@NotNull PyriteParser.StatementReturnContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitForUpdate(PyriteParser.ForUpdateContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionPrimary(@NotNull PyriteParser.ExpressionPrimaryContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitParExpression(PyriteParser.ParExpressionContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionClassFieldRef(@NotNull PyriteParser.ExpressionClassFieldRefContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionList(PyriteParser.ExpressionListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementExpression(@NotNull PyriteParser.StatementExpressionContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionNew(PyriteParser.ExpressionNewContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionMulDiv(PyriteParser.ExpressionMulDivContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionInvokeMethod(@NotNull PyriteParser.ExpressionInvokeMethodContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionClassFieldRef(PyriteParser.ExpressionClassFieldRefContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionPrimary(PyriteParser.ExpressionPrimaryContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionArrayAccess(PyriteParser.ExpressionArrayAccessContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionInvokeMethod(PyriteParser.ExpressionInvokeMethodContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitQualifiedName(@NotNull PyriteParser.QualifiedNameContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionBitOr(PyriteParser.ExpressionBitOrContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionAddSub(PyriteParser.ExpressionAddSubContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBooleanLiteral(@NotNull PyriteParser.BooleanLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionShift(PyriteParser.ExpressionShiftContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimaryParens(@NotNull PyriteParser.PrimaryParensContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionBolOr(PyriteParser.ExpressionBolOrContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionCompare(@NotNull PyriteParser.ExpressionCompareContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionBitExOr(PyriteParser.ExpressionBitExOrContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIfStatement(@NotNull PyriteParser.IfStatementContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCreatorArray(@NotNull PyriteParser.CreatorArrayContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionEqual(PyriteParser.ExpressionEqualContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionBitAnd(@NotNull PyriteParser.ExpressionBitAndContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionBitAnd(PyriteParser.ExpressionBitAndContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNullLiteral(@NotNull PyriteParser.NullLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionBolAnd(PyriteParser.ExpressionBolAndContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArraySpecArray(@NotNull PyriteParser.ArraySpecArrayContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitExpressionCompare(PyriteParser.ExpressionCompareContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArguments(@NotNull PyriteParser.ArgumentsContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitPrimaryParens(PyriteParser.PrimaryParensContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitConstructorBody(@NotNull PyriteParser.ConstructorBodyContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitPrimaryLiteral(PyriteParser.PrimaryLiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMethodBody(@NotNull PyriteParser.MethodBodyContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitPrimaryIdentifier(PyriteParser.PrimaryIdentifierContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCharacterLiteral(@NotNull PyriteParser.CharacterLiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitCreatorClass(PyriteParser.CreatorClassContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIntegerLiteralHex(@NotNull PyriteParser.IntegerLiteralHexContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitCreatorArray(PyriteParser.CreatorArrayContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimitiveType(@NotNull PyriteParser.PrimitiveTypeContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitArguments(PyriteParser.ArgumentsContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSwitchLabelDefault(@NotNull PyriteParser.SwitchLabelDefaultContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitIntegerLiteralDecimal(PyriteParser.IntegerLiteralDecimalContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSwitchLabelCaseStr(@NotNull PyriteParser.SwitchLabelCaseStrContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitIntegerLiteralHex(PyriteParser.IntegerLiteralHexContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionNew(@NotNull PyriteParser.ExpressionNewContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitIntegerLiteralOctal(PyriteParser.IntegerLiteralOctalContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStatementFor(@NotNull PyriteParser.StatementForContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitIntegerLiteralBinary(PyriteParser.IntegerLiteralBinaryContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForInit(@NotNull PyriteParser.ForInitContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitFloatingPointLiteral(PyriteParser.FloatingPointLiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionAssign(@NotNull PyriteParser.ExpressionAssignContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitBooleanLiteral(PyriteParser.BooleanLiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionBolOr(@NotNull PyriteParser.ExpressionBolOrContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitCharacterLiteral(PyriteParser.CharacterLiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLiteral(@NotNull PyriteParser.LiteralContext ctx) { return visitChildren(ctx); }
-
+	@Override public T visitStringLiteral(PyriteParser.StringLiteralContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSwitchBlockStatementGroup(@NotNull PyriteParser.SwitchBlockStatementGroupContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNullLiteral(PyriteParser.NullLiteralContext ctx) { return visitChildren(ctx); }
 }

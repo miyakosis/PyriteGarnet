@@ -6,6 +6,10 @@ import java.util.List;
 
 import pyrite.compiler.FQCNParser.FQCN;
 
+/**
+ * コンパイラメインクラス。
+ *
+ */
 public class Compiler
 {
 	private static Compiler	_instance = new Compiler();
@@ -18,29 +22,40 @@ public class Compiler
 		return	_instance;
 	}
 
+	// コンパイル対象ソースファイル
 	private List<SourceFile>	_sourceFileList = new ArrayList<SourceFile>();
 
+	// main
 	public static void main(String[] args) throws IOException
 	{
 		Compiler.getInstance().compile(args);
 		Compiler.getInstance().createClassFiles();
 	}
 
-
+	// class resolver
 	private ClassResolver	_cr;
+
+	/**
+	 * コンパイルを実行する。
+	 *
+	 * @param args	プログラム引数(ファイル名)
+	 * @throws IOException
+	 */
 	public void	compile(String[] args) throws IOException
 	{
-		// argsで指定されたファイルは必ずコンパイルする。
-		// クラスパス上のファイルは、クラスファイルの方がソースファイルより新しければコンパイルをスキップする。
-		// これは、クラスパス上のファイルはコンパイルをスキップしてもクラス情報が取得できるが、
-		// argsで指定されたファイルはクラスパス上に無い場合、コンパイルスキップした場合にクラス情報が取得できない。
+		// argsで指定されたソースファイルをコンパイルする。
+		// そのソースで参照されるクラスのソースファイルについて、
+		// a. クラスファイルが存在しない → 対応するソースファイルもコンパイルする
+		// b-1. クラスファイルが存在し、ソースファイルより古い → クラスファイルを削除し、対応するソースファイルもコンパイルする
+		// b-2. クラスファイルが存在し、ソースファイルより新しい → コンパイルをスキップする
+		// c. クラスファイルが存在するが、Jar内にある → コンパイルをスキップする
 
 		// 複数クラスで相互参照しているときのため、以下の順で処理を行う。
-		// 引数で指定されたソースファイルに含まれるクラス名を全て取得する。
-		// クラスパスに含まれるクラスを全て取得する。
-		// ソースファイルごとのメンバーフィールド・メソッドを取得する。この時に上記で取得されたクラス以外を参照していればコンパイルエラー。
-		// メソッドの内部を解析する。この時に上記で取得されたメンバー以外を参照していればコンパイルエラー。
-		// クラスファイルを出力する。
+		// 1. 引数で指定されたソースファイルに含まれるクラス名を全て取得する。
+		// 2. クラスパスに含まれるクラスを全て取得する。(1.に含まれるクラスはスキップする)
+		// 3. ソースファイルごとにメンバーフィールド・メソッドを取得する。この時にメソッド引数等で上記で取得されたクラス以外を参照していればコンパイルエラー。
+		// 4. メソッドの内部を解析する。この時に上記で取得されたメンバー以外を参照していればコンパイルエラー。
+		// 5. クラスファイルを出力する。
 
 		_cr = new ClassResolver();	// クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 		_cr.setPhase(1);
@@ -48,7 +63,6 @@ public class Compiler
 		{
 			SourceFile	sf = new SourceFile(args[i], _cr);
 			_sourceFileList.add(sf);
-
 			_cr.addSourceFileClass(sf);
 		}
 		// クラスパスを解析
@@ -56,8 +70,7 @@ public class Compiler
 
 		_cr.setPhase(2);
 		// メソッド定義を処理する。
-		// ソースファイル間で相互参照がある場合、コンパイル位置に存在する参照先ソースファイルについて、
-		// クラス名が解決できていれば、メソッド定義の解析・チェックは可能。
+		// ソースファイル間でクラスの相互参照がある場合でも、参照先ソースファイルからクラス名が解決できていれば、メソッド定義の解析・チェックは可能。
 		for (int i = 0; i < _sourceFileList.size(); ++i)
 		{
 			_sourceFileList.get(i).parseMethodDeclaration();
@@ -92,16 +105,10 @@ public class Compiler
 	//	指定ソースファイルのクラス名のみ解決する
 	public SourceFile	compileClassName(FQCN fqcn, String srcFilePathName)
 	{
-		// コンパイルした結果、クラス情報が存在しない場合に
-		// ファイル名から取得したクラス情報を残さないため、情報をクリアしておく
-		_cr.removeClassEntry(fqcn);
-
 		// ソースファイル解析
 		SourceFile	sf = new SourceFile(srcFilePathName, _cr);
-		FQCN	fqcnSf = sf.getFQCN();
-		_cr.addSourceFileClass(sf);
-
 		_sourceFileList.add(sf);
+		_cr.addSourceFileClass(sf);
 
 		return	sf;
 	}

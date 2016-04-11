@@ -19,6 +19,7 @@ import java.util.zip.ZipFile;
 
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.type.ClassType;
+import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
@@ -27,6 +28,16 @@ import pyrite.compiler.util.HashMapMap;
 import pyrite.compiler.util.StringUtil;
 
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
+/*
+ * クラスパス：
+ *	.pyr .class .pyrc
+ *   o    o      o
+ *   o    o      o
+ *   o    x      x
+ *   o    o      x
+ *   o    x      x
+ *   o    x
+ */
 public class ClassResolver
 {
 	private final static String	PROPERTY_KEY_CLASS_PATH = "java.class.path";
@@ -34,10 +45,12 @@ public class ClassResolver
 	private final static String	PROPERTY_KEY_JAVA_HOME = "java.home";
 	private final static String	JAVA_LIB_PATH = "/lib/rt.jar";
 
-	private Set<String>	classPathEntrySet = new HashSet<String>();	// 同じクラスパスが複数回設定されている場合に、二重取り込みを回避するためのセット
+	private Set<String>	classPathEntrySet = new HashSet<String>();	// 同じクラスパスが複数回設定されている場合に、二重取り込みを回避するためのSet
 
+	// パッケージ・クラス名とそれに紐づくソースファイル情報のMap
 	private HashMapMap<String, String, ClassRelatedFile>	_packageMapMap = new HashMapMap<String, String, ClassRelatedFile>();	// key:パッケージ valueKey:クラス名 value:ClassRelatedFile
 
+	// フィールド・メソッド定義まで取得ずみのクラス情報のキャッシュ
 	private Map<String, ClassFieldMember>	_classCache = new HashMap<String, ClassFieldMember>();	// key:fqcn value:ClassFieldMember
 
 
@@ -49,7 +62,7 @@ public class ClassResolver
 	}
 
 	// メソッド呼び出しのチェックに使用
-	private int	_phase = 0;
+	private int	_phase = 0;	// 0:init 1:init(クラスパス解析中) 2:クラスパスに含まれるクラス取得済み(メソッド定義解析中) 3:メソッド定義解析済み (メソッド本体コンパイル中)
 	public void	setPhase(int phase)
 	{
 		_phase = phase;
@@ -61,8 +74,9 @@ public class ClassResolver
 		FQCN	fqcn = sf.getFQCN();
 		ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
 		if (crf != null)
-		{	// 同じクラスが存在する
-			throw new PyriteSyntaxException("same class exists.");
+		{	// 同じクラスが存在する。
+			// 同じソースファイルを複数指定したか、別のファイルに同じクラスが存在する場合。
+			throw new PyriteSyntaxException("Class duplicated in other files. FQCN:" + fqcn._fqcnStr);
 		}
 		else
 		{
@@ -77,6 +91,7 @@ public class ClassResolver
 		_packageMapMap.remove(fqcn._packageName, fqcn._className);
 	}
 
+	// クラスパスに含まれるクラスを解決する
 	public void	resolveClasspath() throws IOException
 	{
 		String	separator = System.getProperty(PROPERTY_KEY_CLASS_PATH_SEPARATOR);
@@ -92,6 +107,19 @@ public class ClassResolver
 		addClassPathEntry(System.getProperty(PROPERTY_KEY_JAVA_HOME) + JAVA_LIB_PATH);
 
 		// TODO: pyrite.jarの展開
+
+		// 解決した結果、.pyrc のみしか存在せず、class参照もコンパイルもできないものを除外する
+		for (ClassRelatedFile crf : _packageMapMap.values())
+		{
+			if (crf instanceof ClassPathFile)
+			{
+				ClassPathFile	cpf = (ClassPathFile)crf;
+				if (cpf.isClassFileExists() == false && cpf.isSourceFileExists() == false)
+				{
+					_packageMapMap.remove(cpf._fqcn._packageName, cpf._fqcn._className);
+				}
+			}
+		}
 	}
 
 	private void	addClassPathEntry(String classPathEntry) throws IOException
@@ -102,8 +130,8 @@ public class ClassResolver
 		}
 		classPathEntrySet.add(classPathEntry);
 
-		String	checkExt = classPathEntry.toLowerCase();
-		if (checkExt.endsWith("jar") || checkExt.endsWith("zip"))
+		String	ext = classPathEntry.toLowerCase();
+		if (ext.endsWith("jar") || ext.endsWith("zip"))
 		{	// jar file
 			readJarFile(classPathEntry);
 		}
@@ -180,12 +208,13 @@ public class ClassResolver
 			ClassPathFile	cpf = (ClassPathFile)crf;
 
 			// クラスパスエントリが同じであれば、追加情報を登録する
-			// そうではない場合、クラスパスの後の方に定義されているクラス情報であるため無視する
+			// そうではない場合、クラスパスの後の方に定義されている、同じクラス名の情報であるため無視する
 			if (classPathEntry.equals(cpf._classPathEntry))
 			{
 				cpf.addClassFileInfo(filePathName, fileLastModified);
 			}
 		}
+		// crf instanceof SourceFile の場合は、そのクラスはコンパイル対象として登録されているため、何もしない
 
 //		System.out.println(packageName + " / " + packageClassFile._className);
 	}
@@ -204,7 +233,6 @@ public class ClassResolver
 
 		return	classNameList;
 	}
-	// TODO:ファイル名とクラス名が異なる場合、import時に取得したクラス名が、メソッド定義解決時には存在しない可能性がある
 
 	// ClassFieldMember を追加する
 	public void putClassFieldMember(String fqcnStr, ClassFieldMember declaredMember)
@@ -213,20 +241,14 @@ public class ClassResolver
 	}
 
 
-	public boolean isPackage(String packageName1, String packageName2)
+	public boolean isPackage(FQCN fqcn)
 	{
-		String	packageName = StringUtil.concat(packageName1, packageName2);
-		return	isPackage(packageName);
-	}
-
-	public boolean isPackage(String packageName)
-	{
-		if (packageName.equals("java"))
+		if (fqcn._fqcnStr.equals("java"))
 		{
 			return	true;
 		}
 
-		return Package.getPackage(packageName) != null;
+		return Package.getPackage(fqcn._fqcnStr) != null;
 	}
 
 	// assertion: pahese1ではこのメソッドは呼ばれない
@@ -239,69 +261,67 @@ public class ClassResolver
 			return	false;
 		}
 
-		if (crf.isCompileTarget())
-		{	// コンパイル対象のクラス名は解析済みなので、クラス名は存在確定
-			return	true;
-		}
-
-		ClassPathFile	cpf = (ClassPathFile)crf;
-		if (cpf.isNeedCompile())
+		assert (crf instanceof SourceFile || crf instanceof ClassPathFile);
+		if (crf instanceof ClassPathFile)
 		{
-			// クラス名のコンパイル実行
-			Compiler.getInstance().compileClassName(fqcn, cpf.getSourcePathFile());
+			ClassPathFile	cpf = (ClassPathFile)crf;
+			if (cpf.isNeedCompile())
+			{
+				// クラス名のコンパイル実行
+				// コンパイル対象のClassPathFileを除去しておく
+				removeClassEntry(fqcn);
 
-			// コンパイルによってクラス名が正常に解決できるなら、_packageMapMapにオブジェクトが登録されている
-			return	_packageMapMap.get(fqcn._packageName, fqcn._className) != null;
+				Compiler.getInstance().compileClassName(fqcn, cpf.getSourceFilePath());
+
+				// コンパイル後のクラス名が_packageMapMapにオブジェクトが登録されている。
+				return	_packageMapMap.get(fqcn._packageName, fqcn._className) != null;
+			}
 		}
-		else
-		{	// クラスファイルが存在するかを返す
-			// ここでClassFieldMemberを取得すべき?
-			return	cpf.hasClassFile();
-		}
+
+		return	true;
 	}
 
 
-	public boolean hasInterface(String packageClassName, String interfaceName)
+	public boolean hasInterface(FQCN fqcn, String interfaceName)
 	{
-		ClassFieldMember	cls = getClassFieldMember(packageClassName);
+		ClassFieldMember	cls = getClassFieldMember(fqcn);
 		assert (cls != null);
 		return	cls._interfaceSet.contains(interfaceName);
 	}
 
 
 	// assertion: pahese2ではこのメソッドは呼ばれない
-	public ClassFieldMember	getClassFieldMember(String fqcnStr)
+	public ClassFieldMember	getClassFieldMember(FQCN fqcn)
 	{
 		assert(_phase > 2);
-		ClassFieldMember	cls = _classCache.get(fqcnStr);
+		ClassFieldMember	cls = _classCache.get(fqcn._fqcnStr);
 		if (cls == null)
 		{
-			FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
 			ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
 			if (crf == null)
 			{	// そのようなクラスは無い
 				return	null;
 			}
 
-			// このフェーズで、コンパイル対象で_classCacheに存在しないのはありえないはず
-			assert (crf.isCompileTarget() == false);
+			// phase3の段階で、SourceFileは_classCacheに登録されているはずなので、ここではClassPathFileのみが取得される
+			assert (crf instanceof ClassPathFile == false);
 
 			ClassPathFile	cpf = (ClassPathFile)crf;
 			if (cpf.isNeedCompile())
 			{	// コンパイルが必要
 				// クラス名・メソッド定義のコンパイル実行
-				Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourcePathFile());
+				Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourceFilePath());
 
 				// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
-				return	_classCache.get(fqcnStr);
+				return	_classCache.get(fqcn._fqcnStr);
 			}
 			else if (cpf.hasClassFile())
-			{	// クラスファイルがある
+			{	// クラスファイルのみがある
 				try
 				{
-					Class<?>	c = Class.forName(fqcnStr);
+					Class<?>	c = Class.forName(fqcn._fqcnStr);
 					cls = new ClassFieldMember(fqcn, c, this);
-					_classCache.put(fqcnStr, cls);
+					_classCache.put(fqcn._fqcnStr, cls);
 					return	cls;
 				}
 				catch (ClassNotFoundException e)
@@ -313,6 +333,7 @@ public class ClassResolver
 			}
 			else
 			{	// クラスファイルが無いし、Pyriteコンパイルもできない
+				// (このケースはありえない?)
 				return	null;
 			}
 		}
@@ -320,11 +341,11 @@ public class ClassResolver
 	}
 
 	// 該当クラスの該当クラスフィールドの返り値を返す
-	public VarType dispatchVariableC(String packageClassName, String fieldName)
+	public VarType dispatchVariableC(FQCN fqcn, String fieldName)
 	{
 		VarType	resultType = null;
 
-		ClassFieldMember	cls = getClassFieldMember(packageClassName);
+		ClassFieldMember	cls = getClassFieldMember(fqcn);
 		if (cls != null)
 		{
 			resultType = cls._classFieldMap.get(fieldName);
@@ -340,11 +361,11 @@ public class ClassResolver
 
 
 	// 該当クラスの該当インスタンスフィールドの返り値を返す
-	public VarType dispatchVariableI(String packageClassName, String fieldName)
+	public VarType dispatchVariableI(FQCN fqcn, String fieldName)
 	{
 		VarType	resultType = null;
 
-		ClassFieldMember	cls = getClassFieldMember(packageClassName);
+		ClassFieldMember	cls = getClassFieldMember(fqcn);
 		if (cls != null)
 		{
 			resultType = cls._instanceFieldMap.get(fieldName);
@@ -358,49 +379,24 @@ public class ClassResolver
 		return null;
 	}
 
-	// 該当クラスの該当クラスメソッドの型を返す
-	public VarType dispatchMethodC(String packageClassName, String methodName)
+	// 該当クラスの該当クラスメソッドが存在するかを返す
+	public boolean existsMethodC(FQCN fqcn, String methodName)
 	{
-		VarType	resultType = null;
-
-		ClassFieldMember	cls = getClassFieldMember(packageClassName);
-		if (cls != null)
-		{
-			resultType = cls._classMethodNameMap.get(methodName);
-
-			if (resultType != null)
-			{
-				return	resultType;
-			}
-		}
-
-		return null;
+		ClassFieldMember	cls = getClassFieldMember(fqcn);
+		return (cls != null && cls._classMethodNameSet.contains(methodName));
 	}
 
-	// 該当クラスの該当クラスメソッドまたはインスタンスメソッドの返り値を返す
-	public VarType dispatchMethodIC(String packageClassName, String methodName)
+	// 該当クラスの該当クラスメソッドまたはインスタンスメソッドが存在するかを返す
+	public boolean existsMethodIC(FQCN fqcn, String methodName)
 	{
-		VarType	resultType = null;
-
-		ClassFieldMember	cls = getClassFieldMember(packageClassName);
-		if (cls != null)
-		{
-			resultType = cls._instanceMethodNameMap.get(methodName);
-
-			if (resultType != null)
-			{
-				return	resultType;
-			}
-			return	dispatchVariableC(packageClassName, methodName);
-		}
-
-		return null;
+		ClassFieldMember	cls = getClassFieldMember(fqcn);
+		return (cls != null && (cls._classMethodNameSet.contains(methodName) || cls._instanceMethodNameSet.contains(methodName)));
 	}
 
 
 
 	// メソッド引数を考慮して、適切なMethodTypeを返す
-	// 1. m(Object, List)() と m(List, Object)() が定義されているとき、m(ArrayList p1, ArrayList p2) がどちらを呼び出すか曖昧なのでコンパイルエラー
+	// 1. m(Object, List)() と m(List, Object)() が定義されているとき、m(ArrayList p1, ArrayList p2) はどちらを呼び出すか曖昧なのでコンパイルエラー
 	// 2. m(Object, Object)() と m(List, Object)() が定義されているとき、m(ArrayList p1, ArrayList p2) は後者を呼び出す
 	// 3. m(Object, Object)() と m(ArrayList, Object)() が定義されているとき、m(ArrayList p1, Object p2) は後者を呼び出す
 	// 4. m(Object, Object)() と m(ArrayList, Object)() が定義されているとき、m(List p1, Object p2) は前者を呼び出す
@@ -408,30 +404,29 @@ public class ClassResolver
 	//   (Javaでは classがinterfaceより優先されるので、三番目が呼び出される)
 	//   (< 多重継承を見越して、クラスとインターフェースはフラットに扱う)
 	// 6. 当クラスでメソッド解決できない場合、スーパークラスのメソッドに遡って解決を試みる
-	//   (このとき、Javaではメソッド定義に一番近いものが選択されるが、Pyriteでは自クラスのクラス階層に近いものが選択される)
+	//   (このとき、Javaではメソッド定義に一番近いものが選択されるが、Pyriteでは自クラスのクラス階層に近いものを選択する)
 	//   (例、スーパークラスで m(String)、自クラスで m(Object)が定義されている場合、
 	//     m(String p)はJavaではスーパークラスのm(String)、Pyriteでは自クラスのm(Object)が選択される
 	//   (Javaにあわせるか?)
-	// よって、
-	// それぞれの引数について、引数に指定されたクラスを基準に、クラス階層を遡って引数のクラスの組み合わせを作成する。
-	// それぞれの組み合わせにおいて、該当メソッドが存在するかをチェックする。
-	// メソッド定義のクラス階層が最も大きいものを選択する(2.)
-	// 引数によってクラス階層に入れ違いがある場合、コンパイルエラーにする(1.)
-	// 該当するメソッドが存在しない場合、親クラスに遡ってチェックする。
+	// よって、以下の順で処理する
+	// a. それぞれの引数について、引数に指定されたクラスを基準に、クラス階層を遡って引数のクラスの組み合わせを作成する。
+	// b. それぞれの組み合わせにおいて、該当メソッドが存在するかをチェックする。
+	// c. メソッド定義のクラス階層が最も大きいものを選択する(2.)
+	//    引数によってクラス階層に入れ違いがある場合、コンパイルエラーにする(1.)
+	// d. 該当するメソッドが存在しない場合、親クラスに遡ってチェックする。
 	//
 	// とりあえず、クラス階層のみを対象とする。インターフェース定義はフラットとして扱う。
 	public MethodType	dispatchMethodVarType(
-			MethodType methodType,
+			MethodNameType methodNameType,
 			List<VarType> inputParamTypeList)
 	{
-		// TODO:この判定でよいのか、再検討
-		boolean	isStaticOnly = methodType._isStatic;		// true:かならずstaticメソッドでないといけない false:staticでもinstanceでもよい
+		boolean	isStaticOnly = methodNameType._isStatic;		// true:かならずclass methodでないといけない false:class methodでもinstance methodでもよい
 
-		// メソッドパラメータシグネチャの組み合わせを作る
+		// 入力パラメータから、メソッドパラメータ識別子の組み合わせを作る
 		List<MethodParamSignature>	methodParamSignatureList = createMethodParamSignarureList(inputParamTypeList);
 
 		// クラス階層を遡ってメソッドが存在するかチェックする
-		for (ClassFieldMember cls = getClassFieldMember(methodType._fqcn._fqcnStr);
+		for (ClassFieldMember cls = getClassFieldMember(methodNameType._fqcn);
 				cls != null;
 				cls = cls._superCFM)
 		{
@@ -440,8 +435,8 @@ public class ClassResolver
 
 			for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 			{
-				// すべてのメソッドパラメータシグネチャについて、メソッドに存在するかチェックする
-				String	methodSignature = MethodType.createMethodSignature(methodType._fqcn._fqcnStr, methodType._methodName, methodParamSignature._methodParamSignarure);
+				// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
+				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);
 
 				MethodType	resultType = (MethodType)cls._classMethodMap.get(methodSignature);
 				if (resultType != null)
@@ -460,17 +455,12 @@ public class ClassResolver
 				}
 			}
 
-			// 合致するメソッドがいくつあるか判定する。
-			switch (resultTypeList.size())
-			{
-			case 0:	// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
-				break;
-			case 1:	// 該当するメソッドが一つのみだったので、それを返す
-				return	resultTypeList.get(0);
-			default:	// メソッドのクラス階層をチェックする。
+			if (resultTypeList.size() > 0)
+			{	// 最適なメソッド定義がどれかを判別して返す
 				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);
 				return	resultTypeList.get(resultIdx);
 			}
+			// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
 		}
 
 		return	null;	// no such method
@@ -479,15 +469,17 @@ public class ClassResolver
 
 	protected List<MethodParamSignature> createMethodParamSignarureList(List<VarType> inputParamTypeList)
 	{
-		List<MethodParamSignature>	methodParamSignarureList = new ArrayList<MethodParamSignature>();
+		List<MethodParamSignature>	methodParamSignarureList = new ArrayList<MethodParamSignature>();	// 作成したメソッド識別子の組み合わせリスト(返り値)
 
 		if (inputParamTypeList.size() == 0)
-		{	// 引数が空という要素のみを追加したリストを返す
+		{	// 引数が空という要素のみを設定したリストを返す
 			MethodParamSignature	methodParamSignature = new MethodParamSignature("", new ClassHierarchy[0]);
 			methodParamSignarureList.add(methodParamSignature);
 			return	methodParamSignarureList;
 		}
 
+		// 「入力パラメータを階層化した値を保持するリスト」のリスト。入力パラメータ毎に値を保持する。
+		// 「入力パラメータを階層化した値を保持するリスト」には、対応する入力パラメータについて型階層を遡った型情報を保持する。
 		List<List<ClassHierarchy>>	inputParamTypeClassHierarchyListList = new ArrayList<List<ClassHierarchy>>();
 
 		// パラメータごとに型階層オブジェクトを作る
@@ -497,14 +489,15 @@ public class ClassResolver
 			switch (inputParamType._type)
 			{
 			case OBJ:
+				// 継承関係がある場合は、継承元の型を遡る
 				ObjectType	type = (ObjectType)inputParamType;
 				int	level = 0;
-				for (ClassFieldMember cls = getClassFieldMember(type._fqcn._fqcnStr);
+				for (ClassFieldMember cls = getClassFieldMember(type._fqcn);
 						cls != null;
 						cls = cls._superCFM)
 				{
 					// 引数オブジェクトを型階層に追加
-					addInterfaceClassHierarchyRecursive(cls._fqcn._fqcnStr, level, paramClassHierarchyList);
+					addInterfaceClassHierarchyRecursive(cls._fqcn, level, paramClassHierarchyList);
 					level += 1;
 				}
 				break;
@@ -525,14 +518,14 @@ public class ClassResolver
 
 
 
-	// 指定されたクラスを型階層に追加し、再帰的にインターフェースも型階層に追加する
+	// 指定されたクラスを型階層に追加し、インターフェースも再帰的に展開し、同じレベルの型階層に追加する
 	private void addInterfaceClassHierarchyRecursive(
-			String fqcn,
+			FQCN fqcn,
 			int level,
 			List<ClassHierarchy> paramClassHierarchyList)
 	{
-		// 自分自身を登録する
-		VarType	type = ObjectType.getType(fqcn);
+		// クラスを登録する
+		VarType	type = ObjectType.getType(fqcn._fqcnStr);
 		ClassHierarchy	ch = new ClassHierarchy(type, level);
 		if (paramClassHierarchyList.contains(ch) == false)
 		{	// レベル違いで同じ型が存在していない場合に追加する
@@ -542,14 +535,23 @@ public class ClassResolver
 		ClassFieldMember	cls = getClassFieldMember(fqcn);
 		assert (cls != null);
 
-		// インターフェースに対して再帰的に実行する
-		for (String interfaceFqcn : cls._interfaceSet)
+		// インターフェースに対して再帰的に展開して追加する
+		for (String interfaceFqcnStr : cls._interfaceSet)
 		{
+			FQCN	interfaceFqcn = FQCNParser.getFQCN(interfaceFqcnStr);
 			addInterfaceClassHierarchyRecursive(interfaceFqcn, level, paramClassHierarchyList);
 		}
 	}
 
 	// メソッドのパラメータ文字列を組み合わせで再帰的に作成する
+	/**
+	 *
+	 * @param inputParamTypeClassHierarchyListList	「入力パラメータを階層化した値を保持するリスト」のリスト
+	 * @param inListIdx					今回処理対象とする入力パラメータの位置
+	 * @param paramSignaturePrev		一つ前までの入力パラメータを組み合わせたパラメータ識別子
+	 * @param pramClassHierarchys		一つ前までの入力パラメータの選択された型情報を保持した配列
+	 * @param methodParamSignarureList	作成したメソッド識別子を保持するリスト
+	 */
 	private void createMethodParamSignatureRecursive(
 			List<List<ClassHierarchy>> inputParamTypeClassHierarchyListList,
 			int inListIdx,
@@ -564,37 +566,46 @@ public class ClassResolver
 			return;
 		}
 
+		// 処理対象のパラメータの型をすべて組み合わせる
 		for (ClassHierarchy inputParamTypeClassHierarchy : inputParamTypeClassHierarchyListList.get(inListIdx))
 		{
 			String	paramSignature = paramSignaturePrev + inputParamTypeClassHierarchy._type._jvmExpression;
-			pramClassHierarchys[inListIdx] = inputParamTypeClassHierarchy;
+			pramClassHierarchys[inListIdx] = inputParamTypeClassHierarchy;		// 今回選択された型情報を保持する
 
 			// 再帰的に作成
 			createMethodParamSignatureRecursive(
 					inputParamTypeClassHierarchyListList,
-					inListIdx + 1,
+					inListIdx + 1,		// 次のパラメータを処理する
 					paramSignature,
 					pramClassHierarchys,
 					methodParamSignarureList);
 		}
 	}
 
-	// メソッドの優先順を判定する。最も優先されるもののインデクスを返す。
-	// 優先度が曖昧な場合は負の値を返す。
+	// メソッドの優先順を判定する。最も優先されるMethodParamSignatureのインデクスを返す。
+	// 優先度が曖昧な場合は例外を発行する
 	private int checkClassPriority(List<MethodParamSignature> resultMethodParamSignatureList)
 	{
-		// まずは最適と思われるもの(levelが最も小さいもの)を探す
-		// その後、最適と思われるものと一つでも小さいクラス階層のパラメータになっているものがあるかを調べる
-		// c.f.	m(C1, C2) m(C2, C1) m(C3, C3)という定義に対して m(C3, C3) はコンパイルエラーではないため
-		MethodParamSignature	min = resultMethodParamSignatureList.get(0);
-		int	minIdx = 0;
+		// c.f.
+		//  C0 extends C1, C1 extends C2 とする。(数字はレベルに対応している)
+		//	m(C0, C1) m(C1, C0) m(C0, C0)という定義に対して m(C0, C0) という呼び出しがある場合、最も合致するm(C0, C0)を選択する
+		//	m(C0, C1) m(C1, C0) という定義に対して m(C0, C0) という呼び出しがある場合、優先度が曖昧のため例外を発行する。
+		//
+		// そのため、まず最適と思われるもの(levelが最も小さいもの=引数パラメータの型に近いもの)を探す
+		// その後、最適と思われるものに対して、一つでも小さいレベルのパラメータを持つものがある場合、例外を発行する。
+		//
 
+		MethodParamSignature	min = resultMethodParamSignatureList.get(0);	// 最適と思われるMethodParamSignature
+		int	minIdx = 0;	// 最適と思われるMethodParamSignatureのIndex
+
+		// 最適と思われるものを探す。
 		for (int i = 1; i < resultMethodParamSignatureList.size(); ++i)
 		{
 			MethodParamSignature	other = resultMethodParamSignatureList.get(i);
 			ClassHierarchy[]	minLevel = min._classHierarchys;
 			ClassHierarchy[]	otherLevel = other._classHierarchys;
 
+			// levelがより小さいものが発見されたら、それを最適と想定して入れ替える
 			for (int j = 0; j < otherLevel.length; ++j)
 			{
 				if (otherLevel[i]._hierarchyLevel < minLevel[j]._hierarchyLevel)
@@ -606,6 +617,7 @@ public class ClassResolver
 			}
 		}
 
+		// レベルが最小かチェックする。
 		for (int i = 0; i < resultMethodParamSignatureList.size(); ++i)
 		{
 			if (i == minIdx)
@@ -616,21 +628,21 @@ public class ClassResolver
 			ClassHierarchy[]	minLevel = min._classHierarchys;
 			ClassHierarchy[]	otherLevel = other._classHierarchys;
 
-			boolean	isHigherLevel = false;	// true: otherLevel は一つでも minLevel より高レベルの引数パラメータがあった false:すべて同じレベルの引数パラメータだった
+			boolean	existsHigherLevel = false;	// true: otherLevel は一つでも minLevel より高レベルの引数パラメータがあった false:すべて同じレベルの引数パラメータだった
 			for (int j = 0; j < otherLevel.length; ++j)
 			{
 				if (otherLevel[i]._hierarchyLevel < minLevel[j]._hierarchyLevel)
-				{	// 最適と思われるものよりレベルが小さいものが発見されたので、どちらを選択すべきか曖昧
+				{	// 最適と思われるものよりレベルが小さいパラメータが発見されたので、どちらを選択すべきか曖昧
 					throw new PyriteSyntaxException("method call is ambiguity");
 				}
 				else if (otherLevel[i]._hierarchyLevel > minLevel[j]._hierarchyLevel)
 				{
-					isHigherLevel = true;
+					existsHigherLevel = true;
 				}
 			}
 
-			if (isHigherLevel == false)
-			{	// すべて同じレベルの引数パラメータのメソッドが存在する(インターフェース違い)ので、どちらを選択すべきか曖昧
+			if (existsHigherLevel == false)
+			{	// すべて同じレベルの引数パラメータのメソッドが存在する(インターフェース違いの場合)ので、どちらを選択すべきか曖昧
 				throw new PyriteSyntaxException("method call is ambiguity");
 			}
 		}
@@ -645,7 +657,7 @@ public class ClassResolver
 
 		MethodType	resultType = null;
 
-		ClassFieldMember	cls = getClassFieldMember(classType._fqcn._fqcnStr);
+		ClassFieldMember	cls = getClassFieldMember(classType._fqcn);
 		assert (cls != null);
 
 		resultType = (MethodType)cls._constructorMap.get(methodSignature);
@@ -761,8 +773,8 @@ public class ClassResolver
 		public Map<String, VarType>	_instanceFieldMap = new HashMap<String, VarType>();		// key:field name value:型
 		public Map<String, MethodType>	_classMethodMap = new HashMap<String, MethodType>();		// key:signature
 		public Map<String, MethodType>	_instanceMethodMap = new HashMap<String, MethodType>();		// key:signature
-		public Map<String, MethodType>	_classMethodNameMap = new HashMap<String, MethodType>();	// key:method name value:返す型の代表一つ
-		public Map<String, MethodType>	_instanceMethodNameMap = new HashMap<String, MethodType>();	// key:method name value:返す型の代表一つ
+		public Set<String>	_classMethodNameSet = new HashSet<String>();	// key:method name
+		public Set<String>	_instanceMethodNameSet = new HashSet<String>();	// key:method name
 		public Map<String, MethodType>	_constructorMap = new HashMap<String, MethodType>();		// key:signature
 
 		public Set<String>	_interfaceSet = new HashSet<String>();	// key:name
@@ -772,6 +784,7 @@ public class ClassResolver
 			_fqcn = fqcn;
 		}
 
+		// クラスのメタ情報を解析して定義を取得する
 		public ClassFieldMember(FQCN fqcn, Class<?> c, ClassResolver cr)
 		{
 			_fqcn = fqcn;
@@ -783,11 +796,11 @@ public class ClassResolver
 			}
 			else if (superClass == null)
 			{	// 基底クラス定義が取得できなければ、基底クラスは "java.lang.Object"
-				_superCFM = cr.getClassFieldMember("java.lang.Object");
+				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN("java.lang.Object"));
 			}
 			else
 			{	// 基底クラス定義がある場合は、再帰的に取得
-				_superCFM = cr.getClassFieldMember(superClass.getName());
+				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN(superClass.getName()));
 			}
 
 			Field[]	fields = c.getDeclaredFields();
@@ -879,12 +892,12 @@ public class ClassResolver
 			if (type._isStatic)
 			{
 				_classMethodMap.put(type._typeId, type);
-				_classMethodNameMap.put(type._methodName, type);
+				_classMethodNameSet.add(type._methodName);
 			}
 			else
 			{
 				_instanceMethodMap.put(type._typeId, type);
-				_instanceMethodNameMap.put(type._methodName, type);
+				_instanceMethodNameSet.add(type._methodName);
 			}
 		}
 

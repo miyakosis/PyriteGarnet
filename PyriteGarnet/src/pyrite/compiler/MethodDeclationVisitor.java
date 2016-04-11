@@ -13,6 +13,7 @@ import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 
+// メソッド定義を解析するVisitor
 public class MethodDeclationVisitor extends GrammarCommonVisitor
 {
 	public final ConstantPoolManager _cpm;
@@ -61,10 +62,12 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
 	{
 		// import
-		_idm.addImportDeclaretionStr("java.lang.*");		// デフォルトでインポートされる型
-// TODO		_idm.addImportDeclaretionStr("pyrite.lang.*");		// デフォルトでインポートされる型
+		_idm.addImportDeclaretionStr("java.lang.*");		// ソースに記述が無くてもインポートされる型
+// TODO		_idm.addImportDeclaretionStr("pyrite.lang.*");		// ソースに記述が無くてもインポートされる型
+
+		// importDeclaration から取得した文字列を追加保持
 		for (PyriteParser.ImportDeclarationContext idctx : ctx.importDeclaration())
-		{	// とりあえず文字列を収集
+		{
 			_idm.addImportDeclaretionStr((String)visit(idctx));
 		}
 
@@ -134,7 +137,8 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// Identifier (':' typeOrArray)? ('=' expression)?
+	// variableDeclarationStatement
+	//	:  Identifier (':' typeOrArray)? ('=' expression)?
 	@Override
 	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
 	{
@@ -171,7 +175,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes , false);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, false);
 
 		if (_declaredMember._constructorMap.containsKey(type._typeId))
 		{	// 同じ定義のメソッドがすでに登録されている

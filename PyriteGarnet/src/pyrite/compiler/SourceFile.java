@@ -23,6 +23,16 @@ import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 
+/**
+ * ソースファイルを保持するクラス
+ *
+ * ソースファイルに含まれるクラス名が異なっている場合は、
+ * 「クラス名.class」が作成される。
+ *
+ * FQCNはクラス名を保持する。
+ *
+ *  とりあえずは、１ソース１クラスの前提
+ */
 public class SourceFile extends ClassRelatedFile
 {
 //	public final String	_srcFilePathName;
@@ -32,14 +42,18 @@ public class SourceFile extends ClassRelatedFile
 	private ParseTree	_tree;
 
 	private ClassResolver	_cr;
-	private ConstantPoolManager	_cpm;
+	private ConstantPoolManager	_cpm;	// コンスタントプールはクラス単位に保持する
 
+	// パス込みソースファイル名
 	private String	_srcFilePathName;
 
+	// パス込みクラスファイル名
 	private String	_classFilePathName;
+
 
 	public SourceFile(String srcFilePathName, ClassResolver cr)
 	{
+		// ソースファイルに含まれるクラス名のみ解析して取得しておく
 		try
 		{
 			_srcFilePathName = srcFilePathName;
@@ -57,7 +71,7 @@ public class SourceFile extends ClassRelatedFile
 			// クラス名の解析
 			ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
 			classNameVisitor.visit(_tree);
-			_fqcn = classNameVisitor.getClassName();
+			_fqcn = classNameVisitor.getFQCN();
 
 			File	srcPathFile = f.getParentFile();
 			String	srcPath = srcPathFile.getName();
@@ -91,6 +105,9 @@ public class SourceFile extends ClassRelatedFile
 
 	private MethodDeclationVisitor	_methodDeclationVisitor;
 	private MethodCodeDeclation	_defaultConstractor = null;
+	/**
+	 * ソースファイルに含まれるメソッド定義を解析する
+	 */
 	public void	parseMethodDeclaration()
 	{
 		_idm = new ImportDeclarationManager(_cr);
@@ -126,6 +143,9 @@ public class SourceFile extends ClassRelatedFile
 	}
 
 	private List<MethodCodeDeclation>	_methodCodeDeclationList;
+	/**
+	 * メソッド本体を解析し、コードを生成する
+	 */
 	public void	parseCodeGeneration()
 	{
 		// コード生成

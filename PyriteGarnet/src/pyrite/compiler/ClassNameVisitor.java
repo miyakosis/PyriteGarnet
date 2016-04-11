@@ -10,7 +10,7 @@ public class ClassNameVisitor extends PyriteBaseVisitor<Object>
 {
 	private String	_packageName;
 
-	private FQCN	_className;
+	private FQCN	_fqcn;
 
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
@@ -48,13 +48,13 @@ public class ClassNameVisitor extends PyriteBaseVisitor<Object>
 	{
 		String	classNameStr = ctx.Identifier().getText();
 
-		_className = FQCNParser.getFQCN(_packageName, classNameStr);
+		_fqcn = FQCNParser.getFQCN(_packageName, classNameStr);
 
 		return	null;
 	}
 
-	public FQCN getClassName()
+	public FQCN getFQCN()
 	{
-		return _className;
+		return _fqcn;
 	}
 }

@@ -1,8 +1,7 @@
-// Generated from Pyrite.g4 by ANTLR 4.2.2
+// Generated from Pyrite.g4 by ANTLR 4.5.2
 
   package pyrite.compiler.antlr;
 
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -14,583 +13,545 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementWhile}.
+	 * Visit a parse tree produced by {@link PyriteParser#compilationUnit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStatementWhile(@NotNull PyriteParser.StatementWhileContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#floatingPointLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFloatingPointLiteral(@NotNull PyriteParser.FloatingPointLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementIf}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementIf(@NotNull PyriteParser.StatementIfContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#expressionList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionList(@NotNull PyriteParser.ExpressionListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementBlock}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementBlock(@NotNull PyriteParser.StatementBlockContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#stringLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStringLiteral(@NotNull PyriteParser.StringLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitType(@NotNull PyriteParser.TypeContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forUpdate}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForUpdate(@NotNull PyriteParser.ForUpdateContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionArrayAccess}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionArrayAccess(@NotNull PyriteParser.ExpressionArrayAccessContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#inputParameter}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#outputParameters}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionShift}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionShift(@NotNull PyriteParser.ExpressionShiftContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#inputParameters}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forInitSpec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForInitSpec(@NotNull PyriteParser.ForInitSpecContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#outputParameter}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#SwitchLabelCaseInt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSwitchLabelCaseInt(@NotNull PyriteParser.SwitchLabelCaseIntContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#primaryLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPrimaryLiteral(@NotNull PyriteParser.PrimaryLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#classBody}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitClassBody(@NotNull PyriteParser.ClassBodyContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#importDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionEqual}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionEqual(@NotNull PyriteParser.ExpressionEqualContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBitOr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionBitOr(@NotNull PyriteParser.ExpressionBitOrContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBitExOr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionBitExOr(@NotNull PyriteParser.ExpressionBitExOrContext ctx);
-
+	T visitCompilationUnit(PyriteParser.CompilationUnitContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#packageDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPackageDeclaration(@NotNull PyriteParser.PackageDeclarationContext ctx);
-
+	T visitPackageDeclaration(PyriteParser.PackageDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralBinary}.
+	 * Visit a parse tree produced by {@link PyriteParser#importDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIntegerLiteralBinary(@NotNull PyriteParser.IntegerLiteralBinaryContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#label}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLabel(@NotNull PyriteParser.LabelContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementContinue}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementContinue(@NotNull PyriteParser.StatementContinueContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementSwitch}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementSwitch(@NotNull PyriteParser.StatementSwitchContext ctx);
-
+	T visitImportDeclaration(PyriteParser.ImportDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#classInstanceModifier}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitClassInstanceModifier(@NotNull PyriteParser.ClassInstanceModifierContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ForControlIterator}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForControlIterator(@NotNull PyriteParser.ForControlIteratorContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecAssoc}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArraySpecAssoc(@NotNull PyriteParser.ArraySpecAssocContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementEmpty}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementEmpty(@NotNull PyriteParser.StatementEmptyContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ForControlICU}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForControlICU(@NotNull PyriteParser.ForControlICUContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#classBodyDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitClassBodyDeclaration(@NotNull PyriteParser.ClassBodyDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArraySpecType(@NotNull PyriteParser.ArraySpecTypeContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#CreatorClass}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreatorClass(@NotNull PyriteParser.CreatorClassContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#typeList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeList(@NotNull PyriteParser.TypeListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralDecimal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIntegerLiteralDecimal(@NotNull PyriteParser.IntegerLiteralDecimalContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralOctal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIntegerLiteralOctal(@NotNull PyriteParser.IntegerLiteralOctalContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#array}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArray(@NotNull PyriteParser.ArrayContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#variableDeclarationStatement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionAddSub}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionAddSub(@NotNull PyriteParser.ExpressionAddSubContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#compilationUnit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBolAnd}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionBolAnd(@NotNull PyriteParser.ExpressionBolAndContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#typeOrArray}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeOrArray(@NotNull PyriteParser.TypeOrArrayContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#block}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBlock(@NotNull PyriteParser.BlockContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionMulDiv}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionMulDiv(@NotNull PyriteParser.ExpressionMulDivContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementVar}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementVar(@NotNull PyriteParser.StatementVarContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#primaryIdentifier}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPrimaryIdentifier(@NotNull PyriteParser.PrimaryIdentifierContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementBreak}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementBreak(@NotNull PyriteParser.StatementBreakContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementReturn}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementReturn(@NotNull PyriteParser.StatementReturnContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionPrimary}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionPrimary(@NotNull PyriteParser.ExpressionPrimaryContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionClassFieldRef}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionClassFieldRef(@NotNull PyriteParser.ExpressionClassFieldRefContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementExpression(@NotNull PyriteParser.StatementExpressionContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#fieldDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionInvokeMethod}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionInvokeMethod(@NotNull PyriteParser.ExpressionInvokeMethodContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#methodDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#parExpression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#constructorDeclaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#qualifiedName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitQualifiedName(@NotNull PyriteParser.QualifiedNameContext ctx);
-
+	T visitClassInstanceModifier(PyriteParser.ClassInstanceModifierContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#classDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx);
-
+	T visitClassDeclaration(PyriteParser.ClassDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#booleanLiteral}.
+	 * Visit a parse tree produced by {@link PyriteParser#typeList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBooleanLiteral(@NotNull PyriteParser.BooleanLiteralContext ctx);
-
+	T visitTypeList(PyriteParser.TypeListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#primaryParens}.
+	 * Visit a parse tree produced by {@link PyriteParser#classBody}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPrimaryParens(@NotNull PyriteParser.PrimaryParensContext ctx);
-
+	T visitClassBody(PyriteParser.ClassBodyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionCompare}.
+	 * Visit a parse tree produced by {@link PyriteParser#classBodyDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpressionCompare(@NotNull PyriteParser.ExpressionCompareContext ctx);
-
+	T visitClassBodyDeclaration(PyriteParser.ClassBodyDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ifStatement}.
+	 * Visit a parse tree produced by {@link PyriteParser#methodDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIfStatement(@NotNull PyriteParser.IfStatementContext ctx);
-
+	T visitMethodDeclaration(PyriteParser.MethodDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#CreatorArray}.
+	 * Visit a parse tree produced by {@link PyriteParser#inputParameters}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCreatorArray(@NotNull PyriteParser.CreatorArrayContext ctx);
-
+	T visitInputParameters(PyriteParser.InputParametersContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBitAnd}.
+	 * Visit a parse tree produced by {@link PyriteParser#inputParameter}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpressionBitAnd(@NotNull PyriteParser.ExpressionBitAndContext ctx);
-
+	T visitInputParameter(PyriteParser.InputParameterContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#nullLiteral}.
+	 * Visit a parse tree produced by {@link PyriteParser#outputParameters}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNullLiteral(@NotNull PyriteParser.NullLiteralContext ctx);
-
+	T visitOutputParameters(PyriteParser.OutputParametersContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ArraySpecArray}.
+	 * Visit a parse tree produced by {@link PyriteParser#outputParameter}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArraySpecArray(@NotNull PyriteParser.ArraySpecArrayContext ctx);
-
+	T visitOutputParameter(PyriteParser.OutputParameterContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#arguments}.
+	 * Visit a parse tree produced by {@link PyriteParser#constructorDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArguments(@NotNull PyriteParser.ArgumentsContext ctx);
-
+	T visitConstructorDeclaration(PyriteParser.ConstructorDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#constructorBody}.
+	 * Visit a parse tree produced by {@link PyriteParser#fieldDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConstructorBody(@NotNull PyriteParser.ConstructorBodyContext ctx);
-
+	T visitFieldDeclaration(PyriteParser.FieldDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#methodBody}.
+	 * Visit a parse tree produced by {@link PyriteParser#typeOrArray}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitMethodBody(@NotNull PyriteParser.MethodBodyContext ctx);
-
+	T visitTypeOrArray(PyriteParser.TypeOrArrayContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#characterLiteral}.
+	 * Visit a parse tree produced by {@link PyriteParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCharacterLiteral(@NotNull PyriteParser.CharacterLiteralContext ctx);
-
+	T visitType(PyriteParser.TypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#IntegerLiteralHex}.
+	 * Visit a parse tree produced by {@link PyriteParser#array}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIntegerLiteralHex(@NotNull PyriteParser.IntegerLiteralHexContext ctx);
-
+	T visitArray(PyriteParser.ArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ArraySpecType}
+	 * labeled alternative in {@link PyriteParser#arraySpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecType(PyriteParser.ArraySpecTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ArraySpecAssoc}
+	 * labeled alternative in {@link PyriteParser#arraySpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecAssoc(PyriteParser.ArraySpecAssocContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ArraySpecArray}
+	 * labeled alternative in {@link PyriteParser#arraySpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArraySpecArray(PyriteParser.ArraySpecArrayContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#primitiveType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPrimitiveType(@NotNull PyriteParser.PrimitiveTypeContext ctx);
-
+	T visitPrimitiveType(PyriteParser.PrimitiveTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#SwitchLabelDefault}.
+	 * Visit a parse tree produced by {@link PyriteParser#methodBody}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSwitchLabelDefault(@NotNull PyriteParser.SwitchLabelDefaultContext ctx);
-
+	T visitMethodBody(PyriteParser.MethodBodyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#SwitchLabelCaseStr}.
+	 * Visit a parse tree produced by {@link PyriteParser#constructorBody}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSwitchLabelCaseStr(@NotNull PyriteParser.SwitchLabelCaseStrContext ctx);
-
+	T visitConstructorBody(PyriteParser.ConstructorBodyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionNew}.
+	 * Visit a parse tree produced by {@link PyriteParser#qualifiedName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpressionNew(@NotNull PyriteParser.ExpressionNewContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#StatementFor}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStatementFor(@NotNull PyriteParser.StatementForContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forInit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForInit(@NotNull PyriteParser.ForInitContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionAssign}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionAssign(@NotNull PyriteParser.ExpressionAssignContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#ExpressionBolOr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionBolOr(@NotNull PyriteParser.ExpressionBolOrContext ctx);
-
+	T visitQualifiedName(PyriteParser.QualifiedNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#literal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLiteral(@NotNull PyriteParser.LiteralContext ctx);
-
+	T visitLiteral(PyriteParser.LiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#block}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlock(PyriteParser.BlockContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementBlock}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementBlock(PyriteParser.StatementBlockContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementEmpty}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementEmpty(PyriteParser.StatementEmptyContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementExpression}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementExpression(PyriteParser.StatementExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementReturn}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementReturn(PyriteParser.StatementReturnContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementIf}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementIf(PyriteParser.StatementIfContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementWhile}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementWhile(PyriteParser.StatementWhileContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementFor}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementFor(PyriteParser.StatementForContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementSwitch}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementSwitch(PyriteParser.StatementSwitchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementBreak}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementBreak(PyriteParser.StatementBreakContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementContinue}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementContinue(PyriteParser.StatementContinueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementVar}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementVar(PyriteParser.StatementVarContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#variableDeclarationStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDeclarationStatement(PyriteParser.VariableDeclarationStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#label}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLabel(PyriteParser.LabelContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#ifStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfStatement(PyriteParser.IfStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#switchBlockStatementGroup}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSwitchBlockStatementGroup(@NotNull PyriteParser.SwitchBlockStatementGroupContext ctx);
+	T visitSwitchBlockStatementGroup(PyriteParser.SwitchBlockStatementGroupContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code SwitchLabelCaseInt}
+	 * labeled alternative in {@link PyriteParser#switchLabel}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchLabelCaseInt(PyriteParser.SwitchLabelCaseIntContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code SwitchLabelCaseStr}
+	 * labeled alternative in {@link PyriteParser#switchLabel}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchLabelCaseStr(PyriteParser.SwitchLabelCaseStrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code SwitchLabelDefault}
+	 * labeled alternative in {@link PyriteParser#switchLabel}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSwitchLabelDefault(PyriteParser.SwitchLabelDefaultContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ForControlIterator}
+	 * labeled alternative in {@link PyriteParser#forControl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForControlIterator(PyriteParser.ForControlIteratorContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ForControlICU}
+	 * labeled alternative in {@link PyriteParser#forControl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForControlICU(PyriteParser.ForControlICUContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#forInit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForInit(PyriteParser.ForInitContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#forInitSpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForInitSpec(PyriteParser.ForInitSpecContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#forUpdate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForUpdate(PyriteParser.ForUpdateContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#parExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParExpression(PyriteParser.ParExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#expressionList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionList(PyriteParser.ExpressionListContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionNew}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionNew(PyriteParser.ExpressionNewContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionMulDiv}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionMulDiv(PyriteParser.ExpressionMulDivContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionClassFieldRef}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionClassFieldRef(PyriteParser.ExpressionClassFieldRefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionPrimary}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionPrimary(PyriteParser.ExpressionPrimaryContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionArrayAccess}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionArrayAccess(PyriteParser.ExpressionArrayAccessContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionInvokeMethod}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionInvokeMethod(PyriteParser.ExpressionInvokeMethodContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionBitOr}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionBitOr(PyriteParser.ExpressionBitOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionAddSub}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionAddSub(PyriteParser.ExpressionAddSubContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionShift}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionShift(PyriteParser.ExpressionShiftContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionBolOr}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionBolOr(PyriteParser.ExpressionBolOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionBitExOr}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionBitExOr(PyriteParser.ExpressionBitExOrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionAssign}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionEqual}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionEqual(PyriteParser.ExpressionEqualContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionBitAnd}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionBitAnd(PyriteParser.ExpressionBitAndContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionBolAnd}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionBolAnd(PyriteParser.ExpressionBolAndContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionCompare}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionCompare(PyriteParser.ExpressionCompareContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code primaryParens}
+	 * labeled alternative in {@link PyriteParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimaryParens(PyriteParser.PrimaryParensContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code primaryLiteral}
+	 * labeled alternative in {@link PyriteParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimaryLiteral(PyriteParser.PrimaryLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code primaryIdentifier}
+	 * labeled alternative in {@link PyriteParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimaryIdentifier(PyriteParser.PrimaryIdentifierContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code CreatorClass}
+	 * labeled alternative in {@link PyriteParser#creator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCreatorClass(PyriteParser.CreatorClassContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code CreatorArray}
+	 * labeled alternative in {@link PyriteParser#creator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCreatorArray(PyriteParser.CreatorArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#arguments}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArguments(PyriteParser.ArgumentsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code IntegerLiteralDecimal}
+	 * labeled alternative in {@link PyriteParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntegerLiteralDecimal(PyriteParser.IntegerLiteralDecimalContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code IntegerLiteralHex}
+	 * labeled alternative in {@link PyriteParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntegerLiteralHex(PyriteParser.IntegerLiteralHexContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code IntegerLiteralOctal}
+	 * labeled alternative in {@link PyriteParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntegerLiteralOctal(PyriteParser.IntegerLiteralOctalContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code IntegerLiteralBinary}
+	 * labeled alternative in {@link PyriteParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntegerLiteralBinary(PyriteParser.IntegerLiteralBinaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#floatingPointLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFloatingPointLiteral(PyriteParser.FloatingPointLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#booleanLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanLiteral(PyriteParser.BooleanLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#characterLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCharacterLiteral(PyriteParser.CharacterLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#stringLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStringLiteral(PyriteParser.StringLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#nullLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNullLiteral(PyriteParser.NullLiteralContext ctx);
 }

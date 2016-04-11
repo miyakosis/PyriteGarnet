@@ -1,63 +1,77 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.FQCNParser;
-import pyrite.compiler.ImportDeclarationManager;
-import pyrite.compiler.util.StringUtil;
+import pyrite.compiler.FQCNParser.FQCN;
 
 
 public class PackageType extends VarType
 {
-	public final String	_packageName;
+	public final FQCN	_fqcn;
+//	public final String	_packageName;
 
 	// これが呼ばれるときは、必ずImport宣言を考慮したパッケージになっている
-	public static VarType	getType(String packageName1, String packageName2)
+//	public static VarType	getType(String packageName1, String packageName2)
+//	{
+//		String	packageName = StringUtil.concat(packageName1, packageName2);
+//		StringBuilder	sb = new StringBuilder();
+//		sb.append("PACKAGE:").append(packageName);
+//
+//		String	typeId = sb.toString();
+//		VarType	varType = __varTypeMap.get(typeId);
+//		if (varType == null)
+//		{
+//			varType = new PackageType(typeId, packageName);
+//		}
+//
+//		return	varType;
+//	}
+
+	// precond:これが呼ばれるときは、必ずImport宣言を考慮したパッケージになっている
+	public static VarType	getType(FQCN fqcn)
 	{
-		String	packageName = StringUtil.concat(packageName1, packageName2);
 		StringBuilder	sb = new StringBuilder();
-		sb.append("PACKAGE:").append(packageName);
+		sb.append("PACKAGE:").append(fqcn._fqcnStr);
 
 		String	typeId = sb.toString();
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new PackageType(typeId, packageName);
+			varType = new PackageType(typeId, fqcn);
 		}
 
 		return	varType;
 	}
 
-	protected PackageType(String typeId, String packageName)
+	protected PackageType(String typeId, FQCN fqcn)
 	{
 		super(TYPE.PACKAGE, typeId, null);
 
-		_packageName = packageName;
+		_fqcn = fqcn;
 	}
 
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	@Override
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		ClassResolver	cr = cgv._cr;
-		ImportDeclarationManager	idm = cgv._idm;
 
-
-		if (cr.isClass(FQCNParser.getFQCN(_packageName, id)))
-		{	// class name
-			return	ClassType.getType(FQCNParser.getFQCN(_packageName, id));
-		}
-
-		if (cr.isPackage(_packageName, id))
-		{
-			return	PackageType.getType(_packageName, id);
-		}
-
-		throw new RuntimeException("id is not declared." + id);
-	}
+	// CodeGenerationVisitor に移動
+//	// この型に続く識別子の型を解決する。
+//	//   Package.Package
+//	//   Package.Class
+//	@Override
+//	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, ParseTree idNode)
+//	{
+//		ClassResolver	cr = cgv._cr;
+//		ImportDeclarationManager	idm = cgv._idm;
+//
+//		String	id = idNode.getText();
+//		FQCN	fqcn = FQCNParser.getFQCN(_fqcn._fqcnStr, id);
+//
+//		if (cr.isClass(fqcn))
+//		{	// class name
+//			return	ClassType.getType(fqcn);
+//		}
+//
+//		if (cr.isPackage(fqcn))
+//		{
+//			return	PackageType.getType(fqcn);
+//		}
+//
+//		throw new RuntimeException("id is not declared." + id);
+//	}
 }

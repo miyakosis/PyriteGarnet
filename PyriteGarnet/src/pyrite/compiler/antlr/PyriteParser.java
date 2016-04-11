@@ -1,4 +1,4 @@
-// Generated from Pyrite.g4 by ANTLR 4.2.2
+// Generated from Pyrite.g4 by ANTLR 4.5.2
 
   package pyrite.compiler.antlr;
 
@@ -13,11 +13,13 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class PyriteParser extends Parser {
+	static { RuntimeMetaData.checkVersion("4.5.2", RuntimeMetaData.VERSION); }
+
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__6=1, T__5=2, T__4=3, T__3=4, T__2=5, T__1=6, T__0=7, DecimalNumeral=8, 
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, DecimalNumeral=8, 
 		Digits=9, HexNumeral=10, OctalNumeral=11, BinaryNumeral=12, CharacterLiteral=13, 
 		StringLiteral=14, BREAK=15, CASE=16, CATCH=17, CLASS=18, CONST=19, CONTINUE=20, 
 		DEFAULT=21, ELSE=22, ENUM=23, EXTENDS=24, FINAL=25, FINALLY=26, FOR=27, 
@@ -33,23 +35,6 @@ public class PyriteParser extends Parser {
 		DIV_ASSIGN=94, AND_ASSIGN=95, OR_ASSIGN=96, XOR_ASSIGN=97, MOD_ASSIGN=98, 
 		LSHIFT_ASSIGN=99, RSHIFT_ASSIGN=100, URSHIFT_ASSIGN=101, Identifier=102, 
 		AT=103, ELLIPSIS=104, WS=105, COMMENT=106, LINE_COMMENT=107;
-	public static final String[] tokenNames = {
-		"<INVALID>", "'false'", "'fallthrough'", "'<<'", "'null'", "'>>>'", "'true'", 
-		"'>>'", "DecimalNumeral", "Digits", "HexNumeral", "OctalNumeral", "BinaryNumeral", 
-		"CharacterLiteral", "StringLiteral", "'break'", "'case'", "'catch'", "'class'", 
-		"'const'", "'continue'", "'default'", "'else'", "'enum'", "'extends'", 
-		"'final'", "'finally'", "'for'", "'if'", "'implements'", "'import'", "'instanceof'", 
-		"'interface'", "'new'", "'package'", "'private'", "'protected'", "'public'", 
-		"'return'", "'static'", "'super'", "'switch'", "'synchronized'", "'this'", 
-		"'throw'", "'throws'", "'try'", "'void'", "'while'", "'var'", "'obj'", 
-		"'num'", "'int'", "'flt'", "'str'", "'chr'", "'bol'", "'byt'", "'in'", 
-		"'('", "')'", "'{'", "'}'", "'['", "']'", "';'", "','", "'.'", "'='", 
-		"'>'", "'<'", "'!'", "'~'", "'?'", "':'", "'=='", "'<='", "'>='", "'!='", 
-		"'&&'", "'||'", "'++'", "'--'", "'+'", "'-'", "'*'", "'/'", "'&'", "'|'", 
-		"'^'", "'%'", "'+='", "'-='", "'*='", "'/='", "'&='", "'|='", "'^='", 
-		"'%='", "'<<='", "'>>='", "'>>>='", "Identifier", "'@'", "'...'", "WS", 
-		"COMMENT", "LINE_COMMENT"
-	};
 	public static final int
 		RULE_compilationUnit = 0, RULE_packageDeclaration = 1, RULE_importDeclaration = 2, 
 		RULE_classInstanceModifier = 3, RULE_classDeclaration = 4, RULE_typeList = 5, 
@@ -79,11 +64,72 @@ public class PyriteParser extends Parser {
 		"booleanLiteral", "characterLiteral", "stringLiteral", "nullLiteral"
 	};
 
-	@Override
-	public String getGrammarFileName() { return "Pyrite.g4"; }
+	private static final String[] _LITERAL_NAMES = {
+		null, "'fallthrough'", "'<<'", "'>>>'", "'>>'", "'true'", "'false'", "'null'", 
+		null, null, null, null, null, null, null, "'break'", "'case'", "'catch'", 
+		"'class'", "'const'", "'continue'", "'default'", "'else'", "'enum'", "'extends'", 
+		"'final'", "'finally'", "'for'", "'if'", "'implements'", "'import'", "'instanceof'", 
+		"'interface'", "'new'", "'package'", "'private'", "'protected'", "'public'", 
+		"'return'", "'static'", "'super'", "'switch'", "'synchronized'", "'this'", 
+		"'throw'", "'throws'", "'try'", "'void'", "'while'", "'var'", "'obj'", 
+		"'num'", "'int'", "'flt'", "'str'", "'chr'", "'bol'", "'byt'", "'in'", 
+		"'('", "')'", "'{'", "'}'", "'['", "']'", "';'", "','", "'.'", "'='", 
+		"'>'", "'<'", "'!'", "'~'", "'?'", "':'", "'=='", "'<='", "'>='", "'!='", 
+		"'&&'", "'||'", "'++'", "'--'", "'+'", "'-'", "'*'", "'/'", "'&'", "'|'", 
+		"'^'", "'%'", "'+='", "'-='", "'*='", "'/='", "'&='", "'|='", "'^='", 
+		"'%='", "'<<='", "'>>='", "'>>>='", null, "'@'", "'...'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, null, null, null, null, null, null, null, "DecimalNumeral", "Digits", 
+		"HexNumeral", "OctalNumeral", "BinaryNumeral", "CharacterLiteral", "StringLiteral", 
+		"BREAK", "CASE", "CATCH", "CLASS", "CONST", "CONTINUE", "DEFAULT", "ELSE", 
+		"ENUM", "EXTENDS", "FINAL", "FINALLY", "FOR", "IF", "IMPLEMENTS", "IMPORT", 
+		"INSTANCEOF", "INTERFACE", "NEW", "PACKAGE", "PRIVATE", "PROTECTED", "PUBLIC", 
+		"RETURN", "STATIC", "SUPER", "SWITCH", "SYNCHRONIZED", "THIS", "THROW", 
+		"THROWS", "TRY", "VOID", "WHILE", "VAR", "OBJ", "NUM", "INT", "FLT", "STR", 
+		"CHR", "BOL", "BYT", "IN", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "LBRACK", 
+		"RBRACK", "SEMI", "COMMA", "DOT", "ASSIGN", "GT", "LT", "BANG", "TILDE", 
+		"QUESTION", "COLON", "EQUAL", "LE", "GE", "NOTEQUAL", "AND", "OR", "INC", 
+		"DEC", "ADD", "SUB", "MUL", "DIV", "BITAND", "BITOR", "CARET", "MOD", 
+		"ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN", "AND_ASSIGN", 
+		"OR_ASSIGN", "XOR_ASSIGN", "MOD_ASSIGN", "LSHIFT_ASSIGN", "RSHIFT_ASSIGN", 
+		"URSHIFT_ASSIGN", "Identifier", "AT", "ELLIPSIS", "WS", "COMMENT", "LINE_COMMENT"
+	};
+	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
+
+	/**
+	 * @deprecated Use {@link #VOCABULARY} instead.
+	 */
+	@Deprecated
+	public static final String[] tokenNames;
+	static {
+		tokenNames = new String[_SYMBOLIC_NAMES.length];
+		for (int i = 0; i < tokenNames.length; i++) {
+			tokenNames[i] = VOCABULARY.getLiteralName(i);
+			if (tokenNames[i] == null) {
+				tokenNames[i] = VOCABULARY.getSymbolicName(i);
+			}
+
+			if (tokenNames[i] == null) {
+				tokenNames[i] = "<INVALID>";
+			}
+		}
+	}
 
 	@Override
-	public String[] getTokenNames() { return tokenNames; }
+	@Deprecated
+	public String[] getTokenNames() {
+		return tokenNames;
+	}
+
+	@Override
+
+	public Vocabulary getVocabulary() {
+		return VOCABULARY;
+	}
+
+	@Override
+	public String getGrammarFileName() { return "Pyrite.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
@@ -99,18 +145,18 @@ public class PyriteParser extends Parser {
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 	public static class CompilationUnitContext extends ParserRuleContext {
-		public List<ImportDeclarationContext> importDeclaration() {
-			return getRuleContexts(ImportDeclarationContext.class);
+		public ClassDeclarationContext classDeclaration() {
+			return getRuleContext(ClassDeclarationContext.class,0);
 		}
 		public TerminalNode EOF() { return getToken(PyriteParser.EOF, 0); }
 		public PackageDeclarationContext packageDeclaration() {
 			return getRuleContext(PackageDeclarationContext.class,0);
 		}
+		public List<ImportDeclarationContext> importDeclaration() {
+			return getRuleContexts(ImportDeclarationContext.class);
+		}
 		public ImportDeclarationContext importDeclaration(int i) {
 			return getRuleContext(ImportDeclarationContext.class,i);
-		}
-		public ClassDeclarationContext classDeclaration() {
-			return getRuleContext(ClassDeclarationContext.class,0);
 		}
 		public CompilationUnitContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -134,7 +180,8 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==PACKAGE) {
 				{
-				setState(94); packageDeclaration();
+				setState(94);
+				packageDeclaration();
 				}
 			}
 
@@ -144,15 +191,18 @@ public class PyriteParser extends Parser {
 			while (_la==IMPORT) {
 				{
 				{
-				setState(97); importDeclaration();
+				setState(97);
+				importDeclaration();
 				}
 				}
 				setState(102);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(103); classDeclaration();
-			setState(104); match(EOF);
+			setState(103);
+			classDeclaration();
+			setState(104);
+			match(EOF);
 			}
 		}
 		catch (RecognitionException re) {
@@ -187,9 +237,12 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(106); match(PACKAGE);
-			setState(107); qualifiedName();
-			setState(108); match(SEMI);
+			setState(106);
+			match(PACKAGE);
+			setState(107);
+			qualifiedName();
+			setState(108);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -226,18 +279,23 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(110); match(IMPORT);
-			setState(111); qualifiedName();
+			setState(110);
+			match(IMPORT);
+			setState(111);
+			qualifiedName();
 			setState(114);
 			_la = _input.LA(1);
 			if (_la==DOT) {
 				{
-				setState(112); match(DOT);
-				setState(113); ((ImportDeclarationContext)_localctx).ast = match(MUL);
+				setState(112);
+				match(DOT);
+				setState(113);
+				((ImportDeclarationContext)_localctx).ast = match(MUL);
 				}
 			}
 
-			setState(116); match(SEMI);
+			setState(116);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -269,7 +327,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(118); match(STATIC);
+			setState(118);
+			match(STATIC);
 			}
 		}
 		catch (RecognitionException re) {
@@ -284,15 +343,15 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class ClassDeclarationContext extends ParserRuleContext {
+		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public ClassBodyContext classBody() {
 			return getRuleContext(ClassBodyContext.class,0);
 		}
-		public TypeListContext typeList() {
-			return getRuleContext(TypeListContext.class,0);
-		}
-		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public TypeContext type() {
 			return getRuleContext(TypeContext.class,0);
+		}
+		public TypeListContext typeList() {
+			return getRuleContext(TypeListContext.class,0);
 		}
 		public ClassDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -312,14 +371,18 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(120); match(CLASS);
-			setState(121); match(Identifier);
+			setState(120);
+			match(CLASS);
+			setState(121);
+			match(Identifier);
 			setState(124);
 			_la = _input.LA(1);
 			if (_la==EXTENDS) {
 				{
-				setState(122); match(EXTENDS);
-				setState(123); type();
+				setState(122);
+				match(EXTENDS);
+				setState(123);
+				type();
 				}
 			}
 
@@ -327,12 +390,15 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==IMPLEMENTS) {
 				{
-				setState(126); match(IMPLEMENTS);
-				setState(127); typeList();
+				setState(126);
+				match(IMPLEMENTS);
+				setState(127);
+				typeList();
 				}
 			}
 
-			setState(130); classBody();
+			setState(130);
+			classBody();
 			}
 		}
 		catch (RecognitionException re) {
@@ -347,11 +413,11 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class TypeListContext extends ParserRuleContext {
-		public TypeContext type(int i) {
-			return getRuleContext(TypeContext.class,i);
-		}
 		public List<TypeContext> type() {
 			return getRuleContexts(TypeContext.class);
+		}
+		public TypeContext type(int i) {
+			return getRuleContext(TypeContext.class,i);
 		}
 		public TypeListContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -371,15 +437,18 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(132); type();
+			setState(132);
+			type();
 			setState(137);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==COMMA) {
 				{
 				{
-				setState(133); match(COMMA);
-				setState(134); type();
+				setState(133);
+				match(COMMA);
+				setState(134);
+				type();
 				}
 				}
 				setState(139);
@@ -400,11 +469,11 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class ClassBodyContext extends ParserRuleContext {
-		public ClassBodyDeclarationContext classBodyDeclaration(int i) {
-			return getRuleContext(ClassBodyDeclarationContext.class,i);
-		}
 		public List<ClassBodyDeclarationContext> classBodyDeclaration() {
 			return getRuleContexts(ClassBodyDeclarationContext.class);
+		}
+		public ClassBodyDeclarationContext classBodyDeclaration(int i) {
+			return getRuleContext(ClassBodyDeclarationContext.class,i);
 		}
 		public ClassBodyContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -424,21 +493,24 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(140); match(LBRACE);
+			setState(140);
+			match(LBRACE);
 			setState(144);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (((((_la - 39)) & ~0x3f) == 0 && ((1L << (_la - 39)) & ((1L << (STATIC - 39)) | (1L << (VAR - 39)) | (1L << (SEMI - 39)) | (1L << (Identifier - 39)))) != 0)) {
 				{
 				{
-				setState(141); classBodyDeclaration();
+				setState(141);
+				classBodyDeclaration();
 				}
 				}
 				setState(146);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(147); match(RBRACE);
+			setState(147);
+			match(RBRACE);
 			}
 		}
 		catch (RecognitionException re) {
@@ -456,11 +528,11 @@ public class PyriteParser extends Parser {
 		public ConstructorDeclarationContext constructorDeclaration() {
 			return getRuleContext(ConstructorDeclarationContext.class,0);
 		}
-		public FieldDeclarationContext fieldDeclaration() {
-			return getRuleContext(FieldDeclarationContext.class,0);
-		}
 		public MethodDeclarationContext methodDeclaration() {
 			return getRuleContext(MethodDeclarationContext.class,0);
+		}
+		public FieldDeclarationContext fieldDeclaration() {
+			return getRuleContext(FieldDeclarationContext.class,0);
 		}
 		public ClassBodyDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -478,32 +550,34 @@ public class PyriteParser extends Parser {
 		enterRule(_localctx, 14, RULE_classBodyDeclaration);
 		try {
 			setState(153);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,7,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(149); match(SEMI);
+				setState(149);
+				match(SEMI);
 				}
 				break;
-
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(150); constructorDeclaration();
+				setState(150);
+				constructorDeclaration();
 				}
 				break;
-
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(151); methodDeclaration();
+				setState(151);
+				methodDeclaration();
 				}
 				break;
-
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(152); fieldDeclaration();
+				setState(152);
+				fieldDeclaration();
 				}
 				break;
 			}
@@ -520,18 +594,18 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class MethodDeclarationContext extends ParserRuleContext {
-		public MethodBodyContext methodBody() {
-			return getRuleContext(MethodBodyContext.class,0);
-		}
-		public ClassInstanceModifierContext classInstanceModifier() {
-			return getRuleContext(ClassInstanceModifierContext.class,0);
-		}
 		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public InputParametersContext inputParameters() {
 			return getRuleContext(InputParametersContext.class,0);
 		}
 		public OutputParametersContext outputParameters() {
 			return getRuleContext(OutputParametersContext.class,0);
+		}
+		public MethodBodyContext methodBody() {
+			return getRuleContext(MethodBodyContext.class,0);
+		}
+		public ClassInstanceModifierContext classInstanceModifier() {
+			return getRuleContext(ClassInstanceModifierContext.class,0);
 		}
 		public MethodDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -555,14 +629,19 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==STATIC) {
 				{
-				setState(155); classInstanceModifier();
+				setState(155);
+				classInstanceModifier();
 				}
 			}
 
-			setState(158); match(Identifier);
-			setState(159); inputParameters();
-			setState(160); outputParameters();
-			setState(161); methodBody();
+			setState(158);
+			match(Identifier);
+			setState(159);
+			inputParameters();
+			setState(160);
+			outputParameters();
+			setState(161);
+			methodBody();
 			}
 		}
 		catch (RecognitionException re) {
@@ -601,20 +680,24 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(163); match(LPAREN);
+			setState(163);
+			match(LPAREN);
 			setState(172);
 			_la = _input.LA(1);
 			if (_la==VAR || _la==Identifier) {
 				{
-				setState(164); inputParameter();
+				setState(164);
+				inputParameter();
 				setState(169);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					setState(165); match(COMMA);
-					setState(166); inputParameter();
+					setState(165);
+					match(COMMA);
+					setState(166);
+					inputParameter();
 					}
 					}
 					setState(171);
@@ -624,7 +707,8 @@ public class PyriteParser extends Parser {
 				}
 			}
 
-			setState(174); match(RPAREN);
+			setState(174);
+			match(RPAREN);
 			}
 		}
 		catch (RecognitionException re) {
@@ -665,13 +749,17 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==VAR) {
 				{
-				setState(176); match(VAR);
+				setState(176);
+				match(VAR);
 				}
 			}
 
-			setState(179); match(Identifier);
-			setState(180); match(COLON);
-			setState(181); typeOrArray();
+			setState(179);
+			match(Identifier);
+			setState(180);
+			match(COLON);
+			setState(181);
+			typeOrArray();
 			}
 		}
 		catch (RecognitionException re) {
@@ -710,20 +798,24 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(183); match(LPAREN);
+			setState(183);
+			match(LPAREN);
 			setState(192);
 			_la = _input.LA(1);
 			if (((((_la - 49)) & ~0x3f) == 0 && ((1L << (_la - 49)) & ((1L << (VAR - 49)) | (1L << (OBJ - 49)) | (1L << (NUM - 49)) | (1L << (INT - 49)) | (1L << (FLT - 49)) | (1L << (STR - 49)) | (1L << (CHR - 49)) | (1L << (BOL - 49)) | (1L << (BYT - 49)) | (1L << (LBRACK - 49)) | (1L << (Identifier - 49)))) != 0)) {
 				{
-				setState(184); outputParameter();
+				setState(184);
+				outputParameter();
 				setState(189);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					setState(185); match(COMMA);
-					setState(186); outputParameter();
+					setState(185);
+					match(COMMA);
+					setState(186);
+					outputParameter();
 					}
 					}
 					setState(191);
@@ -733,7 +825,8 @@ public class PyriteParser extends Parser {
 				}
 			}
 
-			setState(194); match(RPAREN);
+			setState(194);
+			match(RPAREN);
 			}
 		}
 		catch (RecognitionException re) {
@@ -748,10 +841,10 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class OutputParameterContext extends ParserRuleContext {
-		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public TypeOrArrayContext typeOrArray() {
 			return getRuleContext(TypeOrArrayContext.class,0);
 		}
+		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public OutputParameterContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -771,6 +864,7 @@ public class PyriteParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(201);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,15,_ctx) ) {
 			case 1:
 				{
@@ -778,16 +872,20 @@ public class PyriteParser extends Parser {
 				_la = _input.LA(1);
 				if (_la==VAR) {
 					{
-					setState(196); match(VAR);
+					setState(196);
+					match(VAR);
 					}
 				}
 
-				setState(199); match(Identifier);
-				setState(200); match(COLON);
+				setState(199);
+				match(Identifier);
+				setState(200);
+				match(COLON);
 				}
 				break;
 			}
-			setState(203); typeOrArray();
+			setState(203);
+			typeOrArray();
 			}
 		}
 		catch (RecognitionException re) {
@@ -803,11 +901,11 @@ public class PyriteParser extends Parser {
 
 	public static class ConstructorDeclarationContext extends ParserRuleContext {
 		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
-		public ConstructorBodyContext constructorBody() {
-			return getRuleContext(ConstructorBodyContext.class,0);
-		}
 		public InputParametersContext inputParameters() {
 			return getRuleContext(InputParametersContext.class,0);
+		}
+		public ConstructorBodyContext constructorBody() {
+			return getRuleContext(ConstructorBodyContext.class,0);
 		}
 		public ConstructorDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -826,9 +924,12 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(205); match(Identifier);
-			setState(206); inputParameters();
-			setState(207); constructorBody();
+			setState(205);
+			match(Identifier);
+			setState(206);
+			inputParameters();
+			setState(207);
+			constructorBody();
 			}
 		}
 		catch (RecognitionException re) {
@@ -843,11 +944,11 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class FieldDeclarationContext extends ParserRuleContext {
-		public ClassInstanceModifierContext classInstanceModifier() {
-			return getRuleContext(ClassInstanceModifierContext.class,0);
-		}
 		public VariableDeclarationStatementContext variableDeclarationStatement() {
 			return getRuleContext(VariableDeclarationStatementContext.class,0);
+		}
+		public ClassInstanceModifierContext classInstanceModifier() {
+			return getRuleContext(ClassInstanceModifierContext.class,0);
 		}
 		public FieldDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -871,13 +972,17 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==STATIC) {
 				{
-				setState(209); classInstanceModifier();
+				setState(209);
+				classInstanceModifier();
 				}
 			}
 
-			setState(212); match(VAR);
-			setState(213); variableDeclarationStatement();
-			setState(214); match(SEMI);
+			setState(212);
+			match(VAR);
+			setState(213);
+			variableDeclarationStatement();
+			setState(214);
+			match(SEMI);
 			}
 		}
 		catch (RecognitionException re) {
@@ -926,13 +1031,15 @@ public class PyriteParser extends Parser {
 			case Identifier:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(216); type();
+				setState(216);
+				type();
 				}
 				break;
 			case LBRACK:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(217); array();
+				setState(217);
+				array();
 				}
 				break;
 			default:
@@ -951,11 +1058,11 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class TypeContext extends ParserRuleContext {
-		public QualifiedNameContext qualifiedName() {
-			return getRuleContext(QualifiedNameContext.class,0);
-		}
 		public PrimitiveTypeContext primitiveType() {
 			return getRuleContext(PrimitiveTypeContext.class,0);
+		}
+		public QualifiedNameContext qualifiedName() {
+			return getRuleContext(QualifiedNameContext.class,0);
 		}
 		public TypeContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -984,13 +1091,15 @@ public class PyriteParser extends Parser {
 			case BYT:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(220); primitiveType();
+				setState(220);
+				primitiveType();
 				}
 				break;
 			case Identifier:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(221); qualifiedName();
+				setState(221);
+				qualifiedName();
 				}
 				break;
 			default:
@@ -1029,9 +1138,12 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(224); match(LBRACK);
-			setState(225); arraySpec();
-			setState(226); match(RBRACK);
+			setState(224);
+			match(LBRACK);
+			setState(225);
+			arraySpec();
+			setState(226);
+			match(RBRACK);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1068,11 +1180,11 @@ public class PyriteParser extends Parser {
 		}
 	}
 	public static class ArraySpecAssocContext extends ArraySpecContext {
-		public TypeContext type(int i) {
-			return getRuleContext(TypeContext.class,i);
-		}
 		public List<TypeContext> type() {
 			return getRuleContexts(TypeContext.class);
+		}
+		public TypeContext type(int i) {
+			return getRuleContext(TypeContext.class,i);
 		}
 		public ArraySpecAssocContext(ArraySpecContext ctx) { copyFrom(ctx); }
 		@Override
@@ -1098,30 +1210,34 @@ public class PyriteParser extends Parser {
 		enterRule(_localctx, 36, RULE_arraySpec);
 		try {
 			setState(234);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,19,_ctx) ) {
 			case 1:
 				_localctx = new ArraySpecTypeContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(228); type();
+				setState(228);
+				type();
 				}
 				break;
-
 			case 2:
 				_localctx = new ArraySpecAssocContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(229); type();
-				setState(230); match(COLON);
-				setState(231); type();
+				setState(229);
+				type();
+				setState(230);
+				match(COLON);
+				setState(231);
+				type();
 				}
 				break;
-
 			case 3:
 				_localctx = new ArraySpecArrayContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(233); array();
+				setState(233);
+				array();
 				}
 				break;
 			}
@@ -1160,8 +1276,9 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << OBJ) | (1L << NUM) | (1L << INT) | (1L << FLT) | (1L << STR) | (1L << CHR) | (1L << BOL) | (1L << BYT))) != 0)) ) {
 			_errHandler.recoverInline(this);
+			} else {
+				consume();
 			}
-			consume();
 			}
 		}
 		catch (RecognitionException re) {
@@ -1196,7 +1313,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(238); block();
+			setState(238);
+			block();
 			}
 		}
 		catch (RecognitionException re) {
@@ -1231,7 +1349,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(240); block();
+			setState(240);
+			block();
 			}
 		}
 		catch (RecognitionException re) {
@@ -1246,10 +1365,10 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class QualifiedNameContext extends ParserRuleContext {
+		public List<TerminalNode> Identifier() { return getTokens(PyriteParser.Identifier); }
 		public TerminalNode Identifier(int i) {
 			return getToken(PyriteParser.Identifier, i);
 		}
-		public List<TerminalNode> Identifier() { return getTokens(PyriteParser.Identifier); }
 		public QualifiedNameContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1268,16 +1387,19 @@ public class PyriteParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(242); match(Identifier);
+			setState(242);
+			match(Identifier);
 			setState(247);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,20,_ctx);
-			while ( _alt!=2 && _alt!=ATN.INVALID_ALT_NUMBER ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(243); match(DOT);
-					setState(244); match(Identifier);
+					setState(243);
+					match(DOT);
+					setState(244);
+					match(Identifier);
 					}
 					} 
 				}
@@ -1305,17 +1427,17 @@ public class PyriteParser extends Parser {
 		public FloatingPointLiteralContext floatingPointLiteral() {
 			return getRuleContext(FloatingPointLiteralContext.class,0);
 		}
-		public StringLiteralContext stringLiteral() {
-			return getRuleContext(StringLiteralContext.class,0);
-		}
-		public NullLiteralContext nullLiteral() {
-			return getRuleContext(NullLiteralContext.class,0);
-		}
 		public CharacterLiteralContext characterLiteral() {
 			return getRuleContext(CharacterLiteralContext.class,0);
 		}
+		public StringLiteralContext stringLiteral() {
+			return getRuleContext(StringLiteralContext.class,0);
+		}
 		public BooleanLiteralContext booleanLiteral() {
 			return getRuleContext(BooleanLiteralContext.class,0);
+		}
+		public NullLiteralContext nullLiteral() {
+			return getRuleContext(NullLiteralContext.class,0);
 		}
 		public LiteralContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1340,39 +1462,45 @@ public class PyriteParser extends Parser {
 			case BinaryNumeral:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(250); integerLiteral();
+				setState(250);
+				integerLiteral();
 				}
 				break;
 			case Digits:
 			case DOT:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(251); floatingPointLiteral();
+				setState(251);
+				floatingPointLiteral();
 				}
 				break;
 			case CharacterLiteral:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(252); characterLiteral();
+				setState(252);
+				characterLiteral();
 				}
 				break;
 			case StringLiteral:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(253); stringLiteral();
+				setState(253);
+				stringLiteral();
 				}
 				break;
-			case 1:
-			case 6:
+			case T__4:
+			case T__5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(254); booleanLiteral();
+				setState(254);
+				booleanLiteral();
 				}
 				break;
-			case 4:
+			case T__6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(255); nullLiteral();
+				setState(255);
+				nullLiteral();
 				}
 				break;
 			default:
@@ -1415,21 +1543,24 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(258); match(LBRACE);
+			setState(258);
+			match(LBRACE);
 			setState(262);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << BREAK) | (1L << CONTINUE) | (1L << FOR) | (1L << IF) | (1L << NEW) | (1L << RETURN) | (1L << SWITCH) | (1L << WHILE) | (1L << VAR) | (1L << LPAREN) | (1L << LBRACE))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (SEMI - 65)) | (1L << (DOT - 65)) | (1L << (Identifier - 65)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << BREAK) | (1L << CONTINUE) | (1L << FOR) | (1L << IF) | (1L << NEW) | (1L << RETURN) | (1L << SWITCH) | (1L << WHILE) | (1L << VAR) | (1L << LPAREN) | (1L << LBRACE))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (SEMI - 65)) | (1L << (DOT - 65)) | (1L << (Identifier - 65)))) != 0)) {
 				{
 				{
-				setState(259); statement();
+				setState(259);
+				statement();
 				}
 				}
 				setState(264);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(265); match(RBRACE);
+			setState(265);
+			match(RBRACE);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1454,65 +1585,31 @@ public class PyriteParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class StatementVarContext extends StatementContext {
-		public VariableDeclarationStatementContext variableDeclarationStatement() {
-			return getRuleContext(VariableDeclarationStatementContext.class,0);
+	public static class StatementIfContext extends StatementContext {
+		public IfStatementContext ifStatement() {
+			return getRuleContext(IfStatementContext.class,0);
 		}
-		public StatementVarContext(StatementContext ctx) { copyFrom(ctx); }
+		public StatementIfContext(StatementContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementVar(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementIf(this);
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class StatementSwitchContext extends StatementContext {
-		public SwitchLabelContext switchLabel(int i) {
-			return getRuleContext(SwitchLabelContext.class,i);
-		}
-		public SwitchBlockStatementGroupContext switchBlockStatementGroup(int i) {
-			return getRuleContext(SwitchBlockStatementGroupContext.class,i);
-		}
-		public List<SwitchLabelContext> switchLabel() {
-			return getRuleContexts(SwitchLabelContext.class);
-		}
-		public ParExpressionContext parExpression() {
-			return getRuleContext(ParExpressionContext.class,0);
-		}
-		public List<SwitchBlockStatementGroupContext> switchBlockStatementGroup() {
-			return getRuleContexts(SwitchBlockStatementGroupContext.class);
-		}
-		public StatementSwitchContext(StatementContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementSwitch(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StatementWhileContext extends StatementContext {
-		public ParExpressionContext parExpression() {
-			return getRuleContext(ParExpressionContext.class,0);
-		}
+	public static class StatementForContext extends StatementContext {
 		public LabelContext label() {
 			return getRuleContext(LabelContext.class,0);
+		}
+		public ForControlContext forControl() {
+			return getRuleContext(ForControlContext.class,0);
 		}
 		public BlockContext block() {
 			return getRuleContext(BlockContext.class,0);
 		}
-		public StatementWhileContext(StatementContext ctx) { copyFrom(ctx); }
+		public StatementForContext(StatementContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementWhile(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StatementBreakContext extends StatementContext {
-		public LabelContext label() {
-			return getRuleContext(LabelContext.class,0);
-		}
-		public StatementBreakContext(StatementContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementBreak(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementFor(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1527,14 +1624,25 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class StatementIfContext extends StatementContext {
-		public IfStatementContext ifStatement() {
-			return getRuleContext(IfStatementContext.class,0);
+	public static class StatementBreakContext extends StatementContext {
+		public LabelContext label() {
+			return getRuleContext(LabelContext.class,0);
 		}
-		public StatementIfContext(StatementContext ctx) { copyFrom(ctx); }
+		public StatementBreakContext(StatementContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementIf(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementBreak(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class StatementVarContext extends StatementContext {
+		public VariableDeclarationStatementContext variableDeclarationStatement() {
+			return getRuleContext(VariableDeclarationStatementContext.class,0);
+		}
+		public StatementVarContext(StatementContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementVar(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1543,6 +1651,23 @@ public class PyriteParser extends Parser {
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementEmpty(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class StatementWhileContext extends StatementContext {
+		public LabelContext label() {
+			return getRuleContext(LabelContext.class,0);
+		}
+		public ParExpressionContext parExpression() {
+			return getRuleContext(ParExpressionContext.class,0);
+		}
+		public BlockContext block() {
+			return getRuleContext(BlockContext.class,0);
+		}
+		public StatementWhileContext(StatementContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementWhile(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1557,31 +1682,26 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class StatementBlockContext extends StatementContext {
-		public BlockContext block() {
-			return getRuleContext(BlockContext.class,0);
+	public static class StatementSwitchContext extends StatementContext {
+		public ParExpressionContext parExpression() {
+			return getRuleContext(ParExpressionContext.class,0);
 		}
-		public StatementBlockContext(StatementContext ctx) { copyFrom(ctx); }
+		public List<SwitchBlockStatementGroupContext> switchBlockStatementGroup() {
+			return getRuleContexts(SwitchBlockStatementGroupContext.class);
+		}
+		public SwitchBlockStatementGroupContext switchBlockStatementGroup(int i) {
+			return getRuleContext(SwitchBlockStatementGroupContext.class,i);
+		}
+		public List<SwitchLabelContext> switchLabel() {
+			return getRuleContexts(SwitchLabelContext.class);
+		}
+		public SwitchLabelContext switchLabel(int i) {
+			return getRuleContext(SwitchLabelContext.class,i);
+		}
+		public StatementSwitchContext(StatementContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementBlock(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class StatementForContext extends StatementContext {
-		public ForControlContext forControl() {
-			return getRuleContext(ForControlContext.class,0);
-		}
-		public LabelContext label() {
-			return getRuleContext(LabelContext.class,0);
-		}
-		public BlockContext block() {
-			return getRuleContext(BlockContext.class,0);
-		}
-		public StatementForContext(StatementContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementFor(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementSwitch(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1596,6 +1716,17 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
+	public static class StatementBlockContext extends StatementContext {
+		public BlockContext block() {
+			return getRuleContext(BlockContext.class,0);
+		}
+		public StatementBlockContext(StatementContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitStatementBlock(this);
+			else return visitor.visitChildren(this);
+		}
+	}
 
 	public final StatementContext statement() throws RecognitionException {
 		StatementContext _localctx = new StatementContext(_ctx, getState());
@@ -1604,97 +1735,114 @@ public class PyriteParser extends Parser {
 		try {
 			int _alt;
 			setState(320);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,26,_ctx) ) {
 			case 1:
 				_localctx = new StatementBlockContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(267); block();
+				setState(267);
+				block();
 				}
 				break;
-
 			case 2:
 				_localctx = new StatementEmptyContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(268); match(SEMI);
+				setState(268);
+				match(SEMI);
 				}
 				break;
-
 			case 3:
 				_localctx = new StatementExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(269); expression(0);
-				setState(270); match(SEMI);
+				setState(269);
+				expression(0);
+				setState(270);
+				match(SEMI);
 				}
 				break;
-
 			case 4:
 				_localctx = new StatementReturnContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(272); match(RETURN);
+				setState(272);
+				match(RETURN);
 				setState(274);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 					{
-					setState(273); expressionList();
+					setState(273);
+					expressionList();
 					}
 				}
 
-				setState(276); match(SEMI);
+				setState(276);
+				match(SEMI);
 				}
 				break;
-
 			case 5:
 				_localctx = new StatementIfContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(277); match(IF);
-				setState(278); ifStatement();
+				setState(277);
+				match(IF);
+				setState(278);
+				ifStatement();
 				}
 				break;
-
 			case 6:
 				_localctx = new StatementWhileContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(279); label();
-				setState(280); match(WHILE);
-				setState(281); parExpression();
-				setState(282); block();
+				setState(279);
+				label();
+				setState(280);
+				match(WHILE);
+				setState(281);
+				parExpression();
+				setState(282);
+				block();
 				}
 				break;
-
 			case 7:
 				_localctx = new StatementForContext(_localctx);
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(284); label();
-				setState(285); match(FOR);
-				setState(286); match(LPAREN);
-				setState(287); forControl();
-				setState(288); match(RPAREN);
-				setState(289); block();
+				setState(284);
+				label();
+				setState(285);
+				match(FOR);
+				setState(286);
+				match(LPAREN);
+				setState(287);
+				forControl();
+				setState(288);
+				match(RPAREN);
+				setState(289);
+				block();
 				}
 				break;
-
 			case 8:
 				_localctx = new StatementSwitchContext(_localctx);
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(291); match(SWITCH);
-				setState(292); parExpression();
-				setState(293); match(LBRACE);
+				setState(291);
+				match(SWITCH);
+				setState(292);
+				parExpression();
+				setState(293);
+				match(LBRACE);
 				setState(297);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,24,_ctx);
-				while ( _alt!=2 && _alt!=ATN.INVALID_ALT_NUMBER ) {
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 					if ( _alt==1 ) {
 						{
 						{
-						setState(294); switchBlockStatementGroup();
+						setState(294);
+						switchBlockStatementGroup();
 						}
 						} 
 					}
@@ -1708,44 +1856,52 @@ public class PyriteParser extends Parser {
 				while (_la==CASE || _la==DEFAULT) {
 					{
 					{
-					setState(300); switchLabel();
+					setState(300);
+					switchLabel();
 					}
 					}
 					setState(305);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
-				setState(306); match(RBRACE);
+				setState(306);
+				match(RBRACE);
 				}
 				break;
-
 			case 9:
 				_localctx = new StatementBreakContext(_localctx);
 				enterOuterAlt(_localctx, 9);
 				{
-				setState(308); match(BREAK);
-				setState(309); label();
-				setState(310); match(SEMI);
+				setState(308);
+				match(BREAK);
+				setState(309);
+				label();
+				setState(310);
+				match(SEMI);
 				}
 				break;
-
 			case 10:
 				_localctx = new StatementContinueContext(_localctx);
 				enterOuterAlt(_localctx, 10);
 				{
-				setState(312); match(CONTINUE);
-				setState(313); label();
-				setState(314); match(SEMI);
+				setState(312);
+				match(CONTINUE);
+				setState(313);
+				label();
+				setState(314);
+				match(SEMI);
 				}
 				break;
-
 			case 11:
 				_localctx = new StatementVarContext(_localctx);
 				enterOuterAlt(_localctx, 11);
 				{
-				setState(316); match(VAR);
-				setState(317); variableDeclarationStatement();
-				setState(318); match(SEMI);
+				setState(316);
+				match(VAR);
+				setState(317);
+				variableDeclarationStatement();
+				setState(318);
+				match(SEMI);
 				}
 				break;
 			}
@@ -1763,11 +1919,11 @@ public class PyriteParser extends Parser {
 
 	public static class VariableDeclarationStatementContext extends ParserRuleContext {
 		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
-		public ExpressionContext expression() {
-			return getRuleContext(ExpressionContext.class,0);
-		}
 		public TypeOrArrayContext typeOrArray() {
 			return getRuleContext(TypeOrArrayContext.class,0);
+		}
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
 		}
 		public VariableDeclarationStatementContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1787,13 +1943,16 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(322); match(Identifier);
+			setState(322);
+			match(Identifier);
 			setState(325);
 			_la = _input.LA(1);
 			if (_la==COLON) {
 				{
-				setState(323); match(COLON);
-				setState(324); typeOrArray();
+				setState(323);
+				match(COLON);
+				setState(324);
+				typeOrArray();
 				}
 			}
 
@@ -1801,8 +1960,10 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==ASSIGN) {
 				{
-				setState(327); match(ASSIGN);
-				setState(328); expression(0);
+				setState(327);
+				match(ASSIGN);
+				setState(328);
+				expression(0);
 				}
 			}
 
@@ -1843,7 +2004,8 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==Identifier) {
 				{
-				setState(331); match(Identifier);
+				setState(331);
+				match(Identifier);
 				}
 			}
 
@@ -1863,17 +2025,17 @@ public class PyriteParser extends Parser {
 	public static class IfStatementContext extends ParserRuleContext {
 		public BlockContext fulfillmentBlock;
 		public BlockContext elseBlock;
-		public IfStatementContext ifStatement() {
-			return getRuleContext(IfStatementContext.class,0);
-		}
 		public ParExpressionContext parExpression() {
 			return getRuleContext(ParExpressionContext.class,0);
+		}
+		public List<BlockContext> block() {
+			return getRuleContexts(BlockContext.class);
 		}
 		public BlockContext block(int i) {
 			return getRuleContext(BlockContext.class,i);
 		}
-		public List<BlockContext> block() {
-			return getRuleContexts(BlockContext.class);
+		public IfStatementContext ifStatement() {
+			return getRuleContext(IfStatementContext.class,0);
 		}
 		public IfStatementContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1893,23 +2055,28 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(334); parExpression();
-			setState(335); ((IfStatementContext)_localctx).fulfillmentBlock = block();
+			setState(334);
+			parExpression();
+			setState(335);
+			((IfStatementContext)_localctx).fulfillmentBlock = block();
 			setState(341);
 			_la = _input.LA(1);
 			if (_la==ELSE) {
 				{
-				setState(336); match(ELSE);
+				setState(336);
+				match(ELSE);
 				setState(339);
 				switch (_input.LA(1)) {
 				case LPAREN:
 					{
-					setState(337); ifStatement();
+					setState(337);
+					ifStatement();
 					}
 					break;
 				case LBRACE:
 					{
-					setState(338); ((IfStatementContext)_localctx).elseBlock = block();
+					setState(338);
+					((IfStatementContext)_localctx).elseBlock = block();
 					}
 					break;
 				default:
@@ -1933,14 +2100,14 @@ public class PyriteParser extends Parser {
 
 	public static class SwitchBlockStatementGroupContext extends ParserRuleContext {
 		public Token fallthrough;
-		public List<StatementContext> statement() {
-			return getRuleContexts(StatementContext.class);
+		public List<SwitchLabelContext> switchLabel() {
+			return getRuleContexts(SwitchLabelContext.class);
 		}
 		public SwitchLabelContext switchLabel(int i) {
 			return getRuleContext(SwitchLabelContext.class,i);
 		}
-		public List<SwitchLabelContext> switchLabel() {
-			return getRuleContexts(SwitchLabelContext.class);
+		public List<StatementContext> statement() {
+			return getRuleContexts(StatementContext.class);
 		}
 		public StatementContext statement(int i) {
 			return getRuleContext(StatementContext.class,i);
@@ -1969,7 +2136,8 @@ public class PyriteParser extends Parser {
 			do {
 				{
 				{
-				setState(343); switchLabel();
+				setState(343);
+				switchLabel();
 				}
 				}
 				setState(346); 
@@ -1982,19 +2150,22 @@ public class PyriteParser extends Parser {
 			do {
 				{
 				{
-				setState(348); statement();
+				setState(348);
+				statement();
 				}
 				}
 				setState(351); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << BREAK) | (1L << CONTINUE) | (1L << FOR) | (1L << IF) | (1L << NEW) | (1L << RETURN) | (1L << SWITCH) | (1L << WHILE) | (1L << VAR) | (1L << LPAREN) | (1L << LBRACE))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (SEMI - 65)) | (1L << (DOT - 65)) | (1L << (Identifier - 65)))) != 0) );
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << BREAK) | (1L << CONTINUE) | (1L << FOR) | (1L << IF) | (1L << NEW) | (1L << RETURN) | (1L << SWITCH) | (1L << WHILE) | (1L << VAR) | (1L << LPAREN) | (1L << LBRACE))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (SEMI - 65)) | (1L << (DOT - 65)) | (1L << (Identifier - 65)))) != 0) );
 			setState(355);
 			_la = _input.LA(1);
-			if (_la==2) {
+			if (_la==T__0) {
 				{
-				setState(353); ((SwitchBlockStatementGroupContext)_localctx).fallthrough = match(2);
-				setState(354); match(SEMI);
+				setState(353);
+				((SwitchBlockStatementGroupContext)_localctx).fallthrough = match(T__0);
+				setState(354);
+				match(SEMI);
 				}
 			}
 
@@ -2022,14 +2193,6 @@ public class PyriteParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class SwitchLabelDefaultContext extends SwitchLabelContext {
-		public SwitchLabelDefaultContext(SwitchLabelContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitSwitchLabelDefault(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 	public static class SwitchLabelCaseIntContext extends SwitchLabelContext {
 		public IntegerLiteralContext integerLiteral() {
 			return getRuleContext(IntegerLiteralContext.class,0);
@@ -2038,6 +2201,14 @@ public class PyriteParser extends Parser {
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitSwitchLabelCaseInt(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class SwitchLabelDefaultContext extends SwitchLabelContext {
+		public SwitchLabelDefaultContext(SwitchLabelContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitSwitchLabelDefault(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2058,33 +2229,40 @@ public class PyriteParser extends Parser {
 		enterRule(_localctx, 60, RULE_switchLabel);
 		try {
 			setState(367);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,35,_ctx) ) {
 			case 1:
 				_localctx = new SwitchLabelCaseIntContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(357); match(CASE);
-				setState(358); integerLiteral();
-				setState(359); match(COLON);
+				setState(357);
+				match(CASE);
+				setState(358);
+				integerLiteral();
+				setState(359);
+				match(COLON);
 				}
 				break;
-
 			case 2:
 				_localctx = new SwitchLabelCaseStrContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(361); match(CASE);
-				setState(362); stringLiteral();
-				setState(363); match(COLON);
+				setState(361);
+				match(CASE);
+				setState(362);
+				stringLiteral();
+				setState(363);
+				match(COLON);
 				}
 				break;
-
 			case 3:
 				_localctx = new SwitchLabelDefaultContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(365); match(DEFAULT);
-				setState(366); match(COLON);
+				setState(365);
+				match(DEFAULT);
+				setState(366);
+				match(COLON);
 				}
 				break;
 			}
@@ -2113,11 +2291,11 @@ public class PyriteParser extends Parser {
 	}
 	public static class ForControlIteratorContext extends ForControlContext {
 		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
-		public ExpressionContext expression() {
-			return getRuleContext(ExpressionContext.class,0);
-		}
 		public TypeOrArrayContext typeOrArray() {
 			return getRuleContext(TypeOrArrayContext.class,0);
+		}
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
 		}
 		public ForControlIteratorContext(ForControlContext ctx) { copyFrom(ctx); }
 		@Override
@@ -2150,47 +2328,58 @@ public class PyriteParser extends Parser {
 		int _la;
 		try {
 			setState(387);
+			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,39,_ctx) ) {
 			case 1:
 				_localctx = new ForControlIteratorContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(369); match(VAR);
-				setState(370); match(Identifier);
-				setState(371); match(COLON);
-				setState(372); typeOrArray();
-				setState(373); match(IN);
-				setState(374); expression(0);
+				setState(369);
+				match(VAR);
+				setState(370);
+				match(Identifier);
+				setState(371);
+				match(COLON);
+				setState(372);
+				typeOrArray();
+				setState(373);
+				match(IN);
+				setState(374);
+				expression(0);
 				}
 				break;
-
 			case 2:
 				_localctx = new ForControlICUContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(377);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << VAR) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << VAR) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 					{
-					setState(376); forInit();
+					setState(376);
+					forInit();
 					}
 				}
 
-				setState(379); match(SEMI);
+				setState(379);
+				match(SEMI);
 				setState(381);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 					{
-					setState(380); expression(0);
+					setState(380);
+					expression(0);
 					}
 				}
 
-				setState(383); match(SEMI);
+				setState(383);
+				match(SEMI);
 				setState(385);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 					{
-					setState(384); forUpdate();
+					setState(384);
+					forUpdate();
 					}
 				}
 
@@ -2240,13 +2429,14 @@ public class PyriteParser extends Parser {
 			do {
 				{
 				{
-				setState(389); forInitSpec();
+				setState(389);
+				forInitSpec();
 				}
 				}
 				setState(392); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << VAR) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier );
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << VAR) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier );
 			}
 		}
 		catch (RecognitionException re) {
@@ -2287,13 +2477,15 @@ public class PyriteParser extends Parser {
 			case VAR:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(394); match(VAR);
-				setState(395); variableDeclarationStatement();
+				setState(394);
+				match(VAR);
+				setState(395);
+				variableDeclarationStatement();
 				}
 				break;
-			case 1:
-			case 4:
-			case 6:
+			case T__4:
+			case T__5:
+			case T__6:
 			case DecimalNumeral:
 			case Digits:
 			case HexNumeral:
@@ -2307,7 +2499,8 @@ public class PyriteParser extends Parser {
 			case Identifier:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(396); expression(0);
+				setState(396);
+				expression(0);
 				}
 				break;
 			default:
@@ -2346,7 +2539,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(399); expressionList();
+			setState(399);
+			expressionList();
 			}
 		}
 		catch (RecognitionException re) {
@@ -2381,9 +2575,12 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(401); match(LPAREN);
-			setState(402); expression(0);
-			setState(403); match(RPAREN);
+			setState(401);
+			match(LPAREN);
+			setState(402);
+			expression(0);
+			setState(403);
+			match(RPAREN);
 			}
 		}
 		catch (RecognitionException re) {
@@ -2398,11 +2595,11 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class ExpressionListContext extends ParserRuleContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
 		}
 		public ExpressionListContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2422,15 +2619,18 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(405); expression(0);
+			setState(405);
+			expression(0);
 			setState(410);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==COMMA) {
 				{
 				{
-				setState(406); match(COMMA);
-				setState(407); expression(0);
+				setState(406);
+				match(COMMA);
+				setState(407);
+				expression(0);
 				}
 				}
 				setState(412);
@@ -2461,70 +2661,24 @@ public class PyriteParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class ExpressionBitExOrContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
+	public static class ExpressionNewContext extends ExpressionContext {
+		public CreatorContext creator() {
+			return getRuleContext(CreatorContext.class,0);
 		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionBitExOrContext(ExpressionContext ctx) { copyFrom(ctx); }
+		public ExpressionNewContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitExOr(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionBitOrContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionBitOrContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitOr(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionAddSubContext extends ExpressionContext {
-		public Token op;
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionAddSubContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionAddSub(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionBolAndContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionBolAndContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBolAnd(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionNew(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 	public static class ExpressionMulDivContext extends ExpressionContext {
 		public Token op;
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
 		}
 		public ExpressionMulDivContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
@@ -2533,69 +2687,11 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ExpressionArrayAccessContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionArrayAccessContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionArrayAccess(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionCompareContext extends ExpressionContext {
-		public Token op;
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionCompareContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionCompare(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionBitAndContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionBitAndContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitAnd(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ExpressionShiftContext extends ExpressionContext {
-		public Token op;
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
-		public List<ExpressionContext> expression() {
-			return getRuleContexts(ExpressionContext.class);
-		}
-		public ExpressionShiftContext(ExpressionContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionShift(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 	public static class ExpressionClassFieldRefContext extends ExpressionContext {
-		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
+		public TerminalNode Identifier() { return getToken(PyriteParser.Identifier, 0); }
 		public ExpressionClassFieldRefContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -2614,14 +2710,17 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ExpressionNewContext extends ExpressionContext {
-		public CreatorContext creator() {
-			return getRuleContext(CreatorContext.class,0);
+	public static class ExpressionArrayAccessContext extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
 		}
-		public ExpressionNewContext(ExpressionContext ctx) { copyFrom(ctx); }
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionArrayAccessContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionNew(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionArrayAccess(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2639,13 +2738,85 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ExpressionAssignContext extends ExpressionContext {
-		public Token op;
+	public static class ExpressionBitOrContext extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
+		public ExpressionBitOrContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitOr(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionAddSubContext extends ExpressionContext {
+		public Token op;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionAddSubContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionAddSub(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionShiftContext extends ExpressionContext {
+		public Token op;
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionShiftContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionShift(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionBolOrContext extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionBolOrContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBolOr(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionBitExOrContext extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionBitExOrContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitExOr(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionAssignContext extends ExpressionContext {
+		public Token op;
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
 		}
 		public ExpressionAssignContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
@@ -2656,11 +2827,11 @@ public class PyriteParser extends Parser {
 	}
 	public static class ExpressionEqualContext extends ExpressionContext {
 		public Token op;
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
 		}
 		public ExpressionEqualContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
@@ -2669,17 +2840,46 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ExpressionBolOrContext extends ExpressionContext {
-		public ExpressionContext expression(int i) {
-			return getRuleContext(ExpressionContext.class,i);
-		}
+	public static class ExpressionBitAndContext extends ExpressionContext {
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
-		public ExpressionBolOrContext(ExpressionContext ctx) { copyFrom(ctx); }
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionBitAndContext(ExpressionContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBolOr(this);
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBitAnd(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionBolAndContext extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionBolAndContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionBolAnd(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExpressionCompareContext extends ExpressionContext {
+		public Token op;
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public ExpressionCompareContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionCompare(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2702,9 +2902,9 @@ public class PyriteParser extends Parser {
 			{
 			setState(417);
 			switch (_input.LA(1)) {
-			case 1:
-			case 4:
-			case 6:
+			case T__4:
+			case T__5:
+			case T__6:
 			case DecimalNumeral:
 			case Digits:
 			case HexNumeral:
@@ -2720,7 +2920,8 @@ public class PyriteParser extends Parser {
 				_ctx = _localctx;
 				_prevctx = _localctx;
 
-				setState(414); primary();
+				setState(414);
+				primary();
 				}
 				break;
 			case NEW:
@@ -2728,8 +2929,10 @@ public class PyriteParser extends Parser {
 				_localctx = new ExpressionNewContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(415); match(NEW);
-				setState(416); creator();
+				setState(415);
+				match(NEW);
+				setState(416);
+				creator();
 				}
 				break;
 			default:
@@ -2739,12 +2942,13 @@ public class PyriteParser extends Parser {
 			setState(464);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,45,_ctx);
-			while ( _alt!=2 && _alt!=ATN.INVALID_ALT_NUMBER ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
 					setState(462);
+					_errHandler.sync(this);
 					switch ( getInterpreter().adaptivePredict(_input,44,_ctx) ) {
 					case 1:
 						{
@@ -2757,12 +2961,13 @@ public class PyriteParser extends Parser {
 						_la = _input.LA(1);
 						if ( !(((((_la - 85)) & ~0x3f) == 0 && ((1L << (_la - 85)) & ((1L << (MUL - 85)) | (1L << (DIV - 85)) | (1L << (MOD - 85)))) != 0)) ) {
 							((ExpressionMulDivContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(421); expression(12);
+						setState(421);
+						expression(12);
 						}
 						break;
-
 					case 2:
 						{
 						_localctx = new ExpressionAddSubContext(new ExpressionContext(_parentctx, _parentState));
@@ -2774,12 +2979,13 @@ public class PyriteParser extends Parser {
 						_la = _input.LA(1);
 						if ( !(_la==ADD || _la==SUB) ) {
 							((ExpressionAddSubContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(424); expression(11);
+						setState(424);
+						expression(11);
 						}
 						break;
-
 					case 3:
 						{
 						_localctx = new ExpressionShiftContext(new ExpressionContext(_parentctx, _parentState));
@@ -2789,14 +2995,15 @@ public class PyriteParser extends Parser {
 						setState(426);
 						((ExpressionShiftContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 5) | (1L << 7))) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__2) | (1L << T__3))) != 0)) ) {
 							((ExpressionShiftContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(427); expression(10);
+						setState(427);
+						expression(10);
 						}
 						break;
-
 					case 4:
 						{
 						_localctx = new ExpressionCompareContext(new ExpressionContext(_parentctx, _parentState));
@@ -2808,12 +3015,13 @@ public class PyriteParser extends Parser {
 						_la = _input.LA(1);
 						if ( !(((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (GT - 69)) | (1L << (LT - 69)) | (1L << (LE - 69)) | (1L << (GE - 69)))) != 0)) ) {
 							((ExpressionCompareContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(430); expression(9);
+						setState(430);
+						expression(9);
 						}
 						break;
-
 					case 5:
 						{
 						_localctx = new ExpressionEqualContext(new ExpressionContext(_parentctx, _parentState));
@@ -2825,67 +3033,73 @@ public class PyriteParser extends Parser {
 						_la = _input.LA(1);
 						if ( !(_la==EQUAL || _la==NOTEQUAL) ) {
 							((ExpressionEqualContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(433); expression(8);
+						setState(433);
+						expression(8);
 						}
 						break;
-
 					case 6:
 						{
 						_localctx = new ExpressionBitAndContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(434);
 						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
-						setState(435); match(BITAND);
-						setState(436); expression(7);
+						setState(435);
+						match(BITAND);
+						setState(436);
+						expression(7);
 						}
 						break;
-
 					case 7:
 						{
 						_localctx = new ExpressionBitExOrContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(437);
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
-						setState(438); match(CARET);
-						setState(439); expression(6);
+						setState(438);
+						match(CARET);
+						setState(439);
+						expression(6);
 						}
 						break;
-
 					case 8:
 						{
 						_localctx = new ExpressionBitOrContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(440);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
-						setState(441); match(BITOR);
-						setState(442); expression(5);
+						setState(441);
+						match(BITOR);
+						setState(442);
+						expression(5);
 						}
 						break;
-
 					case 9:
 						{
 						_localctx = new ExpressionBolAndContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(443);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
-						setState(444); match(AND);
-						setState(445); expression(4);
+						setState(444);
+						match(AND);
+						setState(445);
+						expression(4);
 						}
 						break;
-
 					case 10:
 						{
 						_localctx = new ExpressionBolOrContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(446);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
-						setState(447); match(OR);
-						setState(448); expression(3);
+						setState(447);
+						match(OR);
+						setState(448);
+						expression(3);
 						}
 						break;
-
 					case 11:
 						{
 						_localctx = new ExpressionAssignContext(new ExpressionContext(_parentctx, _parentState));
@@ -2897,42 +3111,47 @@ public class PyriteParser extends Parser {
 						_la = _input.LA(1);
 						if ( !(((((_la - 68)) & ~0x3f) == 0 && ((1L << (_la - 68)) & ((1L << (ASSIGN - 68)) | (1L << (ADD_ASSIGN - 68)) | (1L << (SUB_ASSIGN - 68)) | (1L << (MUL_ASSIGN - 68)) | (1L << (DIV_ASSIGN - 68)) | (1L << (AND_ASSIGN - 68)) | (1L << (OR_ASSIGN - 68)) | (1L << (XOR_ASSIGN - 68)) | (1L << (MOD_ASSIGN - 68)) | (1L << (LSHIFT_ASSIGN - 68)) | (1L << (RSHIFT_ASSIGN - 68)) | (1L << (URSHIFT_ASSIGN - 68)))) != 0)) ) {
 							((ExpressionAssignContext)_localctx).op = (Token)_errHandler.recoverInline(this);
+						} else {
+							consume();
 						}
-						consume();
-						setState(451); expression(1);
+						setState(451);
+						expression(1);
 						}
 						break;
-
 					case 12:
 						{
 						_localctx = new ExpressionClassFieldRefContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(452);
 						if (!(precpred(_ctx, 15))) throw new FailedPredicateException(this, "precpred(_ctx, 15)");
-						setState(453); match(DOT);
-						setState(454); match(Identifier);
+						setState(453);
+						match(DOT);
+						setState(454);
+						match(Identifier);
 						}
 						break;
-
 					case 13:
 						{
 						_localctx = new ExpressionInvokeMethodContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(455);
 						if (!(precpred(_ctx, 14))) throw new FailedPredicateException(this, "precpred(_ctx, 14)");
-						setState(456); arguments();
+						setState(456);
+						arguments();
 						}
 						break;
-
 					case 14:
 						{
 						_localctx = new ExpressionArrayAccessContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(457);
 						if (!(precpred(_ctx, 12))) throw new FailedPredicateException(this, "precpred(_ctx, 12)");
-						setState(458); match(LBRACK);
-						setState(459); expression(0);
-						setState(460); match(RBRACK);
+						setState(458);
+						match(LBRACK);
+						setState(459);
+						expression(0);
+						setState(460);
+						match(RBRACK);
 						}
 						break;
 					}
@@ -2975,17 +3194,6 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class PrimaryLiteralContext extends PrimaryContext {
-		public LiteralContext literal() {
-			return getRuleContext(LiteralContext.class,0);
-		}
-		public PrimaryLiteralContext(PrimaryContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitPrimaryLiteral(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 	public static class PrimaryParensContext extends PrimaryContext {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
@@ -2994,6 +3202,17 @@ public class PyriteParser extends Parser {
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitPrimaryParens(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class PrimaryLiteralContext extends PrimaryContext {
+		public LiteralContext literal() {
+			return getRuleContext(LiteralContext.class,0);
+		}
+		public PrimaryLiteralContext(PrimaryContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitPrimaryLiteral(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -3008,14 +3227,17 @@ public class PyriteParser extends Parser {
 				_localctx = new PrimaryParensContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(467); match(LPAREN);
-				setState(468); expression(0);
-				setState(469); match(RPAREN);
+				setState(467);
+				match(LPAREN);
+				setState(468);
+				expression(0);
+				setState(469);
+				match(RPAREN);
 				}
 				break;
-			case 1:
-			case 4:
-			case 6:
+			case T__4:
+			case T__5:
+			case T__6:
 			case DecimalNumeral:
 			case Digits:
 			case HexNumeral:
@@ -3027,14 +3249,16 @@ public class PyriteParser extends Parser {
 				_localctx = new PrimaryLiteralContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(471); literal();
+				setState(471);
+				literal();
 				}
 				break;
 			case Identifier:
 				_localctx = new PrimaryIdentifierContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(472); match(Identifier);
+				setState(472);
+				match(Identifier);
 				}
 				break;
 			default:
@@ -3099,17 +3323,22 @@ public class PyriteParser extends Parser {
 				_localctx = new CreatorClassContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(475); qualifiedName();
-				setState(476); arguments();
+				setState(475);
+				qualifiedName();
+				setState(476);
+				arguments();
 				}
 				break;
 			case LBRACK:
 				_localctx = new CreatorArrayContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(478); array();
-				setState(479); match(LPAREN);
-				setState(480); match(RPAREN);
+				setState(478);
+				array();
+				setState(479);
+				match(LPAREN);
+				setState(480);
+				match(RPAREN);
 				}
 				break;
 			default:
@@ -3149,16 +3378,19 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(484); match(LPAREN);
+			setState(484);
+			match(LPAREN);
 			setState(486);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 1) | (1L << 4) | (1L << 6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__4) | (1L << T__5) | (1L << T__6) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 				{
-				setState(485); expressionList();
+				setState(485);
+				expressionList();
 				}
 			}
 
-			setState(488); match(RPAREN);
+			setState(488);
+			match(RPAREN);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3230,28 +3462,32 @@ public class PyriteParser extends Parser {
 				_localctx = new IntegerLiteralDecimalContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(490); match(DecimalNumeral);
+				setState(490);
+				match(DecimalNumeral);
 				}
 				break;
 			case HexNumeral:
 				_localctx = new IntegerLiteralHexContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(491); match(HexNumeral);
+				setState(491);
+				match(HexNumeral);
 				}
 				break;
 			case OctalNumeral:
 				_localctx = new IntegerLiteralOctalContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(492); match(OctalNumeral);
+				setState(492);
+				match(OctalNumeral);
 				}
 				break;
 			case BinaryNumeral:
 				_localctx = new IntegerLiteralBinaryContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(493); match(BinaryNumeral);
+				setState(493);
+				match(BinaryNumeral);
 				}
 				break;
 			default:
@@ -3270,10 +3506,10 @@ public class PyriteParser extends Parser {
 	}
 
 	public static class FloatingPointLiteralContext extends ParserRuleContext {
+		public List<TerminalNode> Digits() { return getTokens(PyriteParser.Digits); }
 		public TerminalNode Digits(int i) {
 			return getToken(PyriteParser.Digits, i);
 		}
-		public List<TerminalNode> Digits() { return getTokens(PyriteParser.Digits); }
 		public FloatingPointLiteralContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -3296,12 +3532,15 @@ public class PyriteParser extends Parser {
 			_la = _input.LA(1);
 			if (_la==Digits) {
 				{
-				setState(496); match(Digits);
+				setState(496);
+				match(Digits);
 				}
 			}
 
-			setState(499); match(DOT);
-			setState(500); match(Digits);
+			setState(499);
+			match(DOT);
+			setState(500);
+			match(Digits);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3336,10 +3575,11 @@ public class PyriteParser extends Parser {
 			{
 			setState(502);
 			_la = _input.LA(1);
-			if ( !(_la==1 || _la==6) ) {
+			if ( !(_la==T__4 || _la==T__5) ) {
 			_errHandler.recoverInline(this);
+			} else {
+				consume();
 			}
-			consume();
 			}
 		}
 		catch (RecognitionException re) {
@@ -3372,7 +3612,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(504); match(CharacterLiteral);
+			setState(504);
+			match(CharacterLiteral);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3405,7 +3646,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(506); match(StringLiteral);
+			setState(506);
+			match(StringLiteral);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3437,7 +3679,8 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(508); match(4);
+			setState(508);
+			match(T__6);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3453,39 +3696,41 @@ public class PyriteParser extends Parser {
 
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
-		case 37: return expression_sempred((ExpressionContext)_localctx, predIndex);
+		case 37:
+			return expression_sempred((ExpressionContext)_localctx, predIndex);
 		}
 		return true;
 	}
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 0: return precpred(_ctx, 11);
-
-		case 1: return precpred(_ctx, 10);
-
-		case 2: return precpred(_ctx, 9);
-
-		case 3: return precpred(_ctx, 8);
-
-		case 4: return precpred(_ctx, 7);
-
-		case 5: return precpred(_ctx, 6);
-
-		case 6: return precpred(_ctx, 5);
-
-		case 7: return precpred(_ctx, 4);
-
-		case 8: return precpred(_ctx, 3);
-
-		case 9: return precpred(_ctx, 2);
-
-		case 10: return precpred(_ctx, 1);
-
-		case 11: return precpred(_ctx, 15);
-
-		case 12: return precpred(_ctx, 14);
-
-		case 13: return precpred(_ctx, 12);
+		case 0:
+			return precpred(_ctx, 11);
+		case 1:
+			return precpred(_ctx, 10);
+		case 2:
+			return precpred(_ctx, 9);
+		case 3:
+			return precpred(_ctx, 8);
+		case 4:
+			return precpred(_ctx, 7);
+		case 5:
+			return precpred(_ctx, 6);
+		case 6:
+			return precpred(_ctx, 5);
+		case 7:
+			return precpred(_ctx, 4);
+		case 8:
+			return precpred(_ctx, 3);
+		case 9:
+			return precpred(_ctx, 2);
+		case 10:
+			return precpred(_ctx, 1);
+		case 11:
+			return precpred(_ctx, 15);
+		case 12:
+			return precpred(_ctx, 14);
+		case 13:
+			return precpred(_ctx, 12);
 		}
 		return true;
 	}
@@ -3529,82 +3774,82 @@ public class PyriteParser extends Parser {
 		"\n(\3)\3)\3)\3)\3)\3)\3)\5)\u01e5\n)\3*\3*\5*\u01e9\n*\3*\3*\3+\3+\3+"+
 		"\3+\5+\u01f1\n+\3,\5,\u01f4\n,\3,\3,\3,\3-\3-\3.\3.\3/\3/\3\60\3\60\3"+
 		"\60\2\3L\61\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\66"+
-		"8:<>@BDFHJLNPRTVXZ\\^\2\n\3\2\64;\4\2WX\\\\\3\2UV\5\2\5\5\7\7\t\t\4\2"+
-		"GHNO\4\2MMPP\4\2FF]g\4\2\3\3\b\b\u0224\2a\3\2\2\2\4l\3\2\2\2\6p\3\2\2"+
-		"\2\bx\3\2\2\2\nz\3\2\2\2\f\u0086\3\2\2\2\16\u008e\3\2\2\2\20\u009b\3\2"+
-		"\2\2\22\u009e\3\2\2\2\24\u00a5\3\2\2\2\26\u00b3\3\2\2\2\30\u00b9\3\2\2"+
-		"\2\32\u00cb\3\2\2\2\34\u00cf\3\2\2\2\36\u00d4\3\2\2\2 \u00dc\3\2\2\2\""+
-		"\u00e0\3\2\2\2$\u00e2\3\2\2\2&\u00ec\3\2\2\2(\u00ee\3\2\2\2*\u00f0\3\2"+
-		"\2\2,\u00f2\3\2\2\2.\u00f4\3\2\2\2\60\u0102\3\2\2\2\62\u0104\3\2\2\2\64"+
-		"\u0142\3\2\2\2\66\u0144\3\2\2\28\u014e\3\2\2\2:\u0150\3\2\2\2<\u015a\3"+
-		"\2\2\2>\u0171\3\2\2\2@\u0185\3\2\2\2B\u0188\3\2\2\2D\u018f\3\2\2\2F\u0191"+
-		"\3\2\2\2H\u0193\3\2\2\2J\u0197\3\2\2\2L\u01a3\3\2\2\2N\u01db\3\2\2\2P"+
-		"\u01e4\3\2\2\2R\u01e6\3\2\2\2T\u01f0\3\2\2\2V\u01f3\3\2\2\2X\u01f8\3\2"+
-		"\2\2Z\u01fa\3\2\2\2\\\u01fc\3\2\2\2^\u01fe\3\2\2\2`b\5\4\3\2a`\3\2\2\2"+
-		"ab\3\2\2\2bf\3\2\2\2ce\5\6\4\2dc\3\2\2\2eh\3\2\2\2fd\3\2\2\2fg\3\2\2\2"+
-		"gi\3\2\2\2hf\3\2\2\2ij\5\n\6\2jk\7\2\2\3k\3\3\2\2\2lm\7$\2\2mn\5.\30\2"+
-		"no\7C\2\2o\5\3\2\2\2pq\7 \2\2qt\5.\30\2rs\7E\2\2su\7W\2\2tr\3\2\2\2tu"+
-		"\3\2\2\2uv\3\2\2\2vw\7C\2\2w\7\3\2\2\2xy\7)\2\2y\t\3\2\2\2z{\7\24\2\2"+
-		"{~\7h\2\2|}\7\32\2\2}\177\5\"\22\2~|\3\2\2\2~\177\3\2\2\2\177\u0082\3"+
-		"\2\2\2\u0080\u0081\7\37\2\2\u0081\u0083\5\f\7\2\u0082\u0080\3\2\2\2\u0082"+
-		"\u0083\3\2\2\2\u0083\u0084\3\2\2\2\u0084\u0085\5\16\b\2\u0085\13\3\2\2"+
-		"\2\u0086\u008b\5\"\22\2\u0087\u0088\7D\2\2\u0088\u008a\5\"\22\2\u0089"+
-		"\u0087\3\2\2\2\u008a\u008d\3\2\2\2\u008b\u0089\3\2\2\2\u008b\u008c\3\2"+
-		"\2\2\u008c\r\3\2\2\2\u008d\u008b\3\2\2\2\u008e\u0092\7?\2\2\u008f\u0091"+
-		"\5\20\t\2\u0090\u008f\3\2\2\2\u0091\u0094\3\2\2\2\u0092\u0090\3\2\2\2"+
-		"\u0092\u0093\3\2\2\2\u0093\u0095\3\2\2\2\u0094\u0092\3\2\2\2\u0095\u0096"+
-		"\7@\2\2\u0096\17\3\2\2\2\u0097\u009c\7C\2\2\u0098\u009c\5\34\17\2\u0099"+
-		"\u009c\5\22\n\2\u009a\u009c\5\36\20\2\u009b\u0097\3\2\2\2\u009b\u0098"+
-		"\3\2\2\2\u009b\u0099\3\2\2\2\u009b\u009a\3\2\2\2\u009c\21\3\2\2\2\u009d"+
-		"\u009f\5\b\5\2\u009e\u009d\3\2\2\2\u009e\u009f\3\2\2\2\u009f\u00a0\3\2"+
-		"\2\2\u00a0\u00a1\7h\2\2\u00a1\u00a2\5\24\13\2\u00a2\u00a3\5\30\r\2\u00a3"+
-		"\u00a4\5*\26\2\u00a4\23\3\2\2\2\u00a5\u00ae\7=\2\2\u00a6\u00ab\5\26\f"+
-		"\2\u00a7\u00a8\7D\2\2\u00a8\u00aa\5\26\f\2\u00a9\u00a7\3\2\2\2\u00aa\u00ad"+
-		"\3\2\2\2\u00ab\u00a9\3\2\2\2\u00ab\u00ac\3\2\2\2\u00ac\u00af\3\2\2\2\u00ad"+
-		"\u00ab\3\2\2\2\u00ae\u00a6\3\2\2\2\u00ae\u00af\3\2\2\2\u00af\u00b0\3\2"+
-		"\2\2\u00b0\u00b1\7>\2\2\u00b1\25\3\2\2\2\u00b2\u00b4\7\63\2\2\u00b3\u00b2"+
-		"\3\2\2\2\u00b3\u00b4\3\2\2\2\u00b4\u00b5\3\2\2\2\u00b5\u00b6\7h\2\2\u00b6"+
-		"\u00b7\7L\2\2\u00b7\u00b8\5 \21\2\u00b8\27\3\2\2\2\u00b9\u00c2\7=\2\2"+
-		"\u00ba\u00bf\5\32\16\2\u00bb\u00bc\7D\2\2\u00bc\u00be\5\32\16\2\u00bd"+
-		"\u00bb\3\2\2\2\u00be\u00c1\3\2\2\2\u00bf\u00bd\3\2\2\2\u00bf\u00c0\3\2"+
-		"\2\2\u00c0\u00c3\3\2\2\2\u00c1\u00bf\3\2\2\2\u00c2\u00ba\3\2\2\2\u00c2"+
-		"\u00c3\3\2\2\2\u00c3\u00c4\3\2\2\2\u00c4\u00c5\7>\2\2\u00c5\31\3\2\2\2"+
-		"\u00c6\u00c8\7\63\2\2\u00c7\u00c6\3\2\2\2\u00c7\u00c8\3\2\2\2\u00c8\u00c9"+
-		"\3\2\2\2\u00c9\u00ca\7h\2\2\u00ca\u00cc\7L\2\2\u00cb\u00c7\3\2\2\2\u00cb"+
-		"\u00cc\3\2\2\2\u00cc\u00cd\3\2\2\2\u00cd\u00ce\5 \21\2\u00ce\33\3\2\2"+
-		"\2\u00cf\u00d0\7h\2\2\u00d0\u00d1\5\24\13\2\u00d1\u00d2\5,\27\2\u00d2"+
-		"\35\3\2\2\2\u00d3\u00d5\5\b\5\2\u00d4\u00d3\3\2\2\2\u00d4\u00d5\3\2\2"+
-		"\2\u00d5\u00d6\3\2\2\2\u00d6\u00d7\7\63\2\2\u00d7\u00d8\5\66\34\2\u00d8"+
-		"\u00d9\7C\2\2\u00d9\37\3\2\2\2\u00da\u00dd\5\"\22\2\u00db\u00dd\5$\23"+
-		"\2\u00dc\u00da\3\2\2\2\u00dc\u00db\3\2\2\2\u00dd!\3\2\2\2\u00de\u00e1"+
-		"\5(\25\2\u00df\u00e1\5.\30\2\u00e0\u00de\3\2\2\2\u00e0\u00df\3\2\2\2\u00e1"+
-		"#\3\2\2\2\u00e2\u00e3\7A\2\2\u00e3\u00e4\5&\24\2\u00e4\u00e5\7B\2\2\u00e5"+
-		"%\3\2\2\2\u00e6\u00ed\5\"\22\2\u00e7\u00e8\5\"\22\2\u00e8\u00e9\7L\2\2"+
-		"\u00e9\u00ea\5\"\22\2\u00ea\u00ed\3\2\2\2\u00eb\u00ed\5$\23\2\u00ec\u00e6"+
-		"\3\2\2\2\u00ec\u00e7\3\2\2\2\u00ec\u00eb\3\2\2\2\u00ed\'\3\2\2\2\u00ee"+
-		"\u00ef\t\2\2\2\u00ef)\3\2\2\2\u00f0\u00f1\5\62\32\2\u00f1+\3\2\2\2\u00f2"+
-		"\u00f3\5\62\32\2\u00f3-\3\2\2\2\u00f4\u00f9\7h\2\2\u00f5\u00f6\7E\2\2"+
-		"\u00f6\u00f8\7h\2\2\u00f7\u00f5\3\2\2\2\u00f8\u00fb\3\2\2\2\u00f9\u00f7"+
-		"\3\2\2\2\u00f9\u00fa\3\2\2\2\u00fa/\3\2\2\2\u00fb\u00f9\3\2\2\2\u00fc"+
-		"\u0103\5T+\2\u00fd\u0103\5V,\2\u00fe\u0103\5Z.\2\u00ff\u0103\5\\/\2\u0100"+
-		"\u0103\5X-\2\u0101\u0103\5^\60\2\u0102\u00fc\3\2\2\2\u0102\u00fd\3\2\2"+
-		"\2\u0102\u00fe\3\2\2\2\u0102\u00ff\3\2\2\2\u0102\u0100\3\2\2\2\u0102\u0101"+
-		"\3\2\2\2\u0103\61\3\2\2\2\u0104\u0108\7?\2\2\u0105\u0107\5\64\33\2\u0106"+
-		"\u0105\3\2\2\2\u0107\u010a\3\2\2\2\u0108\u0106\3\2\2\2\u0108\u0109\3\2"+
-		"\2\2\u0109\u010b\3\2\2\2\u010a\u0108\3\2\2\2\u010b\u010c\7@\2\2\u010c"+
-		"\63\3\2\2\2\u010d\u0143\5\62\32\2\u010e\u0143\7C\2\2\u010f\u0110\5L\'"+
-		"\2\u0110\u0111\7C\2\2\u0111\u0143\3\2\2\2\u0112\u0114\7(\2\2\u0113\u0115"+
-		"\5J&\2\u0114\u0113\3\2\2\2\u0114\u0115\3\2\2\2\u0115\u0116\3\2\2\2\u0116"+
-		"\u0143\7C\2\2\u0117\u0118\7\36\2\2\u0118\u0143\5:\36\2\u0119\u011a\58"+
-		"\35\2\u011a\u011b\7\62\2\2\u011b\u011c\5H%\2\u011c\u011d\5\62\32\2\u011d"+
-		"\u0143\3\2\2\2\u011e\u011f\58\35\2\u011f\u0120\7\35\2\2\u0120\u0121\7"+
-		"=\2\2\u0121\u0122\5@!\2\u0122\u0123\7>\2\2\u0123\u0124\5\62\32\2\u0124"+
-		"\u0143\3\2\2\2\u0125\u0126\7+\2\2\u0126\u0127\5H%\2\u0127\u012b\7?\2\2"+
-		"\u0128\u012a\5<\37\2\u0129\u0128\3\2\2\2\u012a\u012d\3\2\2\2\u012b\u0129"+
-		"\3\2\2\2\u012b\u012c\3\2\2\2\u012c\u0131\3\2\2\2\u012d\u012b\3\2\2\2\u012e"+
-		"\u0130\5> \2\u012f\u012e\3\2\2\2\u0130\u0133\3\2\2\2\u0131\u012f\3\2\2"+
-		"\2\u0131\u0132\3\2\2\2\u0132\u0134\3\2\2\2\u0133\u0131\3\2\2\2\u0134\u0135"+
-		"\7@\2\2\u0135\u0143\3\2\2\2\u0136\u0137\7\21\2\2\u0137\u0138\58\35\2\u0138"+
+		"8:<>@BDFHJLNPRTVXZ\\^\2\n\3\2\64;\4\2WX\\\\\3\2UV\3\2\4\6\4\2GHNO\4\2"+
+		"MMPP\4\2FF]g\3\2\7\b\u0224\2a\3\2\2\2\4l\3\2\2\2\6p\3\2\2\2\bx\3\2\2\2"+
+		"\nz\3\2\2\2\f\u0086\3\2\2\2\16\u008e\3\2\2\2\20\u009b\3\2\2\2\22\u009e"+
+		"\3\2\2\2\24\u00a5\3\2\2\2\26\u00b3\3\2\2\2\30\u00b9\3\2\2\2\32\u00cb\3"+
+		"\2\2\2\34\u00cf\3\2\2\2\36\u00d4\3\2\2\2 \u00dc\3\2\2\2\"\u00e0\3\2\2"+
+		"\2$\u00e2\3\2\2\2&\u00ec\3\2\2\2(\u00ee\3\2\2\2*\u00f0\3\2\2\2,\u00f2"+
+		"\3\2\2\2.\u00f4\3\2\2\2\60\u0102\3\2\2\2\62\u0104\3\2\2\2\64\u0142\3\2"+
+		"\2\2\66\u0144\3\2\2\28\u014e\3\2\2\2:\u0150\3\2\2\2<\u015a\3\2\2\2>\u0171"+
+		"\3\2\2\2@\u0185\3\2\2\2B\u0188\3\2\2\2D\u018f\3\2\2\2F\u0191\3\2\2\2H"+
+		"\u0193\3\2\2\2J\u0197\3\2\2\2L\u01a3\3\2\2\2N\u01db\3\2\2\2P\u01e4\3\2"+
+		"\2\2R\u01e6\3\2\2\2T\u01f0\3\2\2\2V\u01f3\3\2\2\2X\u01f8\3\2\2\2Z\u01fa"+
+		"\3\2\2\2\\\u01fc\3\2\2\2^\u01fe\3\2\2\2`b\5\4\3\2a`\3\2\2\2ab\3\2\2\2"+
+		"bf\3\2\2\2ce\5\6\4\2dc\3\2\2\2eh\3\2\2\2fd\3\2\2\2fg\3\2\2\2gi\3\2\2\2"+
+		"hf\3\2\2\2ij\5\n\6\2jk\7\2\2\3k\3\3\2\2\2lm\7$\2\2mn\5.\30\2no\7C\2\2"+
+		"o\5\3\2\2\2pq\7 \2\2qt\5.\30\2rs\7E\2\2su\7W\2\2tr\3\2\2\2tu\3\2\2\2u"+
+		"v\3\2\2\2vw\7C\2\2w\7\3\2\2\2xy\7)\2\2y\t\3\2\2\2z{\7\24\2\2{~\7h\2\2"+
+		"|}\7\32\2\2}\177\5\"\22\2~|\3\2\2\2~\177\3\2\2\2\177\u0082\3\2\2\2\u0080"+
+		"\u0081\7\37\2\2\u0081\u0083\5\f\7\2\u0082\u0080\3\2\2\2\u0082\u0083\3"+
+		"\2\2\2\u0083\u0084\3\2\2\2\u0084\u0085\5\16\b\2\u0085\13\3\2\2\2\u0086"+
+		"\u008b\5\"\22\2\u0087\u0088\7D\2\2\u0088\u008a\5\"\22\2\u0089\u0087\3"+
+		"\2\2\2\u008a\u008d\3\2\2\2\u008b\u0089\3\2\2\2\u008b\u008c\3\2\2\2\u008c"+
+		"\r\3\2\2\2\u008d\u008b\3\2\2\2\u008e\u0092\7?\2\2\u008f\u0091\5\20\t\2"+
+		"\u0090\u008f\3\2\2\2\u0091\u0094\3\2\2\2\u0092\u0090\3\2\2\2\u0092\u0093"+
+		"\3\2\2\2\u0093\u0095\3\2\2\2\u0094\u0092\3\2\2\2\u0095\u0096\7@\2\2\u0096"+
+		"\17\3\2\2\2\u0097\u009c\7C\2\2\u0098\u009c\5\34\17\2\u0099\u009c\5\22"+
+		"\n\2\u009a\u009c\5\36\20\2\u009b\u0097\3\2\2\2\u009b\u0098\3\2\2\2\u009b"+
+		"\u0099\3\2\2\2\u009b\u009a\3\2\2\2\u009c\21\3\2\2\2\u009d\u009f\5\b\5"+
+		"\2\u009e\u009d\3\2\2\2\u009e\u009f\3\2\2\2\u009f\u00a0\3\2\2\2\u00a0\u00a1"+
+		"\7h\2\2\u00a1\u00a2\5\24\13\2\u00a2\u00a3\5\30\r\2\u00a3\u00a4\5*\26\2"+
+		"\u00a4\23\3\2\2\2\u00a5\u00ae\7=\2\2\u00a6\u00ab\5\26\f\2\u00a7\u00a8"+
+		"\7D\2\2\u00a8\u00aa\5\26\f\2\u00a9\u00a7\3\2\2\2\u00aa\u00ad\3\2\2\2\u00ab"+
+		"\u00a9\3\2\2\2\u00ab\u00ac\3\2\2\2\u00ac\u00af\3\2\2\2\u00ad\u00ab\3\2"+
+		"\2\2\u00ae\u00a6\3\2\2\2\u00ae\u00af\3\2\2\2\u00af\u00b0\3\2\2\2\u00b0"+
+		"\u00b1\7>\2\2\u00b1\25\3\2\2\2\u00b2\u00b4\7\63\2\2\u00b3\u00b2\3\2\2"+
+		"\2\u00b3\u00b4\3\2\2\2\u00b4\u00b5\3\2\2\2\u00b5\u00b6\7h\2\2\u00b6\u00b7"+
+		"\7L\2\2\u00b7\u00b8\5 \21\2\u00b8\27\3\2\2\2\u00b9\u00c2\7=\2\2\u00ba"+
+		"\u00bf\5\32\16\2\u00bb\u00bc\7D\2\2\u00bc\u00be\5\32\16\2\u00bd\u00bb"+
+		"\3\2\2\2\u00be\u00c1\3\2\2\2\u00bf\u00bd\3\2\2\2\u00bf\u00c0\3\2\2\2\u00c0"+
+		"\u00c3\3\2\2\2\u00c1\u00bf\3\2\2\2\u00c2\u00ba\3\2\2\2\u00c2\u00c3\3\2"+
+		"\2\2\u00c3\u00c4\3\2\2\2\u00c4\u00c5\7>\2\2\u00c5\31\3\2\2\2\u00c6\u00c8"+
+		"\7\63\2\2\u00c7\u00c6\3\2\2\2\u00c7\u00c8\3\2\2\2\u00c8\u00c9\3\2\2\2"+
+		"\u00c9\u00ca\7h\2\2\u00ca\u00cc\7L\2\2\u00cb\u00c7\3\2\2\2\u00cb\u00cc"+
+		"\3\2\2\2\u00cc\u00cd\3\2\2\2\u00cd\u00ce\5 \21\2\u00ce\33\3\2\2\2\u00cf"+
+		"\u00d0\7h\2\2\u00d0\u00d1\5\24\13\2\u00d1\u00d2\5,\27\2\u00d2\35\3\2\2"+
+		"\2\u00d3\u00d5\5\b\5\2\u00d4\u00d3\3\2\2\2\u00d4\u00d5\3\2\2\2\u00d5\u00d6"+
+		"\3\2\2\2\u00d6\u00d7\7\63\2\2\u00d7\u00d8\5\66\34\2\u00d8\u00d9\7C\2\2"+
+		"\u00d9\37\3\2\2\2\u00da\u00dd\5\"\22\2\u00db\u00dd\5$\23\2\u00dc\u00da"+
+		"\3\2\2\2\u00dc\u00db\3\2\2\2\u00dd!\3\2\2\2\u00de\u00e1\5(\25\2\u00df"+
+		"\u00e1\5.\30\2\u00e0\u00de\3\2\2\2\u00e0\u00df\3\2\2\2\u00e1#\3\2\2\2"+
+		"\u00e2\u00e3\7A\2\2\u00e3\u00e4\5&\24\2\u00e4\u00e5\7B\2\2\u00e5%\3\2"+
+		"\2\2\u00e6\u00ed\5\"\22\2\u00e7\u00e8\5\"\22\2\u00e8\u00e9\7L\2\2\u00e9"+
+		"\u00ea\5\"\22\2\u00ea\u00ed\3\2\2\2\u00eb\u00ed\5$\23\2\u00ec\u00e6\3"+
+		"\2\2\2\u00ec\u00e7\3\2\2\2\u00ec\u00eb\3\2\2\2\u00ed\'\3\2\2\2\u00ee\u00ef"+
+		"\t\2\2\2\u00ef)\3\2\2\2\u00f0\u00f1\5\62\32\2\u00f1+\3\2\2\2\u00f2\u00f3"+
+		"\5\62\32\2\u00f3-\3\2\2\2\u00f4\u00f9\7h\2\2\u00f5\u00f6\7E\2\2\u00f6"+
+		"\u00f8\7h\2\2\u00f7\u00f5\3\2\2\2\u00f8\u00fb\3\2\2\2\u00f9\u00f7\3\2"+
+		"\2\2\u00f9\u00fa\3\2\2\2\u00fa/\3\2\2\2\u00fb\u00f9\3\2\2\2\u00fc\u0103"+
+		"\5T+\2\u00fd\u0103\5V,\2\u00fe\u0103\5Z.\2\u00ff\u0103\5\\/\2\u0100\u0103"+
+		"\5X-\2\u0101\u0103\5^\60\2\u0102\u00fc\3\2\2\2\u0102\u00fd\3\2\2\2\u0102"+
+		"\u00fe\3\2\2\2\u0102\u00ff\3\2\2\2\u0102\u0100\3\2\2\2\u0102\u0101\3\2"+
+		"\2\2\u0103\61\3\2\2\2\u0104\u0108\7?\2\2\u0105\u0107\5\64\33\2\u0106\u0105"+
+		"\3\2\2\2\u0107\u010a\3\2\2\2\u0108\u0106\3\2\2\2\u0108\u0109\3\2\2\2\u0109"+
+		"\u010b\3\2\2\2\u010a\u0108\3\2\2\2\u010b\u010c\7@\2\2\u010c\63\3\2\2\2"+
+		"\u010d\u0143\5\62\32\2\u010e\u0143\7C\2\2\u010f\u0110\5L\'\2\u0110\u0111"+
+		"\7C\2\2\u0111\u0143\3\2\2\2\u0112\u0114\7(\2\2\u0113\u0115\5J&\2\u0114"+
+		"\u0113\3\2\2\2\u0114\u0115\3\2\2\2\u0115\u0116\3\2\2\2\u0116\u0143\7C"+
+		"\2\2\u0117\u0118\7\36\2\2\u0118\u0143\5:\36\2\u0119\u011a\58\35\2\u011a"+
+		"\u011b\7\62\2\2\u011b\u011c\5H%\2\u011c\u011d\5\62\32\2\u011d\u0143\3"+
+		"\2\2\2\u011e\u011f\58\35\2\u011f\u0120\7\35\2\2\u0120\u0121\7=\2\2\u0121"+
+		"\u0122\5@!\2\u0122\u0123\7>\2\2\u0123\u0124\5\62\32\2\u0124\u0143\3\2"+
+		"\2\2\u0125\u0126\7+\2\2\u0126\u0127\5H%\2\u0127\u012b\7?\2\2\u0128\u012a"+
+		"\5<\37\2\u0129\u0128\3\2\2\2\u012a\u012d\3\2\2\2\u012b\u0129\3\2\2\2\u012b"+
+		"\u012c\3\2\2\2\u012c\u0131\3\2\2\2\u012d\u012b\3\2\2\2\u012e\u0130\5>"+
+		" \2\u012f\u012e\3\2\2\2\u0130\u0133\3\2\2\2\u0131\u012f\3\2\2\2\u0131"+
+		"\u0132\3\2\2\2\u0132\u0134\3\2\2\2\u0133\u0131\3\2\2\2\u0134\u0135\7@"+
+		"\2\2\u0135\u0143\3\2\2\2\u0136\u0137\7\21\2\2\u0137\u0138\58\35\2\u0138"+
 		"\u0139\7C\2\2\u0139\u0143\3\2\2\2\u013a\u013b\7\26\2\2\u013b\u013c\58"+
 		"\35\2\u013c\u013d\7C\2\2\u013d\u0143\3\2\2\2\u013e\u013f\7\63\2\2\u013f"+
 		"\u0140\5\66\34\2\u0140\u0141\7C\2\2\u0141\u0143\3\2\2\2\u0142\u010d\3"+
@@ -3621,7 +3866,7 @@ public class PyriteParser extends Parser {
 		"\3\2\2\2\u0158;\3\2\2\2\u0159\u015b\5> \2\u015a\u0159\3\2\2\2\u015b\u015c"+
 		"\3\2\2\2\u015c\u015a\3\2\2\2\u015c\u015d\3\2\2\2\u015d\u015f\3\2\2\2\u015e"+
 		"\u0160\5\64\33\2\u015f\u015e\3\2\2\2\u0160\u0161\3\2\2\2\u0161\u015f\3"+
-		"\2\2\2\u0161\u0162\3\2\2\2\u0162\u0165\3\2\2\2\u0163\u0164\7\4\2\2\u0164"+
+		"\2\2\2\u0161\u0162\3\2\2\2\u0162\u0165\3\2\2\2\u0163\u0164\7\3\2\2\u0164"+
 		"\u0166\7C\2\2\u0165\u0163\3\2\2\2\u0165\u0166\3\2\2\2\u0166=\3\2\2\2\u0167"+
 		"\u0168\7\22\2\2\u0168\u0169\5T+\2\u0169\u016a\7L\2\2\u016a\u0172\3\2\2"+
 		"\2\u016b\u016c\7\22\2\2\u016c\u016d\5\\/\2\u016d\u016e\7L\2\2\u016e\u0172"+
@@ -3673,7 +3918,7 @@ public class PyriteParser extends Parser {
 		"\u01f3\u01f4\3\2\2\2\u01f4\u01f5\3\2\2\2\u01f5\u01f6\7E\2\2\u01f6\u01f7"+
 		"\7\13\2\2\u01f7W\3\2\2\2\u01f8\u01f9\t\t\2\2\u01f9Y\3\2\2\2\u01fa\u01fb"+
 		"\7\17\2\2\u01fb[\3\2\2\2\u01fc\u01fd\7\20\2\2\u01fd]\3\2\2\2\u01fe\u01ff"+
-		"\7\6\2\2\u01ff_\3\2\2\2\65aft~\u0082\u008b\u0092\u009b\u009e\u00ab\u00ae"+
+		"\7\t\2\2\u01ff_\3\2\2\2\65aft~\u0082\u008b\u0092\u009b\u009e\u00ab\u00ae"+
 		"\u00b3\u00bf\u00c2\u00c7\u00cb\u00d4\u00dc\u00e0\u00ec\u00f9\u0102\u0108"+
 		"\u0114\u012b\u0131\u0142\u0147\u014b\u014e\u0155\u0157\u015c\u0161\u0165"+
 		"\u0171\u017b\u017f\u0183\u0185\u018a\u018f\u019c\u01a3\u01d0\u01d2\u01db"+

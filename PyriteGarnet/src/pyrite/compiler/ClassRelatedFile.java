@@ -10,11 +10,4 @@ public abstract class ClassRelatedFile
 	{
 		return	_fqcn;
 	}
-
-	// 実装的に微妙かもしれないが、SourceFileにあまりコードを追加したくない
-	public boolean isCompileTarget()
-	{
-		return	(this instanceof SourceFile);
-	}
-
 }

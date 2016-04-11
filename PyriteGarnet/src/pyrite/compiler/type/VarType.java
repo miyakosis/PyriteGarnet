@@ -3,18 +3,17 @@ package pyrite.compiler.type;
 import java.util.HashMap;
 import java.util.Map;
 
-import pyrite.compiler.CodeGenerationVisitor;
-
 /*
  * コンパイル情報としての型を保持するクラス
  */
 public class VarType
 {
 	public enum	TYPE {NULL, VOID, OBJ, NUM, INT, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC,
-		PACKAGE, CLASS, METHOD, PARTIALID,
+		PACKAGE, CLASS, METHOD, METHOD_NAME,
 		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
 		};
 
+	// typeIdをキーに、VarTypeをキャッシュするMap
 	// new VarType(TYPE) より先にMapを生成しておく必要がある
 	protected static Map<String, VarType>	__varTypeMap = new HashMap<String, VarType>();	// key:_typeId
 
@@ -287,22 +286,19 @@ public class VarType
 //	}
 
 
-	// ID 先頭要素の型解決を行った後の型を返す
-	public VarType	resolveType(CodeGenerationVisitor cgv)
-	{
-		return	this;	// PartialIdType 以外は型解決済みなので、自分自身を返す
-	}
+//	// ID 先頭要素の型解決を行った後の型を返す
+//	public VarType	resolveType(CodeGenerationVisitor cgv)
+//	{
+//		return	this;	// PartialIdType 以外は型解決済みなので、自分自身を返す
+//	}
 
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		throw new RuntimeException("assertion?");
-	}
+	// CodeGenerationVisitor に移動
+	//	// この型に続く識別子の型を解決する。
+//	// サブクラス毎にそれぞれ続くことができる型が異なるため、とり得る型をそれぞれでチェックする。
+//	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, ParseTree idNode)
+//	{
+//		throw new PyriteSyntaxException("id is not defined.:" + idNode.getText());
+//	}
 
 
 	// Javaのインターフェース定義からPyriteコンパイル時の型を作成する

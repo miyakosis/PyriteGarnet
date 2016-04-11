@@ -17,6 +17,8 @@ public class ImportDeclarationManager
 	private List<String>	_importDeclartionStrList = new ArrayList<String>();
 
 	//	public HashMapMap<String, String, String>	_importMap = new HashMapMap<String, String, String>();	// key:class name value:full class name full class name
+
+	// クラス名に対応するimport宣言
 	private Map<String, ImportDeclaration>	_importMap = new HashMap<String, ImportDeclaration>();	// key:class name value:ImportDeclaration
 
 	public ImportDeclarationManager(ClassResolver cr)
@@ -33,58 +35,45 @@ public class ImportDeclarationManager
 	// import指定を解析し、クラス名をキーとする_importMapを作成する
 	public void	checkImportDeclaretion()
 	{
-		Set<String>	packageNameSet = new HashSet<String>();
-		Set<String>	packageClassNameSet = new HashSet<String>();
-
-		// パッケージ指定かどうかで振り分ける
 		for (String importDeclaretionStr : _importDeclartionStrList)
 		{
 			if (importDeclaretionStr.endsWith(".*"))
-			{
+			{	// パッケージ指定
 				String	packageName = importDeclaretionStr.substring(0, importDeclaretionStr.length() - 2);	// remove ".*"
-				packageNameSet.add(packageName);
+				if (_cr.isPackage(FQCNParser.getFQCN(packageName)) == false)
+				{
+					throw new PyriteSyntaxException("package not found.:" + packageName);
+				}
+				List<String>	classNameList = _cr.getPackageMemberClassName(packageName);
+				for (String className : classNameList)
+				{
+					FQCN	fqcn = FQCNParser.getFQCN(packageName, className);
+
+					ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
+					if (importDeclaration == null)
+					{
+						importDeclaration = new ImportDeclaration(fqcn._className);
+						_importMap.put(className, importDeclaration);
+					}
+					importDeclaration.addFqcnAst(fqcn._fqcnStr);
+				}
 			}
 			else
-			{
-				packageClassNameSet.add(importDeclaretionStr);
-			}
-		}
+			{	// FQCN指定を解決
+				FQCN	fqcn = FQCNParser.getFQCN(importDeclaretionStr);
+				if (_cr.isClass(fqcn) == false)
+				{
+					throw new PyriteSyntaxException("class not found.");
+				}
 
-		// パッケージ指定を先に解決
-		for (String packageName : packageNameSet)
-		{
-			if (_cr.isPackage(packageName) == false)
-			{
-				throw new PyriteSyntaxException("package not found.");
-			}
-			List<String>	classNameList = _cr.getPackageMemberClassName(packageName);
-			for (String className : classNameList)
-			{
-				ImportDeclaration	importDeclaration = _importMap.get(className);
+				ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
 				if (importDeclaration == null)
 				{
-					importDeclaration = new ImportDeclaration();
-					_importMap.put(className, importDeclaration);
+					importDeclaration = new ImportDeclaration(fqcn._className);
+					_importMap.put(fqcn._className, importDeclaration);
 				}
-				importDeclaration.addFqcn(packageName + "." + className, false);
+				importDeclaration.addFqcn(fqcn._fqcnStr);
 			}
-		}
-		// FQCN指定を解決
-		for (String fqcnStr : packageClassNameSet)
-		{
-			FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
-			if (_cr.isClass(fqcn) == false)
-			{
-				throw new PyriteSyntaxException("class not found.");
-			}
-
-			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
-			if (importDeclaration == null)
-			{
-				importDeclaration = new ImportDeclaration();
-				_importMap.put(fqcn._className, importDeclaration);
-			}
-			importDeclaration.addFqcn(fqcn._fqcnStr, false);
 		}
 	}
 
@@ -145,41 +134,50 @@ public class ImportDeclarationManager
 				}
 			}
 		}
+		// TODO:inner classの場合を考慮する
 		return	null;
 	}
 
+	// classに対応するimport宣言
 	public static class ImportDeclaration
 	{
+		public final String	_className;
+
+		// クラス名が複数のFQCNを持つ場合があるため、Setで保持する
+		// FQCNで指定されたimport文
 		private Set<String>	_fqcnSet = new HashSet<String>();
+		// packageの末尾が.*で指定されたため、パッケージ名から展開されたfqcn
+		private Set<String>	_fqcnAstSet = new HashSet<String>();
 
-		// true:現在クラス名まで指定された import を保持している false:.* で終わる import を保持している
-		private boolean	_isFqcn = false;
 
-		/**
-		 *
-		 * @param fqcnStr
-		 * @param isFqcn	true:import文で指定されたfqcn false:packageの末尾が.*で指定されたため、パッケージ名から展開されたfqcn
-		 */
-		public void addFqcn(String fqcnStr, boolean isFqcn)
+		public ImportDeclaration(String	className)
 		{
-			if (_isFqcn == false && isFqcn)
-			{	// 現在、.* で終わる import を保持しており、クラス名まで指定された import が指定された
-				// .* で終わる import 内容をクリアして、今後はクラス名まで指定された import 内容のみを保持する
-				_fqcnSet.clear();
-				_isFqcn = true;
-			}
+			_className = className;
+		}
+
+		public void addFqcn(String fqcnStr)
+		{
 			_fqcnSet.add(fqcnStr);
 		}
 
-		public boolean isDuplicatedDeclaration()
+		public void addFqcnAst(String fqcnStr)
 		{
-			return	_fqcnSet.size() > 1;
+			_fqcnAstSet.add(fqcnStr);
+		}
+
+
+		public boolean isDuplicatedDeclaration()
+		{	// クラス名が参照されるタイミングで、重複チェックを行う
+			Set<String>	fqcnSet = (_fqcnSet.size() > 0) ? _fqcnSet : _fqcnAstSet;
+			return	(fqcnSet.size() > 1);
 		}
 
 		public String	getFQCNStr()
 		{
-			assert	(_fqcnSet.size() == 1);
-			return	_fqcnSet.iterator().next();
+			Set<String>	fqcnSet = (_fqcnSet.size() > 0) ? _fqcnSet : _fqcnAstSet;
+			assert	(fqcnSet.size() == 1);
+			return	fqcnSet.iterator().next();
+
 		}
 	}
 }

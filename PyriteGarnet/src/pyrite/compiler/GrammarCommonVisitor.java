@@ -25,7 +25,8 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		_idm = idm;
 	}
 
-	// '(' (inputParameter (',' inputParameter)*)? ')'
+	// inputParameters
+    // :   '(' (inputParameter (',' inputParameter)*)? ')'
 	@Override
 	public Object visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx)
 	{
@@ -42,7 +43,8 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return	paramList;
 	}
 
-	// Identifier ':' typeOrArray
+	// inputParameter
+    // :   'var'? Identifier ':' typeOrArray
 	@Override
 	public Object visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx)
 	{
@@ -56,7 +58,8 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 //		return	methodParam;
 	}
 
-	// '(' (outputParameter (',' outputParameter)*)? ')'
+	// outputParameters
+    // :   '(' (outputParameter (',' outputParameter)*)? ')'
 	@Override
 	public Object visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx)
 	{
@@ -73,7 +76,8 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return	paramList;
 	}
 
-	// (Identifier ':')? typeOrArray
+	// outputParameter
+    // :   ('var'? Identifier ':')? typeOrArray
 	@Override
 	public Object visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx)
 	{
@@ -160,13 +164,13 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		Object	arraySpecObj = visit(ctx.arraySpec());
 		// assertion: arraySpec == VarType or VarType[] or ArrayType
 		if (arraySpecObj instanceof VarType[])
-		{
+		{	// ArraySpecAssoc からの返り値
 			VarType[]	varTypes = (VarType[])arraySpecObj;
 			assert(varTypes.length == 2);
 			return	AssocType.getType(varTypes[0], varTypes[1]);
 		}
 		else
-		{
+		{	// 型 or 配列
 			return	ArrayType.getType((VarType)arraySpecObj);
 		}
 	}
@@ -229,8 +233,8 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		}
 	}
 
-
-	// Identifier ('.' Identifier)*
+	// qualifiedName
+	// : Identifier ('.' Identifier)*
 	@Override
 	public Object visitQualifiedName(@NotNull PyriteParser.QualifiedNameContext ctx)
 	{

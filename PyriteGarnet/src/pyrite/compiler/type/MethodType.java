@@ -6,7 +6,7 @@ import pyrite.compiler.FQCNParser.FQCN;
 
 public class MethodType extends VarType
 {
-	public final FQCN	_fqcn;
+	public final FQCN	_fqcn;		// メソッドが所属するクラス
 	public final String	_methodName;
 	public final VarType[]	_paramTypes;
 	public final VarType[]	_returnTypes;
@@ -180,20 +180,6 @@ public class MethodType extends VarType
 
 
 
-
-
-	// 識別子解決の段階では、メソッド名に続く識別子は存在しないため、例外を発行
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	@Override
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		throw new RuntimeException("id is not declared." + id);
-	}
 
 
 
