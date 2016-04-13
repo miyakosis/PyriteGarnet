@@ -1224,29 +1224,36 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		case ARRAY:
-			if (isParentAssignExpression)
-			{
-				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
-				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X2);
-				// TODO:値はArrayへの参照になってしまうような気がする。戻り値がスタックに残るので、それを除外するかしないかをやる必要があるかもしれない
-			}
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
+
+			if (isParentAssignExpression == false)
+			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
+				_currentMethodCodeDeclation.addCodeOp(BC.POP);
+			}
 			break;
 
 		case ASSOC:
-			if (isParentAssignExpression)
-			{
-				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
-				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X2);
-				// TODO:値はArrayへの参照になってしまうような気がする。戻り値がスタックに残るので、それを除外するかしないかをやる必要があるかもしれない
-			}
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
+
+			if (isParentAssignExpression == false)
+			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
+				_currentMethodCodeDeclation.addCodeOp(BC.POP);
+			}
 			break;
 		}
 	}
 
+	//  expression ';'
+	public Object visitStatementExpression(PyriteParser.StatementExpressionContext ctx)
+	{
+		visit(ctx.expression());
+
+		// TODO:スタックにオブジェクト参照が残っている場合、除去する
+
+		return	null;
+	}
 
 	// 'return' expressionList? ';'
 	@Override

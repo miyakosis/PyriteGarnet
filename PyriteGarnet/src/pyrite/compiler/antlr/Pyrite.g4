@@ -579,7 +579,7 @@ block
 statement
     :   block								# StatementBlock	// not used
     |   ';'									# StatementEmpty	// not used
-    |   expression ';'						# StatementExpression	// not used
+    |   expression ';'						# StatementExpression
     |   'return' expressionList? ';'		# StatementReturn
     |   'if' ifStatement							# StatementIf		// not used
     |   label 'while' parExpression block			# StatementWhile
