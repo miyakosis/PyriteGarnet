@@ -441,7 +441,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.removeCode(expressionCodePosFrom, expressionCodePosTo);
 		}
 		byte	opCode = methodType._isStatic ? BC.INVOKESTATIC : BC.INVOKEVIRTUAL;
-		_currentMethodCodeDeclation.addCodeOp(opCode, methodType._paramTypes.length);
+		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
 
 		// 返り値
@@ -834,43 +834,39 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		if (expressionType._type == TYPE.ARRAY)
 		{
-			ArrayType	arrayType = null;
-			arrayType = (ArrayType)expressionType;
-			if (indexType._type != TYPE.INT)
-			{
+			ArrayType	arrayType = (ArrayType)expressionType;
+			if (_cr.isInherited(indexType._fqcn, VarType.INT._fqcn))
+			{	// indexTypeのクラスが、Integerを継承していない
 				throw new PyriteSyntaxException("array indexer must integer.");
 			}
 
 			if (isParentAssignLeftExpression(ctx))
 			{	// assign
-				// TODO
-				throw new RuntimeException("not implemented yet");
+				return	new LValueType(LValueType.TYPE.ARRAY, expressionType, _cpm.getMethodRef(arrayType._fqcn._fqcnStr, "set", "(Lpyrite.lang.Integer;Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
 			else
 			{	// refer
-				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, 1);
-				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Array.CLASS_NAME, "get", "(I)Ljava.lang.Object;"));
+				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Array.CLASS_NAME, "get", "(Lpyrite.lang.Integer;)Ljava.lang.Object;"));
 			}
-			return	arrayType._type;
+			return	arrayType._arrayVarType;
 		}
 		else if (expressionType._type == TYPE.ASSOC)
 		{
-			AssocType	assocType = null;
-			assocType = (AssocType)expressionType;
-			if (indexType._type != assocType._keyVarType._type)
-			{	// TODO:オブジェクトの継承関係を考慮する必要あり
+			AssocType	assocType = (AssocType)expressionType;
+			if (_cr.isInherited(indexType._fqcn, assocType._keyVarType._fqcn))
+			{	// indexTypeのクラスが、連想配列キーのクラスと継承関係にない
 				throw new PyriteSyntaxException("assoc indexer unmatch.");
 			}
 
 			if (isParentAssignLeftExpression(ctx))
 			{	// assign
-				// TODO
-				throw new RuntimeException("not implemented yet");
+				return	new LValueType(LValueType.TYPE.ASSOC, expressionType, _cpm.getMethodRef(assocType._fqcn._fqcnStr, "set", "(Lpyrite.lang.Object;Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
 			else
 			{	// refer
-				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, 1);
-				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Assoc.CLASS_NAME, "get", "(Lpyrite.lang.String;)Ljava.lang.Object;"));
+				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(Assoc.CLASS_NAME, "get", "(Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
 			return	assocType._valVarType;
 		}
@@ -1232,22 +1228,21 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X2);
+				// TODO:値はArrayへの参照になってしまうような気がする。戻り値がスタックに残るので、それを除外するかしないかをやる必要があるかもしれない
 			}
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
+			break;
 
-			switch (lType._type)
+		case ASSOC:
+			if (isParentAssignExpression)
 			{
-			case INT:
-				_currentMethodCodeDeclation.addCodeOp(BC.IASTORE);
-				break;
-
-			case BOL:
-				_currentMethodCodeDeclation.addCodeOp(BC.BASTORE);
-				break;
-
-			default:
-				_currentMethodCodeDeclation.addCodeOp(BC.AASTORE);
-				break;
+				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
+				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X2);
+				// TODO:値はArrayへの参照になってしまうような気がする。戻り値がスタックに残るので、それを除外するかしないかをやる必要があるかもしれない
 			}
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 			break;
 		}
 	}

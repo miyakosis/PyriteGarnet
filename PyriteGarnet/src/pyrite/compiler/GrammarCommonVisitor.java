@@ -157,33 +157,34 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return visit(ctx.expression());
 	}
 
-	// '[' arraySpec ']'
+	// array
+	//	:   '[' typeOrArray (':' typeOrArray)? ']'
 	@Override
 	public Object visitArray(@NotNull PyriteParser.ArrayContext ctx)
 	{
-		Object	arraySpecObj = visit(ctx.arraySpec());
-		// assertion: arraySpec == VarType or VarType[] or ArrayType
-		if (arraySpecObj instanceof VarType[])
-		{	// ArraySpecAssoc からの返り値
-			VarType[]	varTypes = (VarType[])arraySpecObj;
-			assert(varTypes.length == 2);
-			return	AssocType.getType(varTypes[0], varTypes[1]);
+
+		if (ctx.typeOrArray().size() == 1)
+		{	// array
+			VarType	valType = (VarType)visit(ctx.typeOrArray(0));
+			return	ArrayType.getType((VarType)valType);
 		}
 		else
-		{	// 型 or 配列
-			return	ArrayType.getType((VarType)arraySpecObj);
+		{	// assoc
+			VarType	keyType = (VarType)visit(ctx.typeOrArray(0));
+			VarType	valType = (VarType)visit(ctx.typeOrArray(1));
+			return	AssocType.getType(keyType, valType);
 		}
 	}
 
-	@Override
-	// type ':' type
-	public Object visitArraySpecAssoc(@NotNull PyriteParser.ArraySpecAssocContext ctx)
-	{
-		VarType	keyType = (VarType)visit(ctx.type(0));
-		VarType	valType = (VarType)visit(ctx.type(1));
-
-		return	new VarType[]{keyType, valType};
-	}
+//	@Override
+//	// type ':' type
+//	public Object visitArraySpecAssoc(@NotNull PyriteParser.ArraySpecAssocContext ctx)
+//	{
+//		VarType	keyType = (VarType)visit(ctx.type(0));
+//		VarType	valType = (VarType)visit(ctx.type(1));
+//
+//		return	new VarType[]{keyType, valType};
+//	}
 
 
 
@@ -212,6 +213,9 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 
 		case "int":
 			return	VarType.INT;
+
+		case "dec":
+			return	VarType.DEC;
 
 		case "flt":
 			return	VarType.FLT;

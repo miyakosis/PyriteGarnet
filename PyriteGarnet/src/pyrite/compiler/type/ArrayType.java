@@ -1,5 +1,8 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.FQCNParser;
+import pyrite.compiler.FQCNParser.FQCN;
+
 public class ArrayType extends VarType
 {
 	public final VarType	_arrayVarType;
@@ -13,7 +16,8 @@ public class ArrayType extends VarType
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new ArrayType(typeId, arrayVarType);
+			FQCN	fqcn = FQCNParser.getFQCN("pyrite.lang.Array");
+			varType = new ArrayType(typeId, fqcn, arrayVarType);
 		}
 
 		return	varType;
@@ -37,9 +41,9 @@ public class ArrayType extends VarType
 	}
 	*/
 
-	protected ArrayType(String typeId, VarType arrayVarType)
+	protected ArrayType(String typeId, FQCN fqcn, VarType arrayVarType)
 	{
-		super(TYPE.ARRAY, typeId, "Lpyrite.lang.Array;");
+		super(TYPE.ARRAY, typeId, fqcn, "L" + fqcn._fqcnStr + ";");
 		_arrayVarType = arrayVarType;
 	}
 }

@@ -121,27 +121,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArray(PyriteParser.ArrayContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code ArraySpecType}
-	 * labeled alternative in {@link PyriteParser#arraySpec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArraySpecType(PyriteParser.ArraySpecTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code ArraySpecAssoc}
-	 * labeled alternative in {@link PyriteParser#arraySpec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArraySpecAssoc(PyriteParser.ArraySpecAssocContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code ArraySpecArray}
-	 * labeled alternative in {@link PyriteParser#arraySpec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArraySpecArray(PyriteParser.ArraySpecArrayContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#primitiveType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

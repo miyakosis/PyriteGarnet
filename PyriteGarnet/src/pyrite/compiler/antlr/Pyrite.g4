@@ -368,14 +368,17 @@ type
     ;
 
 array
-    :   '[' arraySpec ']'
+    :   '[' typeOrArray (':' typeOrArray)? ']'
     ;
 
-arraySpec
-    :   type			# ArraySpecType		// not used
-    |   type ':' type	# ArraySpecAssoc
-    |   array			# ArraySpecArray	// not used
-    ;
+//	array
+//	    :   '[' arraySpec ']'
+//	    ;
+
+//	arraySpec
+//	    :   typeOrArray						# ArraySpecArray		// not used
+//	    |   typeOrArray ':' typeOrArray		# ArraySpecAssoc
+//	    ;
 
 
 //	type
@@ -395,6 +398,7 @@ primitiveType
     :   'obj'
     |   'num'
     |   'int'
+    |   'dec'
     |   'flt'
     |   'str'
     |   'chr'

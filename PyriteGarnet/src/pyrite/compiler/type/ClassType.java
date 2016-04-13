@@ -5,7 +5,7 @@ import pyrite.compiler.FQCNParser.FQCN;
 
 public class ClassType extends VarType
 {
-	public final FQCN	_fqcn;
+//	public final FQCN	_fqcn;
 
 	public static VarType	getType(FQCN fqcn)
 	{
@@ -24,9 +24,9 @@ public class ClassType extends VarType
 
 	protected ClassType(String typeId, FQCN fqcn)
 	{
-		super(TYPE.CLASS, typeId, null);
+		super(TYPE.CLASS, typeId, fqcn, null);
 
-		_fqcn = fqcn;
+//		_fqcn = fqcn;
 	}
 
 // CodeGenerationVisitor に移動

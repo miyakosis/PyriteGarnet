@@ -5,7 +5,7 @@ import pyrite.compiler.FQCNParser.FQCN;
 
 public class PackageType extends VarType
 {
-	public final FQCN	_fqcn;
+//	public final FQCN	_fqcn;
 //	public final String	_packageName;
 
 	// これが呼ばれるときは、必ずImport宣言を考慮したパッケージになっている
@@ -43,9 +43,9 @@ public class PackageType extends VarType
 
 	protected PackageType(String typeId, FQCN fqcn)
 	{
-		super(TYPE.PACKAGE, typeId, null);
+		super(TYPE.PACKAGE, typeId, null, null);
 
-		_fqcn = fqcn;
+//		_fqcn = fqcn;
 	}
 
 

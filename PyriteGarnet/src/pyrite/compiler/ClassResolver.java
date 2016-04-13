@@ -671,6 +671,20 @@ public class ClassResolver
 
 
 
+	// subClass と baseClass が継承関係にあるか(baseClassにsubClassを代入可能か)を調べる
+	//
+	public boolean	isInherited(FQCN subClass, FQCN baseClass)
+	{
+		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
+		{
+			if (cfm._fqcn == baseClass)
+			{
+				return	true;
+			}
+		}
+		return	false;
+	}
+
 
 	//	public MethodDeclation dispatchMethodDeclation(
 //			String packageClassName,

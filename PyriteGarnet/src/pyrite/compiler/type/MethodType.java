@@ -6,7 +6,7 @@ import pyrite.compiler.FQCNParser.FQCN;
 
 public class MethodType extends VarType
 {
-	public final FQCN	_fqcn;		// メソッドが所属するクラス
+//	public final FQCN	_fqcn;		// メソッドが所属するクラス
 	public final String	_methodName;
 	public final VarType[]	_paramTypes;
 	public final VarType[]	_returnTypes;
@@ -46,9 +46,9 @@ public class MethodType extends VarType
 
 	protected MethodType(String typeId, FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
 	{
-		super(TYPE.METHOD, typeId, null);
+		super(TYPE.METHOD, typeId, fqcn, null);
 
-		_fqcn = fqcn;
+//		_fqcn = fqcn;
 		_methodName = methodName;
 		_paramTypes = paramTypes;
 		_returnTypes = returnTypes;

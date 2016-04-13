@@ -8,7 +8,7 @@ public class JVMType extends VarType
 
 	protected JVMType(TYPE type, String typeId, String jvmExpression)
 	{
-		super(type, typeId, jvmExpression);
+		super(type, typeId, null, jvmExpression);
 		// TODO 自動生成されたコンストラクター・スタブ
 	}
 

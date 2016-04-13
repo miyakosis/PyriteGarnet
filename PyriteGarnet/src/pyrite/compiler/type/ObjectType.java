@@ -8,7 +8,7 @@ import pyrite.compiler.FQCNParser.FQCN;
 public class ObjectType extends VarType
 {
 	// for className
-	public FQCN	_fqcn;
+//	public FQCN	_fqcn;
 
 	public static VarType getType(String fqcnStr)
 	{
@@ -28,9 +28,9 @@ public class ObjectType extends VarType
 
 	protected ObjectType(String typeId, FQCN fqcn)
 	{
-		super(TYPE.OBJ, typeId, typeId);
+		super(TYPE.OBJ, typeId, fqcn, typeId);
 
-		_fqcn = fqcn;
+//		_fqcn = fqcn;
 	}
 
 	// CodeGenerationVisitor に移動

@@ -1,5 +1,7 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.FQCNParser;
+import pyrite.compiler.FQCNParser.FQCN;
 
 public class AssocType extends VarType
 {
@@ -15,15 +17,16 @@ public class AssocType extends VarType
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new AssocType(typeId, keyVarType, valVarType);
+			FQCN	fqcn = FQCNParser.getFQCN("pyrite.lang.Array");
+			varType = new AssocType(typeId, fqcn, keyVarType, valVarType);
 		}
 
 		return	varType;
 	}
 
-	protected AssocType(String typeId, VarType keyVarType, VarType valVarType)
+	protected AssocType(String typeId, FQCN fqcn, VarType keyVarType, VarType valVarType)
 	{
-		super(TYPE.ASSOC, typeId, "Lpyrite.lang.Assoc;");
+		super(TYPE.ASSOC, typeId, fqcn, "L" + fqcn._fqcnStr + ";");
 
 		_keyVarType = keyVarType;
 		_valVarType = valVarType;
