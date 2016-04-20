@@ -887,6 +887,10 @@ public class ClassResolver
 				// Pyriteの型であれば、解析して複数の帰り値型として解決する
 				throw new RuntimeException("not implemented yet");	// TODO
 			}
+			else if (returnTypeClass.getName().equals("void"))
+			{
+				returnTypes = new VarType[0];
+			}
 			else
 			{
 				returnTypes = new VarType[1];

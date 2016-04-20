@@ -252,135 +252,166 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 	// expression
+	//  expression ';'
+	public Object visitStatementExpression(PyriteParser.StatementExpressionContext ctx)
+	{
+		visit(ctx.expression());
+		return	null;
+	}
+
 	// expression '.' Identifier
 	@Override
 	public Object visitExpressionClassFieldRef(@NotNull PyriteParser.ExpressionClassFieldRefContext ctx)
 	{
 		VarType	expressionVarType = (VarType)visit(ctx.expression());
 
+		VarType	varType;	// result var type
 		TerminalNode	idNode = ctx.Identifier();
-		boolean	isLValue = isLValueExpressionElement(idNode);
 		String	id = idNode.getText();
 
-		VarType	varType;	// result var type
-
-		switch (expressionVarType._type)
-		{
-		case PACKAGE:
-			//   Package.Package
-			//   Package.Class
-			PackageType	packageType = (PackageType)expressionVarType;
-			FQCN	fqcn = FQCNParser.getFQCN(packageType._fqcn._fqcnStr, id);
-
-			if (_cr.isClass(fqcn))
-			{	// class name
-				return	ClassType.getType(fqcn);
-			}
-
-			if (_cr.isPackage(fqcn))
+		if (isLValueExpressionElement(idNode))
+		{	// assign
+			switch (expressionVarType._type)
 			{
-				return	PackageType.getType(fqcn);
-			}
+			case PACKAGE:
+				throw new PyriteSyntaxException("id is not declared." + id);
 
-			throw new PyriteSyntaxException("id is not declared." + id);
-
-		case CLASS:
-			//   Class.Class			// inner class. not implemented.
-			//   Class.Class field
-			//   Class.Class method
-			ClassType	classType = (ClassType)expressionVarType;
-			varType = _cr.dispatchVariableC(classType._fqcn, id);
-			if (varType != null)
-			{	// クラス変数
-				// code
-				if (isLValue)
-				{	// assign
+			case CLASS:
+				//   Class.Class			// inner class. not implemented.
+				//   Class.Class field
+				//   Class.Class method
+				ClassType	classType = (ClassType)expressionVarType;
+				varType = _cr.dispatchVariableC(classType._fqcn, id);
+				if (varType != null)
+				{	// クラス変数
+					// code
 					// assign()で値設定するため、ここでコードは作成しない。
 					return	new LValueType(LValueType.TYPE.CLASS, varType, _cpm.getFieldRef(classType._fqcn._fqcnStr, id, varType._jvmExpression));
-					// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
-//					cgv.setLeftExpressionVarType(3, -1, packageClassName, id);
-//					return	new AssignLeftExpressionType(varType, 3, -1, classType._fqcn._fqcnStr, id);
+						// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
+//						cgv.setLeftExpressionVarType(3, -1, packageClassName, id);
+//						return	new AssignLeftExpressionType(varType, 3, -1, classType._fqcn._fqcnStr, id);
 				}
-				else
-				{
-					_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(classType._fqcn._fqcnStr, id, varType._jvmExpression));
-					return	varType;
-				}
-			}
 
-			if (_cr.existsMethodC(classType._fqcn, id))
-			{	// クラスメソッド
-				return	MethodNameType.getType(classType._fqcn, id, true);
-			}
+				// 不明なIdentifier
+				throw new PyriteSyntaxException("id is not declared. " + id);
 
-			// TODO:クラス.クラスはとりあえず未サポート
-			throw new PyriteSyntaxException("id is not declared. " + id);
-
-		case OBJ:
-			//   Object.Instance field
-			//   Object.Instance method
-			//   Class.Class field
-			//   Object.Class method
-			ObjectType	objectType = (ObjectType)expressionVarType;
-			if (isLValue)
-			{	// assign
+			case OBJ:
+				//   Object.Instance field
+				//   Object.Instance method
+				//   Class.Class field
+				//   Object.Class method
+				ObjectType	objectType = (ObjectType)expressionVarType;
 				// assign()で値設定するため、ここでコードは作成しない。
 				varType = _cr.dispatchVariableI(objectType._fqcn, id);
 				if (varType != null)
 				{
 					return	new LValueType(LValueType.TYPE.INSTANCE, varType, _cpm.getFieldRef(objectType._fqcn._fqcnStr, id, varType._jvmExpression));
-//					cgv.setLeftExpressionVarType(2, -1, _fqcn._fqcnStr, id);
-//					return	varType;
-//					return	new AssignLeftExpressionType(varType, 2, -1, objectType._fqcn._fqcnStr, id);
+//						cgv.setLeftExpressionVarType(2, -1, _fqcn._fqcnStr, id);
+//						return	varType;
+//						return	new AssignLeftExpressionType(varType, 2, -1, objectType._fqcn._fqcnStr, id);
 				}
 
 				varType = _cr.dispatchVariableC(objectType._fqcn, id);
 				if (varType != null)
 				{
 					return	new LValueType(LValueType.TYPE.CLASS, varType, _cpm.getFieldRef(objectType._fqcn._fqcnStr, id, varType._jvmExpression));
-//					cgv.setLeftExpressionVarType(3, -1, _fqcn._fqcnStr, id);
-//					return	varType;
-//					return	new AssignLeftExpressionType(varType, 3, -1, objectType._fqcn._fqcnStr, id);
+//						cgv.setLeftExpressionVarType(3, -1, _fqcn._fqcnStr, id);
+//						return	varType;
+//						return	new AssignLeftExpressionType(varType, 3, -1, objectType._fqcn._fqcnStr, id);
 				}
+
+				// 不明なIdentifier
+				throw new PyriteSyntaxException("id is not declared. " + id);
+
+			case ARRAY:
+			case ASSOC:
+				throw new PyriteSyntaxException("id is not declared." + id);
+
+			default:
+				// それ以外の型では、.による識別子連鎖は許容されていない
+				throw new PyriteSyntaxException("id is not declared. " + id);
 			}
-			else
+		}
+		else
+		{	// refer
+			switch (expressionVarType._type)
 			{
-				varType = _cr.dispatchVariableI(objectType._fqcn, id);
+			case PACKAGE:
+				//   Package.Package
+				//   Package.Class
+				PackageType	packageType = (PackageType)expressionVarType;
+				FQCN	fqcn = FQCNParser.getFQCN(packageType._fqcn._fqcnStr, id);
+
+				if (_cr.isClass(fqcn))
+				{	// class name
+					return	ClassType.getType(fqcn);
+				}
+
+				if (_cr.isPackage(fqcn))
+				{
+					return	PackageType.getType(fqcn);
+				}
+
+				throw new PyriteSyntaxException("id is not declared." + id);
+
+			case CLASS:
+				//   Class.Class			// inner class. not implemented.
+				//   Class.Class field
+				//   Class.Class method
+				varType = _cr.dispatchVariableC(expressionVarType._fqcn, id);
+				if (varType != null)
+				{	// クラス変数
+					// code
+					_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(expressionVarType._fqcn._fqcnStr, id, varType._jvmExpression));
+					return	varType;
+				}
+
+				if (_cr.existsMethodC(expressionVarType._fqcn, id))
+				{	// クラスメソッド
+					return	MethodNameType.getType(expressionVarType._fqcn, id, true);
+				}
+
+				// TODO:クラス.クラスはとりあえず未サポート
+				throw new PyriteSyntaxException("id is not declared. " + id);
+
+			case OBJ:
+			case ARRAY:
+			case ASSOC:
+				//   Object.Instance field
+				//   Object.Instance method
+				//   Object.Class field
+				//   Object.Class method
+				varType = _cr.dispatchVariableI(expressionVarType._fqcn, id);
 				if (varType != null)
 				{	// インスタンスフィールド
 					_currentMethodCodeDeclation.addCodeOp(BC.GETFIELD);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(objectType._fqcn._fqcnStr, id, varType._jvmExpression));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(expressionVarType._fqcn._fqcnStr, id, varType._jvmExpression));
 
 					return	varType;
 				}
 
-				varType = _cr.dispatchVariableC(objectType._fqcn, id);
+				varType = _cr.dispatchVariableC(expressionVarType._fqcn, id);
 				if (varType != null)
 				{	// クラスフィールド
 					_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(objectType._fqcn._fqcnStr, id, varType._jvmExpression));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(expressionVarType._fqcn._fqcnStr, id, varType._jvmExpression));
 
 					return	varType;
 				}
 
-				if (_cr.existsMethodIC(objectType._fqcn, id))
+				if (_cr.existsMethodIC(expressionVarType._fqcn, id))
 				{	// クラスメソッド/インスタンスメソッド
-					return	MethodNameType.getType(objectType._fqcn, id, false);
+					return	MethodNameType.getType(expressionVarType._fqcn, id, false);
 				}
+
+				// 不明なIdentifier
+				throw new PyriteSyntaxException("id is not declared. " + id);
+
+			default:
+				// それ以外の型では、.による識別子連鎖は許容されていない
+				throw new PyriteSyntaxException("id is not declared. " + id);
 			}
-
-			// 不明なIdentifier
-			throw new PyriteSyntaxException("id is not declared. " + id);
-
-		case ARRAY:
-		case ASSOC:
-			// TODO:
-			throw new RuntimeException("not implemented.");
-
-		default:
-			// それ以外の型では、.による識別子連鎖は許容されていない
-			throw new PyriteSyntaxException("id is not declared. " + id);
 		}
 	}
 
@@ -443,6 +474,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		byte	opCode = methodType._isStatic ? BC.INVOKESTATIC : BC.INVOKEVIRTUAL;
 		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
+
+		if (isRemainStackValue(ctx) == false && methodType._returnTypes.length > 0)
+		{	//
+			_currentMethodCodeDeclation.addCodeOp(BC.POP);
+		}
+
 
 		// 返り値
 		// TODO:とりあえず暫定で。要複数パラメータ対応
@@ -537,10 +574,15 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
 				inputParamType = ObjectType.getType("java.lang.Object");
 				break;
-			case INT:
-			case STR:
-			case BOL:
 			case OBJ:
+			case NUM:
+			case INT:
+			case DEC:
+			case FLT:
+			case STR:
+			case CHR:
+			case BOL:
+			case BYT:
 				// OK
 				break;
 			default:
@@ -552,7 +594,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		return	inputParamTypeList;
 	}
-
 
 
 
@@ -840,7 +881,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				throw new PyriteSyntaxException("array indexer must integer.");
 			}
 
-			if (isParentAssignLeftExpression(ctx))
+			if (isLValueExpressionElement(ctx))
 			{	// assign
 				return	new LValueType(LValueType.TYPE.ARRAY, expressionType, _cpm.getMethodRef(arrayType._fqcn._fqcnStr, "set", "(Lpyrite.lang.Integer;Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
@@ -859,7 +900,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				throw new PyriteSyntaxException("assoc indexer unmatch.");
 			}
 
-			if (isParentAssignLeftExpression(ctx))
+			if (isLValueExpressionElement(ctx))
 			{	// assign
 				return	new LValueType(LValueType.TYPE.ASSOC, expressionType, _cpm.getMethodRef(assocType._fqcn._fqcnStr, "set", "(Lpyrite.lang.Object;Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
@@ -947,19 +988,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	}
 
 
-	// 親要素が代入かどうかを返す
-	public static boolean	isParentAssignExpression(RuleContext ctx)
-	{
-		// 親要素が代入か、条件判定の場合は値を残す必要がある
-		return	(ctx.parent instanceof PyriteParser.ExpressionAssignContext)
-				|| (ctx.parent instanceof PyriteParser.ParExpressionContext);
-	}
-
-	// 自分が代入要素の左辺式かどうかを返す
-	public boolean	isParentAssignLeftExpression(RuleContext ctx)
-	{
-		return	_isLValueExpression && isParentAssignExpression(ctx);
-	}
 
 	// expression op=('*'|'/') expression
 	@Override
@@ -1124,6 +1152,13 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	}
 
 
+/*
+	// 自分が代入要素の左辺式かどうかを返す
+	public boolean	isParentAssignLeftExpression(RuleContext ctx)
+	{
+		return	_isLValueExpression && isParentAssignExpression(ctx);
+	}
+
 	protected boolean	_isLValueExpression = false;	// true:左辺値の解析中 false:それ以外。右結合なので、状態は一つで管理できる。
 	// 左辺値の場合は、式の最後の要素がローカル変数またはフィールドでなければならない。
 	// また左辺値かどうかによって、式の最後の要素の式解析が異なる
@@ -1137,6 +1172,42 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		return	_isLValueExpression && ctx == _lValueExpressionElement;
 	}
+*/
+
+	// 親要素を参照し、スタックに値を残す必要があるかどうかを返す。
+	// 親要素が StatementExpression の場合は、スタックに値を残してはいけない。
+	// c.f. StatementExpression
+	// statement : expression ';'
+	public static boolean	isRemainStackValue(RuleContext ctx)
+	{
+		return	!(ctx.parent instanceof PyriteParser.StatementExpressionContext);
+	}
+
+	// expressionが左辺値かどうかによって、式の最後の要素の式解析が異なる
+	// ローカル変数参照が
+	//   左辺値にある場合：ローカル変数への値設定(ローカル変数インデクスの取得) 右辺値にある場合：ローカル変数参照をスタックに積む
+	// フィールド参照が
+	//   左辺値にある場合：フィールドへの値設定(スタックにオブジェクト参照を残したままにする) 右辺値にある場合：フィールド参照をスタックに詰む
+	// 左辺値の場合は、式の最後の要素がローカル変数またはフィールドでなければならない。
+	public boolean	isLValueExpressionElement(ParseTree ctx)
+	{
+		if (ctx.getParent() instanceof PyriteParser.ExpressionAssignContext)
+		{
+			PyriteParser.ExpressionAssignContext	parent = (PyriteParser.ExpressionAssignContext)ctx.getParent();
+			// PyriteParser.ExpressionAssignContext は
+			// <assoc=right> expression '=' expression
+
+			ParserRuleContext	leftExpression = parent.expression(0);
+			ParseTree	lValueExpressionElement = leftExpression.getChild(leftExpression.getChildCount() - 1);
+
+			if (ctx == lValueExpressionElement)
+			{
+				return	true;
+			}
+		}
+		return	false;
+	}
+
 
 	// <assoc=right> expression '=' expression
 	@Override
@@ -1145,11 +1216,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodCodeDeclation	methodDeclaretion = _currentMethodCodeDeclation;
 
 		// 左辺値
-		_isLValueExpression = true;
+//		_isLValueExpression = true;
 //		_assignType = 0;
 		// 識別子最後の要素を取得しておく
-		ParserRuleContext	leftExpression = ctx.expression(0);
-		_lValueExpressionElement = leftExpression.getChild(leftExpression.getChildCount() - 1);
+//		ParserRuleContext	leftExpression = ctx.expression(0);
+//		_lValueExpressionElement = leftExpression.getChild(leftExpression.getChildCount() - 1);
 
 		Object	lType = visit(ctx.expression(0));	// get value of left subexpression
 		if (lType instanceof LValueType == false)
@@ -1157,13 +1228,13 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new PyriteSyntaxException("Left expression is not left value type.");
 		}
 		LValueType	lValueType = (LValueType)lType;
-		_isLValueExpression = false;
+//		_isLValueExpression = false;
 
 		// 右辺値
 		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
 
 		// assign
-		createAssignCode(lValueType, rType, isParentAssignExpression(ctx));
+		createAssignCode(lValueType, rType, isRemainStackValue(ctx));
 
 		return	lValueType._type;
 	}
@@ -1171,7 +1242,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 	// 代入のバイトコードを作成する
-	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isParentAssignExpression)
+	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isKeepStackValue)
 	{
 		VarType lType = lValueType._type;
 		if (lType._type != rType._type)
@@ -1182,7 +1253,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		switch (lValueType._lValueType)
 		{
 		case LOCAL:
-			if (isParentAssignExpression)
+			if (isKeepStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP);
@@ -1202,7 +1273,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		case INSTANCE:
-			if (isParentAssignExpression)
+			if (isKeepStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X1);
@@ -1213,7 +1284,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		case CLASS:
-			if (isParentAssignExpression)
+			if (isKeepStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP);
@@ -1227,7 +1298,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
-			if (isParentAssignExpression == false)
+			if (isKeepStackValue == false)
 			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
@@ -1237,7 +1308,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
-			if (isParentAssignExpression == false)
+			if (isKeepStackValue == false)
 			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
@@ -1245,15 +1316,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 	}
 
-	//  expression ';'
-	public Object visitStatementExpression(PyriteParser.StatementExpressionContext ctx)
-	{
-		visit(ctx.expression());
-
-		// TODO:スタックにオブジェクト参照が残っている場合、除去する
-
-		return	null;
-	}
 
 	// 'return' expressionList? ';'
 	@Override
