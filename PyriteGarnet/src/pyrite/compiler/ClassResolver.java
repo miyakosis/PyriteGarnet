@@ -282,11 +282,11 @@ public class ClassResolver
 	}
 
 
-	public boolean hasInterface(FQCN fqcn, String interfaceName)
+	public boolean hasInterface(FQCN fqcn, FQCN interfaceFQCN)
 	{
 		ClassFieldMember	cls = getClassFieldMember(fqcn);
 		assert (cls != null);
-		return	cls._interfaceSet.contains(interfaceName);
+		return	cls._interfaceSet.contains(interfaceFQCN);
 	}
 
 
@@ -536,9 +536,8 @@ public class ClassResolver
 		assert (cls != null);
 
 		// インターフェースに対して再帰的に展開して追加する
-		for (String interfaceFqcnStr : cls._interfaceSet)
+		for (FQCN interfaceFqcn : cls._interfaceSet)
 		{
-			FQCN	interfaceFqcn = FQCNParser.getFQCN(interfaceFqcnStr);
 			addInterfaceClassHierarchyRecursive(interfaceFqcn, level, paramClassHierarchyList);
 		}
 	}
@@ -673,11 +672,15 @@ public class ClassResolver
 
 	// subClass と baseClass が継承関係にあるか(baseClassにsubClassを代入可能か)を調べる
 	//
-	public boolean	isInherited(FQCN subClass, FQCN baseClass)
+	public boolean	isInherited(FQCN baseClass, FQCN subClass)
 	{
 		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
 		{
 			if (cfm._fqcn == baseClass)
+			{
+				return	true;
+			}
+			if (cfm._interfaceSet.contains(baseClass))
 			{
 				return	true;
 			}
@@ -791,7 +794,7 @@ public class ClassResolver
 		public Set<String>	_instanceMethodNameSet = new HashSet<String>();	// key:method name
 		public Map<String, MethodType>	_constructorMap = new HashMap<String, MethodType>();		// key:signature
 
-		public Set<String>	_interfaceSet = new HashSet<String>();	// key:name
+		public Set<FQCN>	_interfaceSet = new HashSet<FQCN>();	// key:name
 
 		public ClassFieldMember(FQCN fqcn)
 		{
@@ -865,7 +868,7 @@ public class ClassResolver
 
 			for (Class<?> interfaceClass : c.getInterfaces())
 			{
-				_interfaceSet.add(interfaceClass.getName());
+				_interfaceSet.add(FQCNParser.getFQCN(interfaceClass.getName()));
 			}
 		}
 

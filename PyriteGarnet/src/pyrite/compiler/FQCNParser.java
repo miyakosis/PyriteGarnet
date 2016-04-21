@@ -61,5 +61,17 @@ public class FQCNParser
 		{
 			return	_fqcnStr;
 		}
+
+		@Override
+		public int	hashCode()
+		{
+			return	_fqcnStr.hashCode();
+		}
+
+		@Override
+		public boolean	equals(Object o)
+		{
+			return	_fqcnStr.equals(o);
+		}
 	}
 }

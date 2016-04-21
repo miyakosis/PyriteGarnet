@@ -492,6 +492,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			return	methodType._returnTypes[0];
 		}
 
+		// TODO:	Java メソッド呼び出し/型変換
+
 
 
 
@@ -876,7 +878,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		if (expressionType._type == TYPE.ARRAY)
 		{
 			ArrayType	arrayType = (ArrayType)expressionType;
-			if (_cr.isInherited(indexType._fqcn, VarType.INT._fqcn))
+			if (_cr.isInherited( VarType.INT._fqcn, indexType._fqcn))
 			{	// indexTypeのクラスが、Integerを継承していない
 				throw new PyriteSyntaxException("array indexer must integer.");
 			}
@@ -895,7 +897,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		else if (expressionType._type == TYPE.ASSOC)
 		{
 			AssocType	assocType = (AssocType)expressionType;
-			if (_cr.isInherited(indexType._fqcn, assocType._keyVarType._fqcn))
+			if (_cr.isInherited(assocType._keyVarType._fqcn, indexType._fqcn))
 			{	// indexTypeのクラスが、連想配列キーのクラスと継承関係にない
 				throw new PyriteSyntaxException("assoc indexer unmatch.");
 			}
@@ -1242,18 +1244,20 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 	// 代入のバイトコードを作成する
-	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isKeepStackValue)
+	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isRemainStackValue)
 	{
+		// 代入チェック
 		VarType lType = lValueType._type;
-		if (lType._type != rType._type)
-		{
+		if (_cr.isInherited(lType._fqcn, rType._fqcn) == false)
+		{	// 代入不可
 			throw new RuntimeException("assign type unmached.");
 		}
 
+		// 代入
 		switch (lValueType._lValueType)
 		{
 		case LOCAL:
-			if (isKeepStackValue)
+			if (isRemainStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP);
@@ -1273,7 +1277,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		case INSTANCE:
-			if (isKeepStackValue)
+			if (isRemainStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP_X1);
@@ -1284,7 +1288,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		case CLASS:
-			if (isKeepStackValue)
+			if (isRemainStackValue)
 			{
 				// 値設定後にスタック上から設定値が消えてしまうが、式の値として設定値を返すために、スタック上の値を複製しておく
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP);
@@ -1298,7 +1302,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
-			if (isKeepStackValue == false)
+			if (isRemainStackValue == false)
 			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
@@ -1308,7 +1312,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
-			if (isKeepStackValue == false)
+			if (isRemainStackValue == false)
 			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
@@ -1712,7 +1716,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
 			}
 		}
-		else if (expressionType._type == VarType.TYPE.OBJ && _cr.hasInterface(((ObjectType)expressionType)._fqcn, "java.lang.Iterable"))
+		else if (expressionType._type == VarType.TYPE.OBJ && _cr.hasInterface(((ObjectType)expressionType)._fqcn, FQCNParser.getFQCN("java.lang.Iterable")))
 		{	// 集合要素はCollection
 			 // iterator()
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
