@@ -670,10 +670,14 @@ public class ClassResolver
 
 
 
-	// subClass と baseClass が継承関係にあるか(baseClassにsubClassを代入可能か)を調べる
-	//
-	public boolean	isInherited(FQCN baseClass, FQCN subClass)
+	// baseClassにsubClassを代入可能か(subClass と baseClass が継承関係にあるか)を調べる
+	public boolean	isAssignable(FQCN baseClass, FQCN subClass)
 	{
+		if (subClass == null)
+		{	// nullは代入可能
+			return	true;
+		}
+
 		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
 		{
 			if (cfm._fqcn == baseClass)
