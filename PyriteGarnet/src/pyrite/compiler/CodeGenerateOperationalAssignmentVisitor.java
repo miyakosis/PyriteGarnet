@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import pyrite.compiler.ClassResolver.ClassFieldMember;
 import pyrite.compiler.FQCNParser.FQCN;
 
+// 演算代入子の際に、左辺要素を参照してスタックに積むためのVisitor
 public class CodeGenerateOperationalAssignmentVisitor extends CodeGenerationVisitor
 {
 

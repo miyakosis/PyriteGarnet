@@ -6,7 +6,7 @@ import java.util.Stack;
 
 public class ControlBlockManager
 {
-	public static enum TYPE {INIT, LOOP, SWITCH};
+	public static enum TYPE {INIT, WHILE, FOR, SWITCH};
 
 	private ControlBlock	_currentCB = new ControlBlock(TYPE.INIT, null);
 	private Stack<ControlBlock>	_cbStack = new Stack<ControlBlock>();
@@ -34,6 +34,55 @@ public class ControlBlockManager
 		_currentCB = _cbStack.pop();
 	}
 
+
+	public void setBreakPos(String label, int breakPos)
+	{
+		ControlBlock	cb = findControlBrock(label);
+
+		if (cb._type == TYPE.WHILE || cb._type == TYPE.FOR || cb._type == TYPE.SWITCH)
+		{
+			cb.setBreakPos(breakPos);
+		}
+		else
+		{
+			throw new PyriteSyntaxException("label is only for control statement.");
+		}
+	}
+
+	public void setContinuePos(String label, int continuePos)
+	{
+		ControlBlock	cb = findControlBrock(label);
+
+		if (cb._type == TYPE.WHILE || cb._type == TYPE.FOR)
+		{
+			cb.setContinuePos(continuePos);
+		}
+		else
+		{
+			throw new PyriteSyntaxException("label is only for control statement.");
+		}
+	}
+
+	protected ControlBlock	findControlBrock(String label)
+	{
+		if (label == null)
+		{
+			return	_currentCB;
+		}
+		else
+		{	// ラベルで指定された制御構文位置を探す
+			for (ControlBlock cb : _cbStack)
+			{
+				if (label.equals(cb._label))
+				{
+					return	cb;
+				}
+			}
+			throw new PyriteSyntaxException("label not found.");
+		}
+	}
+
+/*
 	public void setContinuePos(int condPos)
 	{
 		_currentCB.setContinuePos(condPos);
@@ -41,90 +90,52 @@ public class ControlBlockManager
 
 	public int getContinuePos(String label)
 	{
-		if (label == null)
+		ControlBlock	cb = findControlBrock(label);
+
+		if (cb._type == TYPE.WHILE || cb._type == TYPE.FOR)
 		{
-			return	_currentCB._continuePos;
+			return	cb._continuePos;
 		}
 		else
-		{	// ラベルで指定された制御構文位置を探す
-			for (ControlBlock cb : _cbStack)
-			{
-				if (label.equals(cb._label))
-				{
-					if (cb._type == TYPE.LOOP)
-					{
-						return	cb._continuePos;
-					}
-					else
-					{
-						throw new PyriteSyntaxException("label is only for control statement.");
-					}
-				}
-			}
-			throw new PyriteSyntaxException("label not found.");
+		{
+			throw new PyriteSyntaxException("label is only for control statement.");
 		}
+	}
+*/
+
+	public List<Integer>	getBreakPosList()
+	{
+		return	_currentCB._breakPosList;
 	}
 
-	public void setBreakPos(String label, int breakPos)
+	public List<Integer>	getContinuePosList()
 	{
-		if (label == null)
-		{
-			_currentCB.setBreakPos(breakPos);
-		}
-		else
-		{	// ラベルで指定された制御構文位置を探す
-			for (ControlBlock cb : _cbStack)
-			{
-				if (label.equals(cb._label))
-				{
-					if (cb._type == TYPE.LOOP || cb._type == TYPE.SWITCH)
-					{
-						cb.setBreakPos(breakPos);
-						return;
-					}
-					else
-					{
-						throw new PyriteSyntaxException("label is only for control statement.");
-					}
-				}
-			}
-			throw new PyriteSyntaxException("label not found.");
-		}
+		return	_currentCB._continuePosList;
 	}
 
-	public int[]	getBreakPoss()
-	{
-		int[]	breakPoss = new int[_currentCB._breakPosList.size()];
-		for (int i = 0; i < breakPoss.length; ++i)
-		{
-			breakPoss[i] = _currentCB._breakPosList.get(i);
-		}
-		return	breakPoss;
-	}
 
 	public static class ControlBlock
 	{
-		private TYPE	_type;
-		private String	_label;
+		private final TYPE	_type;
+		private final String	_label;
 
-		private int	_continuePos;
 		private List<Integer>	_breakPosList = new ArrayList<Integer>();
+		private List<Integer>	_continuePosList = new ArrayList<Integer>();
 
 		public ControlBlock(TYPE type, String label)
 		{
 			_type = type;
 			_label = label;
-			_continuePos = -1;
-		}
-
-		public void setContinuePos(int condPos)
-		{
-			_continuePos = condPos;
 		}
 
 		public void setBreakPos(int breakPos)
 		{
 			_breakPosList.add(breakPos);
+		}
+
+		public void setContinuePos(int continuePos)
+		{
+			_continuePosList.add(continuePos);
 		}
 	}
 }

@@ -1,9 +1,10 @@
 package pyrite.lang;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-public class Assoc extends pyrite.lang.Object
+public class Assoc extends pyrite.lang.Object implements Iterable
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Assoc";
 
@@ -29,4 +30,9 @@ public class Assoc extends pyrite.lang.Object
 		return	_v.put(index, val);
 	}
 
+	@Override
+	public Iterator iterator()
+	{
+		return _v.entrySet().iterator();
+	}
 }

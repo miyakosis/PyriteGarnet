@@ -3,7 +3,7 @@ package pyrite.compiler.type;
 public class LValueType
 {
 	// local value, instance field, class field, array
-	public enum	TYPE {LOCAL, INSTANCE, CLASS, ARRAY, ASSOC};
+	public static enum	TYPE {LOCAL, INSTANCE, CLASS, ARRAY, ASSOC};
 
 	public final TYPE	_lValueType;
 	public final VarType	_type;

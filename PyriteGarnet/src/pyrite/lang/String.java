@@ -1,6 +1,6 @@
 package pyrite.lang;
 
-public class String extends pyrite.lang.Object
+public class String extends pyrite.lang.Object implements CharSequence
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.String";
 
@@ -24,5 +24,24 @@ public class String extends pyrite.lang.Object
 	public boolean	equals(java.lang.Object o)
 	{
 		return	this.hashCode() == o.hashCode();
+	}
+
+
+	@Override
+	public char charAt(int i)
+	{
+		return _v.charAt(i);
+	}
+
+	@Override
+	public int length()
+	{
+		return _v.length();
+	}
+
+	@Override
+	public CharSequence subSequence(int beginIndex, int endIndex)
+	{
+		return _v.subSequence(beginIndex, endIndex);
 	}
 }
