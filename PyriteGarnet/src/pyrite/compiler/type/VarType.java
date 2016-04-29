@@ -292,15 +292,15 @@ public class VarType
 //		_hashCode = createHashCode(type, nArrayLevel, id);
 //	}
 
-//	public int	hashCode()
-//	{
-//		return	_hashCode;
-//	}
-//
-//	public boolean	equals(Object o)
-//	{
-//		return	((VarType)o)._hashCode == _hashCode;
-//	}
+	public int	hashCode()
+	{
+		return	_typeId.hashCode();
+	}
+
+	public boolean	equals(Object o)
+	{
+		return	_typeId.equals(((VarType)o)._typeId);
+	}
 
 	public String	toString()
 	{

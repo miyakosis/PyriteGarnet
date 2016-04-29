@@ -17,6 +17,7 @@ import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
 import pyrite.compiler.type.ClassType;
+import pyrite.compiler.type.ExpressionListType;
 import pyrite.compiler.type.LValueType;
 import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
@@ -456,7 +457,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodNameType	methodNameType = (MethodNameType)expressionVarType;
 
 		// methodParameter
-		List<VarType>	inputParamTypeList = (List<VarType>)visit(ctx.arguments());
+		ExpressionListType	expressionListType = (ExpressionListType)visit(ctx.arguments());
+		List<VarType>	inputParamTypeList = expressionListType._paramTypeList;
 
 		// メソッド定義・出力パラメータを解決
 		MethodType	methodType = _cr.dispatchMethodVarType(methodNameType, inputParamTypeList);
@@ -555,30 +557,29 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitArguments(@NotNull PyriteParser.ArgumentsContext ctx)
 	{
-		List<VarType>	paramTypeList;
+		ExpressionListType	expressionListType;
 		PyriteParser.ExpressionListContext	expressionListContext = ctx.expressionList();
 		if (expressionListContext != null)
 		{
-			paramTypeList = (List<VarType>)visit(expressionListContext);
+			expressionListType = (ExpressionListType)visit(expressionListContext);
 		}
 		else
 		{
-			paramTypeList = new ArrayList<VarType>();
+			expressionListType = new ExpressionListType();
 		}
 
 		// 入力パラメータを解決
-		// paramTypeList は PartialIdType の可能性があるため、型解決する
 		// メソッド解決のために参照する入力パラメータの型情報
-		List<VarType>	inputParamTypeList = new ArrayList<VarType>();
-		for (VarType inputParamType : paramTypeList)
+
+		for (int i = 0; i < expressionListType._paramTypeList.size(); ++i)
 		{
 //			VarType	inputParamType = type.resolveType(this);
 
-			switch (inputParamType._type)
+			switch (expressionListType._paramTypeList.get(i)._type)
 			{
 			case NULL:
 				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
-				inputParamType = ObjectType.getType("java.lang.Object");
+				expressionListType._paramTypeList.set(i, ObjectType.getType("java.lang.Object"));
 				break;
 			case OBJ:
 			case NUM:
@@ -596,11 +597,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			default:
 				throw new RuntimeException("method parameter unsuitable.");
 			}
-
-			inputParamTypeList.add(inputParamType);
 		}
 
-		return	inputParamTypeList;
+		return	expressionListType;
 	}
 
 
@@ -609,15 +608,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionList(@NotNull PyriteParser.ExpressionListContext ctx)
 	{
-		List<VarType>	typeList = new ArrayList<VarType>();
+		ExpressionListType	expressionListType = new ExpressionListType();
 		List<PyriteParser.ExpressionContext>	exprs = ctx.expression();
 
 		for (PyriteParser.ExpressionContext expr : exprs)
 		{
-			typeList.add((VarType)visit(expr));
+			expressionListType._paramTypeList.add((VarType)visit(expr));
+			expressionListType._paramCodePosList.add(_currentMethodCodeDeclation.getCodePos());
 		}
 
-		return	typeList;
+		return	expressionListType;
 	}
 
 	// 'new' creator
@@ -888,7 +888,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		if (expressionType._type == TYPE.ARRAY)
 		{
 			ArrayType	arrayType = (ArrayType)expressionType;
-			if (_cr.isAssignable( VarType.INT._fqcn, indexType._fqcn))
+			if (_cr.isInherited(indexType._fqcn, VarType.INT._fqcn) == false)
 			{	// indexTypeのクラスが、Integerを継承していない
 				throw new PyriteSyntaxException("array indexer must integer.");
 			}
@@ -907,9 +907,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		else if (expressionType._type == TYPE.ASSOC)
 		{
 			AssocType	assocType = (AssocType)expressionType;
-			if (_cr.isAssignable(assocType._keyVarType._fqcn, indexType._fqcn))
+			if (_cr.isInherited(indexType._fqcn, assocType._keyVarType._fqcn) == false)
 			{	// indexTypeのクラスが、連想配列キーのクラスと継承関係にない
-				throw new PyriteSyntaxException("assoc indexer unmatch.");
+				throw new PyriteSyntaxException("assoc indexer type unmatch.");
 			}
 
 			if (isLValueExpressionElement(ctx))
@@ -1319,10 +1319,35 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		// 代入チェック
 		VarType lType = lValueType._type;
-		if (_cr.isAssignable(lType._fqcn, rType._fqcn) == false)
-		{	// 代入不可
-			throw new RuntimeException("assign type unmached.");
+		if (rType == VarType.NULL)
+		{	// nullは常に代入可
+			;
 		}
+		else if (_cr.isInherited(lType._fqcn, rType._fqcn) == false)
+		{	// 型が違うので代入不可
+			throw new PyriteSyntaxException("assign type unmached.");
+		}
+		else if (lType._type == VarType.TYPE.ARRAY)
+		{	// 要素の型が一致しているかをチェックする
+			VarType	lElementType = ((ArrayType)lType)._arrayVarType;
+			VarType	rElementType = ((ArrayType)rType)._arrayVarType;
+			if (lElementType.equals(rElementType) == false)
+			{
+				throw new PyriteSyntaxException("assign type unmached.");
+			}
+		}
+		else if (lType._type == VarType.TYPE.ASSOC)
+		{
+			VarType	lKeyType = ((AssocType)lType)._keyVarType;
+			VarType	rKeyType = ((AssocType)rType)._keyVarType;
+			VarType	lValType = ((AssocType)lType)._valVarType;
+			VarType	rValType = ((AssocType)rType)._valVarType;
+			if (lKeyType.equals(rKeyType) == false || lValType.equals(rValType) == false)
+			{
+				throw new PyriteSyntaxException("assign type unmached.");
+			}
+		}
+		// precond:lType._fqcnは、Array と Assoc の両方を継承することはない
 
 		// 代入
 		switch (lValueType._lValueType)
@@ -1766,13 +1791,31 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		VarType	expressionType = (VarType)visit(ctx.expression());
 //		expressionType = expressionType.resolveType(this);
 
-		if (expressionType._type == VarType.TYPE.ARRAY || expressionType._type == VarType.TYPE.ASSOC ||
-				(expressionType._type == VarType.TYPE.OBJ && _cr.hasInterface(expressionType._fqcn, FQCNParser.getFQCN("java.lang.Iterable"))))
+		// 型チェック
+		switch (expressionType._type)
 		{
-			;
-		}
-		else
-		{
+		case ARRAY:
+			ArrayType	arrayType = (ArrayType)lTypeName._type;
+			if (_cr.isInherited(arrayType._arrayVarType._fqcn, type._fqcn) == false)
+			{	// 代入不可
+				throw new PyriteSyntaxException("assign type unmached.");
+			}
+			break;
+
+		case ASSOC:
+			// TODO:Map.Entry が iterator() で返るが、これをなんとかして型チェックできないか。
+			// 現時点では、代入で型変換ができない場合、実行時エラーになる
+			break;
+
+		case OBJ:
+			if (_cr.hasInterface(expressionType._fqcn, FQCNParser.getFQCN("java.lang.Iterable")) == false)
+			{
+				throw new PyriteSyntaxException("enumlation target is not collection");
+			}
+			// 現時点では、代入で型変換ができない場合、実行時エラーになる
+			break;
+
+		default:
 			throw new PyriteSyntaxException("enumlation target is not collection");
 		}
 
@@ -1781,13 +1824,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.lang.Iterable", "iterator", "()Ljava.util.Iterator;"));
 
 		// iterator をローカルに保存
-		String	iteratorName = "$it" + ctx.hashCode();	// Pyriteコードで定義できない名称
+		String	iteratorName = "$it" + ctx.hashCode();	// Pyriteコードでは定義できない名称
 		VarTypeName	iteratorTypeName = _currentMethodCodeDeclation.putLocalVar(iteratorName, ObjectType.getType("java.util.Iterator"));
 		_currentMethodCodeDeclation.addCodeOpASTORE(iteratorTypeName._localVarNum);
 
-		// iterator.hasnext
+		// iterator.hasNext()
 		int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
-		_controlBlockManager.setContinuePos(condPos);					// continue で戻る位置を記憶
 		_currentMethodCodeDeclation.addCodeOp(BC.ALOAD);
 		_currentMethodCodeDeclation.addCodeU2(iteratorTypeName._localVarNum);
 		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
@@ -1796,18 +1838,13 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
 		_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
 
-		// iterator.next
+		// iterator.next()
 		_currentMethodCodeDeclation.addCodeOpALOAD(iteratorTypeName._localVarNum);
 		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "next", "()Ljava/lang/Object;"));
 
 		// 変数に代入
 		_currentMethodCodeDeclation.addCodeOp(BC.CHECKCAST);
-		if (type._type != VarType.TYPE.OBJ)
-		{
-			// TODO:インターフェースや配列も許容？
-			throw new RuntimeException("checkcast");
-		}
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(((ObjectType)type)._fqcn._fqcnStr));
 		_currentMethodCodeDeclation.addCodeOpASTORE(lTypeName._localVarNum);
 
@@ -1825,157 +1862,162 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		jmpDistance = blockEndPos - condBranchPos;
 		_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
 
-		// ブロック内の break 文のとび先を設定する
-		for (int breakPos : _controlBlockManager.getBreakPoss())
+		// labelに対応する break 文のとび先を設定する
+		for (int breakPos : _controlBlockManager.getBreakPosList())
 		{
 			jmpDistance = blockEndPos - breakPos;
 			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
 		}
 
-
-
-
-		if (expressionType._type == VarType.TYPE.ARRAY)
-		{	// 集合要素は配列
-			if (type._type != expressionType._type)
-			{
-				throw new PyriteSyntaxException("type is unmatched.");
-			}
-
-			// 集合要素を一度ローカル変数に保持
-			String	collectionName = "$" + ctx.hashCode();	// Pyriteコードで定義できない名称
-			VarTypeName	collectionTypeName = _currentMethodCodeDeclation.putLocalVar(collectionName, expressionType);
-//			AssignLeftExpressionType	assignCollectionType = new AssignLeftExpressionType(expressionType, collectionTypeName._localVarNum);
-			LValueType	lValueType = new LValueType(LValueType.TYPE.LOCAL, expressionType, collectionTypeName._localVarNum);
-			createAssignCode(lValueType, expressionType, false);
-
-			// 集合要素の長さを取得、ローカル変数に保持
-			String	collectionLengthName = "$l" + ctx.hashCode();	// Pyriteコードで定義できない名称
-			VarTypeName	collectionLengthTypeName = _currentMethodCodeDeclation.putLocalVar(collectionLengthName, VarType.INT);
-			_currentMethodCodeDeclation.addCodeOpALOAD(collectionTypeName._localVarNum);
-			_currentMethodCodeDeclation.addCodeOp(BC.ARRAYLENGTH);
-			_currentMethodCodeDeclation.addCodeOpISTORE(collectionLengthTypeName._localVarNum);
-
-			// インデクス変数を定義し、0で初期化する
-			String	indexName = "$i" + ctx.hashCode();	// Pyriteコードで定義できない名称
-			VarTypeName	indexTypeName = _currentMethodCodeDeclation.putLocalVar(indexName, VarType.INT);
-			_currentMethodCodeDeclation.addCodeOp(BC.ICONST_0);
-			_currentMethodCodeDeclation.addCodeOpISTORE(indexTypeName._localVarNum);
-
-			// インデクスと配列長の比較を行う
-			int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
-			_controlBlockManager.setContinuePos(condPos);					// continue で戻る位置を記憶
-			_currentMethodCodeDeclation.addCodeOpILOAD(indexTypeName._localVarNum);
-			_currentMethodCodeDeclation.addCodeOpILOAD(collectionLengthTypeName._localVarNum);
-			int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 分岐命令バイト位置
-			_currentMethodCodeDeclation.addCodeOp(BC.IF_ICMPGE);
-			_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
-
-			// 変数に代入
-			_currentMethodCodeDeclation.addCodeOpALOAD(collectionTypeName._localVarNum);	// 配列をロード
-			_currentMethodCodeDeclation.addCodeOpILOAD(indexTypeName._localVarNum);
-			switch (type._type)
-			{
-			case STR:
-			case OBJ:
-				_currentMethodCodeDeclation.addCodeOp(BC.AALOAD);							// 要素をロード
-				_currentMethodCodeDeclation.addCodeOpASTORE(lTypeName._localVarNum);		// 変数に代入
-				break;
-			case INT:
-				_currentMethodCodeDeclation.addCodeOp(BC.IALOAD);							// 要素をロード
-				_currentMethodCodeDeclation.addCodeOpISTORE(lTypeName._localVarNum);		// 変数に代入
-				break;
-			default:
-				throw new RuntimeException("other?");
-			}
-
-			// ブロック内の処理
-			visit(_forBlockContext);
-			// インデクスのインクリメント
-			_currentMethodCodeDeclation.addCodeOp(BC.IINC);
-			_currentMethodCodeDeclation.addCodeU1(indexTypeName._localVarNum);
-			_currentMethodCodeDeclation.addCodeU1(1);
-
-			// ブロック末尾に、条件判定に戻るジャンプ命令を追加する
-			int	blockEndPos = _currentMethodCodeDeclation.getCodePos();	   // ブロック終了バイト位置
-			int	jmpDistance = condPos - blockEndPos;
-			_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
-			_currentMethodCodeDeclation.addCodeU2(jmpDistance);
-
-			// 条件が満たされない場合のとび先を設定する
-			blockEndPos = _currentMethodCodeDeclation.getCodePos();
-			jmpDistance = blockEndPos - condBranchPos;
-			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
-
-			// ブロック内の break 文のとび先を設定する
-			for (int breakPos : _controlBlockManager.getBreakPoss())
-			{
-				jmpDistance = blockEndPos - breakPos;
-				_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
-			}
-		}
-		else if (expressionType._type == VarType.TYPE.OBJ && _cr.hasInterface(((ObjectType)expressionType)._fqcn, FQCNParser.getFQCN("java.lang.Iterable")))
-		{	// 集合要素はCollection
-			 // iterator()
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.lang.Iterable", "iterator", "()Ljava.util.Iterator;"));
-
-			// iterator をローカルに保存
-			String	iteratorName = "$it" + ctx.hashCode();	// Pyriteコードで定義できない名称
-			VarTypeName	iteratorTypeName = _currentMethodCodeDeclation.putLocalVar(iteratorName, ObjectType.getType("java.util.Iterator"));
-			_currentMethodCodeDeclation.addCodeOpASTORE(iteratorTypeName._localVarNum);
-
-			// iterator.hasnext
-			int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
-			_controlBlockManager.setContinuePos(condPos);					// continue で戻る位置を記憶
-			_currentMethodCodeDeclation.addCodeOp(BC.ALOAD);
-			_currentMethodCodeDeclation.addCodeU2(iteratorTypeName._localVarNum);
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "hasNext", "()Z"));
-			int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 分岐命令バイト位置
-			_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
-			_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
-
-			// iterator.next
-			_currentMethodCodeDeclation.addCodeOpALOAD(iteratorTypeName._localVarNum);
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "next", "()Ljava/lang/Object;"));
-
-			// 変数に代入
-			_currentMethodCodeDeclation.addCodeOp(BC.CHECKCAST);
-			if (type._type != VarType.TYPE.OBJ)
-			{
-				// TODO:インターフェースや配列も許容？
-				throw new RuntimeException("checkcast");
-			}
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(((ObjectType)type)._fqcn._fqcnStr));
-			_currentMethodCodeDeclation.addCodeOpASTORE(lTypeName._localVarNum);
-
-			// ブロック内の処理
-			visit(_forBlockContext);
-
-			// ブロック末尾に、条件判定に戻るジャンプ命令を追加する
-			int	blockEndPos = _currentMethodCodeDeclation.getCodePos();	   // ブロック終了バイト位置
-			int	jmpDistance = condPos - blockEndPos;
-			_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
-			_currentMethodCodeDeclation.addCodeU2(jmpDistance);
-
-			// 条件が満たされない場合のとび先を設定する
-			blockEndPos = _currentMethodCodeDeclation.getCodePos();
-			jmpDistance = blockEndPos - condBranchPos;
-			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
-
-			// ブロック内の break 文のとび先を設定する
-			for (int breakPos : _controlBlockManager.getBreakPoss())
-			{
-				jmpDistance = blockEndPos - breakPos;
-				_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
-			}
-		}
-		else
+		// labelに対応する continue 文のとび先を設定する
+		for (int continuePos : _controlBlockManager.getContinuePosList())
 		{
-			throw new PyriteSyntaxException("enumlation target is not collection");
+			jmpDistance = condPos - continuePos;	// ループ条件判定に飛ぶ
+			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, continuePos + 1);
 		}
+
+
+//		if (expressionType._type == VarType.TYPE.ARRAY)
+//		{	// 集合要素は配列
+//			if (type._type != expressionType._type)
+//			{
+//				throw new PyriteSyntaxException("type is unmatched.");
+//			}
+//
+//			// 集合要素を一度ローカル変数に保持
+//			String	collectionName = "$" + ctx.hashCode();	// Pyriteコードで定義できない名称
+//			VarTypeName	collectionTypeName = _currentMethodCodeDeclation.putLocalVar(collectionName, expressionType);
+////			AssignLeftExpressionType	assignCollectionType = new AssignLeftExpressionType(expressionType, collectionTypeName._localVarNum);
+//			LValueType	lValueType = new LValueType(LValueType.TYPE.LOCAL, expressionType, collectionTypeName._localVarNum);
+//			createAssignCode(lValueType, expressionType, false);
+//
+//			// 集合要素の長さを取得、ローカル変数に保持
+//			String	collectionLengthName = "$l" + ctx.hashCode();	// Pyriteコードで定義できない名称
+//			VarTypeName	collectionLengthTypeName = _currentMethodCodeDeclation.putLocalVar(collectionLengthName, VarType.INT);
+//			_currentMethodCodeDeclation.addCodeOpALOAD(collectionTypeName._localVarNum);
+//			_currentMethodCodeDeclation.addCodeOp(BC.ARRAYLENGTH);
+//			_currentMethodCodeDeclation.addCodeOpISTORE(collectionLengthTypeName._localVarNum);
+//
+//			// インデクス変数を定義し、0で初期化する
+//			String	indexName = "$i" + ctx.hashCode();	// Pyriteコードで定義できない名称
+//			VarTypeName	indexTypeName = _currentMethodCodeDeclation.putLocalVar(indexName, VarType.INT);
+//			_currentMethodCodeDeclation.addCodeOp(BC.ICONST_0);
+//			_currentMethodCodeDeclation.addCodeOpISTORE(indexTypeName._localVarNum);
+//
+//			// インデクスと配列長の比較を行う
+//			int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
+//			_controlBlockManager.setContinuePos(condPos);					// continue で戻る位置を記憶
+//			_currentMethodCodeDeclation.addCodeOpILOAD(indexTypeName._localVarNum);
+//			_currentMethodCodeDeclation.addCodeOpILOAD(collectionLengthTypeName._localVarNum);
+//			int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 分岐命令バイト位置
+//			_currentMethodCodeDeclation.addCodeOp(BC.IF_ICMPGE);
+//			_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
+//
+//			// 変数に代入
+//			_currentMethodCodeDeclation.addCodeOpALOAD(collectionTypeName._localVarNum);	// 配列をロード
+//			_currentMethodCodeDeclation.addCodeOpILOAD(indexTypeName._localVarNum);
+//			switch (type._type)
+//			{
+//			case STR:
+//			case OBJ:
+//				_currentMethodCodeDeclation.addCodeOp(BC.AALOAD);							// 要素をロード
+//				_currentMethodCodeDeclation.addCodeOpASTORE(lTypeName._localVarNum);		// 変数に代入
+//				break;
+//			case INT:
+//				_currentMethodCodeDeclation.addCodeOp(BC.IALOAD);							// 要素をロード
+//				_currentMethodCodeDeclation.addCodeOpISTORE(lTypeName._localVarNum);		// 変数に代入
+//				break;
+//			default:
+//				throw new RuntimeException("other?");
+//			}
+//
+//			// ブロック内の処理
+//			visit(_forBlockContext);
+//			// インデクスのインクリメント
+//			_currentMethodCodeDeclation.addCodeOp(BC.IINC);
+//			_currentMethodCodeDeclation.addCodeU1(indexTypeName._localVarNum);
+//			_currentMethodCodeDeclation.addCodeU1(1);
+//
+//			// ブロック末尾に、条件判定に戻るジャンプ命令を追加する
+//			int	blockEndPos = _currentMethodCodeDeclation.getCodePos();	   // ブロック終了バイト位置
+//			int	jmpDistance = condPos - blockEndPos;
+//			_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+//			_currentMethodCodeDeclation.addCodeU2(jmpDistance);
+//
+//			// 条件が満たされない場合のとび先を設定する
+//			blockEndPos = _currentMethodCodeDeclation.getCodePos();
+//			jmpDistance = blockEndPos - condBranchPos;
+//			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
+//
+//			// ブロック内の break 文のとび先を設定する
+//			for (int breakPos : _controlBlockManager.getBreakPoss())
+//			{
+//				jmpDistance = blockEndPos - breakPos;
+//				_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
+//			}
+//		}
+//		else if (expressionType._type == VarType.TYPE.OBJ && _cr.hasInterface(((ObjectType)expressionType)._fqcn, FQCNParser.getFQCN("java.lang.Iterable")))
+//		{	// 集合要素はCollection
+//			 // iterator()
+//			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
+//			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.lang.Iterable", "iterator", "()Ljava.util.Iterator;"));
+//
+//			// iterator をローカルに保存
+//			String	iteratorName = "$it" + ctx.hashCode();	// Pyriteコードで定義できない名称
+//			VarTypeName	iteratorTypeName = _currentMethodCodeDeclation.putLocalVar(iteratorName, ObjectType.getType("java.util.Iterator"));
+//			_currentMethodCodeDeclation.addCodeOpASTORE(iteratorTypeName._localVarNum);
+//
+//			// iterator.hasnext
+//			int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
+//			_controlBlockManager.setContinuePos(condPos);					// continue で戻る位置を記憶
+//			_currentMethodCodeDeclation.addCodeOp(BC.ALOAD);
+//			_currentMethodCodeDeclation.addCodeU2(iteratorTypeName._localVarNum);
+//			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
+//			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "hasNext", "()Z"));
+//			int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 分岐命令バイト位置
+//			_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
+//			_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
+//
+//			// iterator.next
+//			_currentMethodCodeDeclation.addCodeOpALOAD(iteratorTypeName._localVarNum);
+//			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEINTERFACE);
+//			_currentMethodCodeDeclation.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "next", "()Ljava/lang/Object;"));
+//
+//			// 変数に代入
+//			_currentMethodCodeDeclation.addCodeOp(BC.CHECKCAST);
+//			if (type._type != VarType.TYPE.OBJ)
+//			{
+//				// TODO:インターフェースや配列も許容？
+//				throw new RuntimeException("checkcast");
+//			}
+//			_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(((ObjectType)type)._fqcn._fqcnStr));
+//			_currentMethodCodeDeclation.addCodeOpASTORE(lTypeName._localVarNum);
+//
+//			// ブロック内の処理
+//			visit(_forBlockContext);
+//
+//			// ブロック末尾に、条件判定に戻るジャンプ命令を追加する
+//			int	blockEndPos = _currentMethodCodeDeclation.getCodePos();	   // ブロック終了バイト位置
+//			int	jmpDistance = condPos - blockEndPos;
+//			_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+//			_currentMethodCodeDeclation.addCodeU2(jmpDistance);
+//
+//			// 条件が満たされない場合のとび先を設定する
+//			blockEndPos = _currentMethodCodeDeclation.getCodePos();
+//			jmpDistance = blockEndPos - condBranchPos;
+//			_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
+//
+//			// ブロック内の break 文のとび先を設定する
+//			for (int breakPos : _controlBlockManager.getBreakPoss())
+//			{
+//				jmpDistance = blockEndPos - breakPos;
+//				_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, breakPos + 1);
+//			}
+//		}
+//		else
+//		{
+//			throw new PyriteSyntaxException("enumlation target is not collection");
+//		}
 
 		// stackをpopして終了
 		_currentMethodCodeDeclation.popLocalVarStack();

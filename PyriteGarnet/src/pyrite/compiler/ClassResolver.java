@@ -670,23 +670,45 @@ public class ClassResolver
 
 
 
+	// subClass が baseClass が継承しているか
+	public boolean	isInherited(FQCN subClass, FQCN baseClass)
+	{
+		// subClass について、baseClass と同じものがあるかを super class 方向に調べていく
+		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
+		{
+			if (cfm._fqcn == baseClass || cfm._interfaceSet.contains(baseClass))
+			{
+				return	true;
+			}
+		}
+		return	false;
+	}
+
 	// baseClassにsubClassを代入可能か(subClass と baseClass が継承関係にあるか)を調べる
 	public boolean	isAssignable(FQCN baseClass, FQCN subClass)
 	{
 		if (subClass == null)
-		{	// nullは代入可能
+		{	// nullの FQCN はnull。nullは常に代入可能
 			return	true;
 		}
 
+		// subClass について、baseClass と同じものがあるかを super class 方向に調べていく
 		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
 		{
-			if (cfm._fqcn == baseClass)
+			if (cfm._fqcn == baseClass || cfm._interfaceSet.contains(baseClass))
 			{
-				return	true;
-			}
-			if (cfm._interfaceSet.contains(baseClass))
-			{
-				return	true;
+				if (baseClass == FQCNParser.getFQCN(pyrite.lang.Array.CLASS_NAME))
+				{
+
+				}
+				else if (baseClass == FQCNParser.getFQCN(pyrite.lang.Assoc.CLASS_NAME))
+				{
+
+				}
+				else
+				{
+					return	true;
+				}
 			}
 		}
 		return	false;
