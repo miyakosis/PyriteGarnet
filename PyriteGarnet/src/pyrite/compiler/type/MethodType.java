@@ -12,7 +12,7 @@ public class MethodType extends VarType
 	public final VarType[]	_returnTypes;
 	public final boolean	_isStatic;
 
-//	public final String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列
+	public final String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列(返り値は含まれない)
 
 	public final String	_jvmMethodParamExpression;	// メソッド引数のJVM表現
 
@@ -54,7 +54,7 @@ public class MethodType extends VarType
 		_returnTypes = returnTypes;
 		_isStatic = isStatic;
 
-//		_methodSignature = createMethodSignature(packageClassName, methodName, paramTypes);
+		_methodSignature = createMethodSignature(fqcn._fqcnStr, methodName, paramTypes);
 		_jvmMethodParamExpression = createJvmMethodParamExpression(paramTypes, returnTypes);
 	}
 

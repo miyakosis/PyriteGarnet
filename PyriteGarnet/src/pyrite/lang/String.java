@@ -1,6 +1,8 @@
 package pyrite.lang;
 
-public class String extends pyrite.lang.Object implements CharSequence
+import java.io.Serializable;
+
+public class String extends pyrite.lang.Object implements Serializable, CharSequence
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.String";
 
@@ -23,7 +25,11 @@ public class String extends pyrite.lang.Object implements CharSequence
 
 	public boolean	equals(java.lang.Object o)
 	{
-		return	this.hashCode() == o.hashCode();
+		if (o instanceof String)
+		{
+			return	_v.equals(((String)o)._v);
+		}
+		return	false;
 	}
 
 

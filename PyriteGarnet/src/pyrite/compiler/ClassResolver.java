@@ -416,7 +416,7 @@ public class ClassResolver
 	// d. 該当するメソッドが存在しない場合、親クラスに遡ってチェックする。
 	//
 	// とりあえず、クラス階層のみを対象とする。インターフェース定義はフラットとして扱う。
-	public MethodType	dispatchMethodVarType(
+	public MethodType	resolveMethodVarType(
 			MethodNameType methodNameType,
 			List<VarType> inputParamTypeList)
 	{
@@ -438,26 +438,46 @@ public class ClassResolver
 				// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
 				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);
 
-				MethodType	resultType = (MethodType)cls._classMethodMap.get(methodSignature);
-				if (resultType != null)
+				for (MethodType m : cls._classMethodMap.values())
 				{
-					resultTypeList.add(resultType);
-					resultMethodParamSignatureList.add(methodParamSignature);
-				}
-				if (isStaticOnly == false)
-				{
-					resultType = (MethodType)cls._instanceMethodMap.get(methodSignature);
-					if (resultType != null)
+					if (m._methodSignature.matches(methodSignature))
 					{
-						resultTypeList.add(resultType);
+						resultTypeList.add(m);
 						resultMethodParamSignatureList.add(methodParamSignature);
 					}
 				}
+				if (isStaticOnly == false)
+				{
+					for (MethodType m : cls._instanceMethodMap.values())
+					{
+						if (m._methodSignature.matches(methodSignature))
+						{
+							resultTypeList.add(m);
+							resultMethodParamSignatureList.add(methodParamSignature);
+						}
+					}
+				}
+
+//				MethodType	resultType = (MethodType)cls._classMethodMap.get(methodSignature);
+//				if (resultType != null)
+//				{
+//					resultTypeList.add(resultType);
+//					resultMethodParamSignatureList.add(methodParamSignature);
+//				}
+//				if (isStaticOnly == false)
+//				{
+//					resultType = (MethodType)cls._instanceMethodMap.get(methodSignature);
+//					if (resultType != null)
+//					{
+//						resultTypeList.add(resultType);
+//						resultMethodParamSignatureList.add(methodParamSignature);
+//					}
+//				}
 			}
 
 			if (resultTypeList.size() > 0)
 			{	// 最適なメソッド定義がどれかを判別して返す
-				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);
+				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
 				return	resultTypeList.get(resultIdx);
 			}
 			// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
@@ -486,13 +506,16 @@ public class ClassResolver
 		for (VarType inputParamType : inputParamTypeList)
 		{
 			List<ClassHierarchy>	paramClassHierarchyList = new ArrayList<ClassHierarchy>();
-			switch (inputParamType._type)
+
+			if (inputParamType._type == VarType.TYPE.NULL)
 			{
-			case OBJ:
-				// 継承関係がある場合は、継承元の型を遡る
-				ObjectType	type = (ObjectType)inputParamType;
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.NULL, 0));
+			}
+			else
+			{
+				// 継承関係を遡って型階層オブジェクトを作る
 				int	level = 0;
-				for (ClassFieldMember cls = getClassFieldMember(type._fqcn);
+				for (ClassFieldMember cls = getClassFieldMember(inputParamType._fqcn);
 						cls != null;
 						cls = cls._superCFM)
 				{
@@ -500,18 +523,59 @@ public class ClassResolver
 					addInterfaceClassHierarchyRecursive(cls._fqcn, level, paramClassHierarchyList);
 					level += 1;
 				}
+			}
+
+			// Java型変換
+			switch (inputParamType._type)
+			{
+			case NULL:
+				break;
+
+			case OBJ:
+				break;
+
+			case ARRAY:
+			case ASSOC:
+				// TODO: ARRAY, ASSOC は 保持するオブジェクトの型一致判定もする必要がある。今後要検討
+				break;
+
+
+			case INT:
+				// TODO:プログラムからどのようにlong, short の引数のメソッドを指定させるか
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_INT, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_LONG, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_SHORT, 1));
+				break;
+
+			case DEC:
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_DOUBLE, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_FLOAT, 1));
+				break;
+
+			case STR:
+				paramClassHierarchyList.add(new ClassHierarchy(ObjectType.getType("java.lang.String"), 1));
+				break;
+
+			case CHR:
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_CHAR, 1));
+				break;
+
+			case BOL:
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BOOLEAN, 1));
+				break;
+
+			case BYT:
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BYTE, 1));
 				break;
 
 			default:
-				ClassHierarchy	ch = new ClassHierarchy(inputParamType, 0);
-				paramClassHierarchyList.add(ch);
-				break;
+				throw new RuntimeException("assertion");
 			}
 			// 保持
 			inputParamTypeClassHierarchyListList.add(paramClassHierarchyList);
 		}
 
-		// メソッドのパラメータ文字列を組み合わせで再帰的に作成する
+		// パラメータごとの型階層オブジェクトを全て組み合わせ、メソッドのパラメータ文字列を作成する
 		createMethodParamSignatureRecursive(inputParamTypeClassHierarchyListList, 0, "", new ClassHierarchy[inputParamTypeList.size()], methodParamSignarureList);
 		return	methodParamSignarureList;
 	}
@@ -568,7 +632,16 @@ public class ClassResolver
 		// 処理対象のパラメータの型をすべて組み合わせる
 		for (ClassHierarchy inputParamTypeClassHierarchy : inputParamTypeClassHierarchyListList.get(inListIdx))
 		{
-			String	paramSignature = paramSignaturePrev + inputParamTypeClassHierarchy._type._jvmExpression;
+			String	paramSignature = paramSignaturePrev;
+			if (inputParamTypeClassHierarchy._type == VarType.NULL)
+			{
+				paramSignature += "L[.+];";	// どのクラスにも合うように正規表現設定する
+			}
+			else
+			{
+				paramSignature += inputParamTypeClassHierarchy._type._jvmExpression;
+			}
+
 			pramClassHierarchys[inListIdx] = inputParamTypeClassHierarchy;		// 今回選択された型情報を保持する
 
 			// 再帰的に作成
@@ -931,19 +1004,19 @@ public class ClassResolver
 
 		public void	addConstructorType(MethodType type)
 		{
-			_constructorMap.put(type._typeId, type);
+			_constructorMap.put(type._methodSignature, type);
 		}
 
 		public void	addMethodType(MethodType type)
 		{
 			if (type._isStatic)
 			{
-				_classMethodMap.put(type._typeId, type);
+				_classMethodMap.put(type._methodSignature, type);
 				_classMethodNameSet.add(type._methodName);
 			}
 			else
 			{
-				_instanceMethodMap.put(type._typeId, type);
+				_instanceMethodMap.put(type._methodSignature, type);
 				_instanceMethodNameSet.add(type._methodName);
 			}
 		}

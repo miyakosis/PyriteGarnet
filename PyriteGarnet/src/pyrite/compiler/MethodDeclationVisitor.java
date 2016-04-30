@@ -177,9 +177,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		// メソッド定義を作成
 		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, false);
 
-		if (_declaredMember._constructorMap.containsKey(type._typeId))
+		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
-			throw new RuntimeException("method declation duplicated");
+			throw new PyriteSyntaxException("method declation duplicated");
 		}
 
 		// メソッド定義を追加
@@ -217,9 +217,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		// メソッド定義を作成
 		MethodType	type = (MethodType)MethodType.getType(_fqcn, id, paramTypes, returnTypes, isStatic);
 
-		if (_declaredMember._classMethodMap.containsKey(type._typeId) || _declaredMember._instanceMethodMap.containsKey(type._typeId))
+		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
-			throw new RuntimeException("method declation duplicated");
+			throw new PyriteSyntaxException("method declation duplicated");
 		}
 
 		// メソッド定義を追加

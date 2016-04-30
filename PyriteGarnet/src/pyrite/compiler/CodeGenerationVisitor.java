@@ -461,7 +461,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		List<VarType>	inputParamTypeList = expressionListType._paramTypeList;
 
 		// メソッド定義・出力パラメータを解決
-		MethodType	methodType = _cr.dispatchMethodVarType(methodNameType, inputParamTypeList);
+		MethodType	methodType = _cr.resolveMethodVarType(methodNameType, inputParamTypeList);
 		if (methodType == null)
 		{
 			throw new PyriteSyntaxException("no such method");
@@ -567,39 +567,41 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			expressionListType = new ExpressionListType();
 		}
-
-		// 入力パラメータを解決
-		// メソッド解決のために参照する入力パラメータの型情報
-
-		for (int i = 0; i < expressionListType._paramTypeList.size(); ++i)
-		{
-//			VarType	inputParamType = type.resolveType(this);
-
-			switch (expressionListType._paramTypeList.get(i)._type)
-			{
-			case NULL:
-				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
-				expressionListType._paramTypeList.set(i, ObjectType.getType("java.lang.Object"));
-				break;
-			case OBJ:
-			case NUM:
-			case INT:
-			case DEC:
-			case FLT:
-			case STR:
-			case CHR:
-			case BOL:
-			case BYT:
-			case ARRAY:
-			case ASSOC:
-				// OK
-				break;
-			default:
-				throw new RuntimeException("method parameter unsuitable.");
-			}
-		}
-
 		return	expressionListType;
+
+
+//		// 入力パラメータを解決
+//		// メソッド解決のために参照する入力パラメータの型情報
+//
+//		for (int i = 0; i < expressionListType._paramTypeList.size(); ++i)
+//		{
+////			VarType	inputParamType = type.resolveType(this);
+//
+//			switch (expressionListType._paramTypeList.get(i)._type)
+//			{
+//			case NULL:
+//				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
+//				expressionListType._paramTypeList.set(i, ObjectType.getType("java.lang.Object"));
+//				break;
+//			case OBJ:
+//			case NUM:
+//			case INT:
+//			case DEC:
+//			case FLT:
+//			case STR:
+//			case CHR:
+//			case BOL:
+//			case BYT:
+//			case ARRAY:
+//			case ASSOC:
+//				// OK
+//				break;
+//			default:
+//				throw new RuntimeException("method parameter unsuitable.");
+//			}
+//		}
+//
+//		return	expressionListType;
 	}
 
 
