@@ -442,7 +442,12 @@ public class ClassResolver
 				{
 					if (m._methodSignature.matches(methodSignature))
 					{
-						resultTypeList.add(m);
+						if (methodParamSignature.getMethodType() != null)
+						{	// このメソッド引数パラメータに複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+							throw new PyriteSyntaxException("method ambiguity.");
+						}
+						methodParamSignature.setMethodType(m);
+
 						resultMethodParamSignatureList.add(methodParamSignature);
 					}
 				}
@@ -452,7 +457,12 @@ public class ClassResolver
 					{
 						if (m._methodSignature.matches(methodSignature))
 						{
-							resultTypeList.add(m);
+							if (methodParamSignature.getMethodType() != null)
+							{	// このメソッド引数パラメータに複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+								throw new PyriteSyntaxException("method ambiguity.");
+							}
+							methodParamSignature.setMethodType(m);
+
 							resultMethodParamSignatureList.add(methodParamSignature);
 						}
 					}
@@ -477,8 +487,10 @@ public class ClassResolver
 
 			if (resultTypeList.size() > 0)
 			{	// 最適なメソッド定義がどれかを判別して返す
-				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
-				return	resultTypeList.get(resultIdx);
+//				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
+//				return	resultTypeList.get(resultIdx);
+
+				return	checkClassPriority(resultMethodParamSignatureList).getMethodType();
 			}
 			// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
 		}
@@ -521,7 +533,7 @@ public class ClassResolver
 				{
 					// 引数オブジェクトを型階層に追加
 					addInterfaceClassHierarchyRecursive(cls._fqcn, level, paramClassHierarchyList);
-					level += 1;
+					level += 10;	// 後でレベルを差し込むために、多めにレベル間隔を設定する
 				}
 			}
 
@@ -542,30 +554,32 @@ public class ClassResolver
 
 			case INT:
 				// TODO:プログラムからどのようにlong, short の引数のメソッドを指定させるか
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_INT, 1));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_LONG, 1));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_SHORT, 1));
+				// pyrite.lang.Integer > int(Java) > pyrite.lang.Object の順とする
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_INT, 5));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_LONG, 5));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_SHORT, 5));
 				break;
 
 			case DEC:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_DOUBLE, 1));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_FLOAT, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_DOUBLE, 5));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_FLOAT, 5));
 				break;
 
 			case STR:
-				paramClassHierarchyList.add(new ClassHierarchy(ObjectType.getType("java.lang.String"), 1));
+				// pyrite.lang.String > java.lang.String > pyrite.lang.Object > java.lang.Object の順とする
+				paramClassHierarchyList.add(new ClassHierarchy(ObjectType.getType("java.lang.String"), 5));
 				break;
 
 			case CHR:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_CHAR, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_CHAR, 5));
 				break;
 
 			case BOL:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BOOLEAN, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BOOLEAN, 5));
 				break;
 
 			case BYT:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BYTE, 1));
+				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BYTE, 5));
 				break;
 
 			default:
@@ -654,9 +668,9 @@ public class ClassResolver
 		}
 	}
 
-	// メソッドの優先順を判定する。最も優先されるMethodParamSignatureのインデクスを返す。
+	// メソッドの優先順を判定し、最も優先されるMethodParamSignatureを返す。
 	// 優先度が曖昧な場合は例外を発行する
-	private int checkClassPriority(List<MethodParamSignature> resultMethodParamSignatureList)
+	private MethodParamSignature checkClassPriority(List<MethodParamSignature> resultMethodParamSignatureList)
 	{
 		// c.f.
 		//  C0 extends C1, C1 extends C2 とする。(数字はレベルに対応している)
@@ -718,7 +732,7 @@ public class ClassResolver
 				throw new PyriteSyntaxException("method call is ambiguity");
 			}
 		}
-		return	minIdx;
+		return	resultMethodParamSignatureList.get(minIdx);
 	}
 
 	public MethodType	dispatchConstructor(
@@ -1065,10 +1079,24 @@ public class ClassResolver
 		public final String	_methodParamSignarure;
 		public final ClassHierarchy[]	_classHierarchys;
 
+		private MethodType	_matchedMethodType;
+
 		public MethodParamSignature(String methodParamSignarure, ClassHierarchy[] classHierarchys)
 		{
 			_methodParamSignarure = methodParamSignarure;
 			_classHierarchys = Arrays.copyOf(classHierarchys, classHierarchys.length);
+
+			_matchedMethodType = null;
+		}
+
+		public void	setMethodType(MethodType m)
+		{
+			_matchedMethodType = m;
+		}
+
+		public MethodType	getMethodType()
+		{
+			return	_matchedMethodType;
 		}
 	}
 
