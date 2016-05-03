@@ -16,4 +16,37 @@ public class Decimal extends pyrite.lang.Number
 	{
 		_v = new BigDecimal(val);
 	}
+
+	private Decimal(BigDecimal val)
+	{
+		_v = val;
+	}
+
+
+	public final static class CompilerAccessor
+	{
+		public CompilerAccessor()
+		{
+			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
+			{
+				throw new RuntimeException();
+			}
+		}
+
+		public double	javaDoubleValue(Decimal d)
+		{
+			return	d._v.doubleValue();
+		}
+
+		public float	javaFloatValue(Decimal d)
+		{
+			return	d._v.floatValue();
+		}
+
+		public Decimal	pyriteValue(double d)
+		{
+			return	new Decimal(BigDecimal.valueOf(d));
+		}
+
+	}
 }

@@ -416,7 +416,7 @@ public class ClassResolver
 	// d. 該当するメソッドが存在しない場合、親クラスに遡ってチェックする。
 	//
 	// とりあえず、クラス階層のみを対象とする。インターフェース定義はフラットとして扱う。
-	public MethodType	resolveMethodVarType(
+	public MethodParamSignature	resolveMethodVarType(
 			MethodNameType methodNameType,
 			List<VarType> inputParamTypeList)
 	{
@@ -459,6 +459,7 @@ public class ClassResolver
 						{
 							if (methodParamSignature.getMethodType() != null)
 							{	// このメソッド引数パラメータに複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+								// (Javaでは継承関係を考慮して、対立しない場合は継承先のオブジェクトが選択されるが、この判定が大変なのでとりあえずエラーにしてコードで指定してもらうよう仕様とする)
 								throw new PyriteSyntaxException("method ambiguity.");
 							}
 							methodParamSignature.setMethodType(m);
@@ -490,7 +491,7 @@ public class ClassResolver
 //				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
 //				return	resultTypeList.get(resultIdx);
 
-				return	checkClassPriority(resultMethodParamSignatureList).getMethodType();
+				return	checkClassPriority(resultMethodParamSignatureList);
 			}
 			// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
 		}

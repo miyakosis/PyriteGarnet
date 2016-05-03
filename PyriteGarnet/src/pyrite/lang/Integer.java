@@ -13,13 +13,41 @@ public class Integer extends pyrite.lang.Number
 		_v = new BigInteger(val, radix);
 	}
 
-	public int	to_i()
+
+	private Integer(BigInteger val)
 	{
-		return	_v.intValue();
+		_v = val;
 	}
 
-	public long	to_l()
+
+	public final static class CompilerAccessor
 	{
-		return	_v.longValue();
+		public CompilerAccessor()
+		{
+			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
+			{
+				throw new RuntimeException();
+			}
+		}
+
+		public int	javaIntValue(Integer i)
+		{
+			return	i._v.intValue();
+		}
+
+		public long	javaLongValue(Integer i)
+		{
+			return	i._v.longValue();
+		}
+
+		public short	javaShortValue(Integer i)
+		{
+			return	i._v.shortValue();
+		}
+
+		public Integer	pyriteValue(long i)
+		{
+			return	new Integer(BigInteger.valueOf(i));
+		}
 	}
 }

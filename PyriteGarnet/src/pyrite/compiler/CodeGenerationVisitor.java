@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import pyrite.compiler.ClassResolver.MethodParamSignature;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
@@ -31,6 +32,7 @@ import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.StringUtil;
 import pyrite.lang.Array;
 import pyrite.lang.Assoc;
+import pyrite.runtime.PyriteRuntime;
 
 
 public class CodeGenerationVisitor extends GrammarCommonVisitor
@@ -457,22 +459,119 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodNameType	methodNameType = (MethodNameType)expressionVarType;
 
 		// methodParameter
-		ExpressionListType	expressionListType = (ExpressionListType)visit(ctx.arguments());
-		List<VarType>	inputParamTypeList = expressionListType._paramTypeList;
+		ExpressionListType	inputParams = (ExpressionListType)visit(ctx.arguments());
 
 		// メソッド定義・出力パラメータを解決
-		MethodType	methodType = _cr.resolveMethodVarType(methodNameType, inputParamTypeList);
-		if (methodType == null)
+		MethodParamSignature	methodParamSignature = _cr.resolveMethodVarType(methodNameType, inputParams._paramTypeList);
+		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("no such method");
 		}
-
 		// メソッド呼び出しリストに追加
 //		_methodCallMap.put(ctx, methodType);
 
 		// コード生成
+		// Java メソッド呼び出し時の自動型変換
+		// 変換メソッド呼び出しコードを挿入するが、expressionListTypeに保持しているコード位置に影響を与えないために、末尾要素から判定・コード挿入していく
+		BCContainer	cnvCode = new BCContainer();
+		for (int i = inputParams._paramTypeList.size() - 1; i >= 0; i -= 1)
+		{
+			cnvCode.clear();
+			VarType	inputParamType = inputParams._paramTypeList.get(i);
+			int	insertPos = inputParams._paramCodePosList.get(i);
+			VarType	resolvedVarType = methodParamSignature._classHierarchys[i]._type;
+
+			// 入力パラメータの型と、解決されたメソッド引数の型を比べて、必要があれば(Javaのメソッド呼び出しならば)型変換する。
+			switch (inputParamType._type)
+			{
+			case INT:
+				switch (resolvedVarType._type)
+				{
+				case JVM_INT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaInt", "(L" + pyrite.lang.Integer.CLASS_NAME + ";)I"));
+					break;
+
+				case JVM_LONG:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaLong", "(L" + pyrite.lang.Integer.CLASS_NAME + ";)J"));
+					break;
+
+				case JVM_SHORT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaLong", "(L" + pyrite.lang.Integer.CLASS_NAME + ";)S"));
+					break;
+
+				default:
+					break;
+				}
+				break;
+
+			case DEC:
+				switch (resolvedVarType._type)
+				{
+				case JVM_DOUBLE:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaDouble", "(L" + pyrite.lang.Decimal.CLASS_NAME + ";)D"));
+					break;
+
+				case JVM_FLOAT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaFloat", "(L" + pyrite.lang.Decimal.CLASS_NAME + ";)F"));
+					break;
+
+				default:
+					break;
+				}
+				break;
+
+			case STR:
+				if (resolvedVarType == ObjectType.getType("java.lang.String"))
+				{
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaString", "(L" + pyrite.lang.String.CLASS_NAME + ";)Ljava.lang.String;"));
+				}
+				break;
+
+			case CHR:
+				if (resolvedVarType._type == VarType.TYPE.JVM_CHAR)
+				{
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaChar", "(L" + pyrite.lang.Character.CLASS_NAME + ";)C"));
+				}
+				break;
+
+			case BOL:
+				if (resolvedVarType._type == VarType.TYPE.JVM_BOOLEAN)
+				{
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaBoolean", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)Z"));
+				}
+				break;
+
+			case BYT:
+				if (resolvedVarType._type == VarType.TYPE.JVM_BYTE)
+				{
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJavaByte", "(L" + pyrite.lang.Byte.CLASS_NAME + ";)B"));
+				}
+				break;
+
+			default:
+				break;
+			}
+
+			// 変換コードがあれば、追加
+			if (cnvCode.size() > 0)
+			{
+				_currentMethodCodeDeclation.addCodeBlock(cnvCode.getCodeList(), insertPos);
+			}
+		}
+
+		// メソッド呼び出し
+		MethodType	methodType = methodParamSignature.getMethodType();
 		if (methodType._isStatic)
-		{	// クラスメソッドの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
+		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
 			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
 			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
 			_currentMethodCodeDeclation.removeCode(expressionCodePosFrom, expressionCodePosTo);
@@ -481,26 +580,78 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
 
-		if (isRemainStackValue(ctx) == false && methodType._returnTypes.length > 0)
-		{	//
-			_currentMethodCodeDeclation.addCodeOp(BC.POP);
-		}
-
-
 		// 返り値
-		// TODO:とりあえず暫定で。要複数パラメータ対応
 		if (methodType._returnTypes.length == 0)
 		{
 			return	VarType.VOID;
 		}
 		else
 		{
+			if (isRemainStackValue(ctx) == false)
+			{	// 残っている戻り値が不要のため、除去する
+				_currentMethodCodeDeclation.addCodeOp(BC.POP);
+			}
+			else if (methodType._returnTypes.length == 1)
+			{	// Javaメソッド呼び出しで、戻り値がJava primitive型の場合は、Pyrite型へ変換する
+				switch (methodType._returnTypes[0]._type)
+				{
+				case JVM_INT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					break;
+
+				case JVM_LONG:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					break;
+
+				case JVM_SHORT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					break;
+
+				case JVM_FLOAT:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(F)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+					break;
+
+				case JVM_DOUBLE:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(D)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+					break;
+
+				case JVM_CHAR:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
+					break;
+
+				case JVM_BYTE:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteByte", "(B)L" + pyrite.lang.Byte.CLASS_NAME + ";"));
+					break;
+
+				case JVM_BOOLEAN:
+					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteBoolean", "(Z)L" + pyrite.lang.Boolean.CLASS_NAME + ";"));
+					break;
+
+				case OBJ:
+					if (methodType._returnTypes[0] == ObjectType.getType("java.lang.String"))
+					{
+						cnvCode.addCodeOp(BC.INVOKESTATIC);
+						cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
+					}
+					break;
+
+				default:
+					break;
+				}
+
+			}
+
+			// TODO: 複数パラメータ対応
 			return	methodType._returnTypes[0];
 		}
-
-		// TODO:	Java メソッド呼び出し/型変換
-
-
 
 
 /*
@@ -1551,9 +1702,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 		// true -> 1, false -> 0 をスタックに積む
 		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
-		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.Boolean.CLASS_NAME, "getPyrcVal", "()I"));
-
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
 
 		int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	// 分岐命令バイト位置
 		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
@@ -1658,8 +1808,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 分岐命令バイト位置
 		// true -> 1, false -> 0 をスタックに積む
 		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
-		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.Boolean.CLASS_NAME, "getPyrcVal", "()I"));
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
 		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
 		_currentMethodCodeDeclation.addCodeU2(0);  // プレースホルダで置いておく
 
@@ -1730,8 +1880,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 			condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 条件が満たされない場合のジャンプ命令
 			// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(pyrite.lang.Boolean.CLASS_NAME, "getPyrcVal", "()I"));
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
 			_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
 			_currentMethodCodeDeclation.addCodeU2(0);	 // プレースホルダで置いておく
 		}

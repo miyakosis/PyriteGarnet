@@ -7,21 +7,35 @@ public class Boolean extends pyrite.lang.Object
 	public final static Boolean	TRUE = new Boolean(true);
 	public final static Boolean	FALSE = new Boolean(false);
 
-	public final boolean	_value;
-	public Boolean (boolean value)
+	private final boolean	_value;
+	private Boolean (boolean value)
 	{
 		_value = value;
 	}
 
-	public Boolean	valueOf(boolean b)
+	public static Boolean	valueOf(boolean b)
 	{
 		return	b ? TRUE : FALSE;
 	}
 
-
-	// pyrite コンパイラが参照する値
-	public int	getPyrcVal()
+	public final static class CompilerAccessor
 	{
-		return	_value ? 1 : 0;
+		public CompilerAccessor()
+		{
+			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
+			{
+				throw new RuntimeException();
+			}
+		}
+
+		public boolean	javaValue(Boolean b)
+		{
+			return	b._value;
+		}
+
+		public Boolean	pyriteValue(boolean b)
+		{
+			return	Boolean.valueOf(b);
+		}
 	}
 }

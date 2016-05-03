@@ -13,11 +13,6 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 		_v = val;
 	}
 
-	public java.lang.String	to_s()
-	{
-		return	_v;
-	}
-
 	public int	hashCode()
 	{
 		return	_v.hashCode();
@@ -49,5 +44,28 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 	public CharSequence subSequence(int beginIndex, int endIndex)
 	{
 		return _v.subSequence(beginIndex, endIndex);
+	}
+
+
+	public final static class CompilerAccessor
+	{
+		public CompilerAccessor()
+		{
+			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
+			{
+				throw new RuntimeException();
+			}
+		}
+
+		public java.lang.String	javaString(String s)
+		{
+			return	s._v;
+		}
+
+		public String	pyriteString(java.lang.String s)
+		{
+			return	new String(s);
+		}
+
 	}
 }
