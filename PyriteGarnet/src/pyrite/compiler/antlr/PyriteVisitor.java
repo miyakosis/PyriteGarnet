@@ -178,6 +178,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatementExpression(PyriteParser.StatementExpressionContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code StatementVar}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementVar(PyriteParser.StatementVarContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code StatementReturn}
 	 * labeled alternative in {@link PyriteParser#statement}.
 	 * @param ctx the parse tree
@@ -227,12 +234,26 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatementContinue(PyriteParser.StatementContinueContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code StatementVar}
+	 * Visit a parse tree produced by the {@code StatementTry}
 	 * labeled alternative in {@link PyriteParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStatementVar(PyriteParser.StatementVarContext ctx);
+	T visitStatementTry(PyriteParser.StatementTryContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementThrow}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementThrow(PyriteParser.StatementThrowContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code StatementSynchronized}
+	 * labeled alternative in {@link PyriteParser#statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatementSynchronized(PyriteParser.StatementSynchronizedContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#variableDeclarationStatement}.
 	 * @param ctx the parse tree
@@ -251,6 +272,18 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfStatement(PyriteParser.IfStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#catchClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCatchClause(PyriteParser.CatchClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PyriteParser#finallyBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFinallyBlock(PyriteParser.FinallyBlockContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#switchBlockStatementGroup}.
 	 * @param ctx the parse tree

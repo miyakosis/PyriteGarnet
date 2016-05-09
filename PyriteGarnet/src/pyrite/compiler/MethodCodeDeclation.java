@@ -27,6 +27,8 @@ public class MethodCodeDeclation
 	// コードの最大スタックサイズ
 	private MaxStack _maxStack = new MaxStack();
 
+	// Exception table
+	public List<ExceptionTableEntry>	_exceptionTableEntryList = new ArrayList<ExceptionTableEntry>();
 
 	public void	setClassName(String className)
 	{
@@ -87,9 +89,9 @@ public class MethodCodeDeclation
 	// ローカル変数を追加
 	public VarTypeName	putLocalVar(String name, VarType type)
 	{
-		// 同名のローカル変数が存在していても上書き
 		VarTypeName	addVar = new VarTypeName(type, name, _localVarMapStack.size(), _localVarMapStack.stackSize());
 
+		// 同名のローカル変数が存在している場合は上書き
 		_localVarMapStack.put(name, addVar);
 
 		// 使用しているローカル変数の最大が増えていたら更新
@@ -269,6 +271,9 @@ public class MethodCodeDeclation
 	// コード領域の pos から 2バイトを n で置き換える
 	public void	replaceCodeU2(int n, int pos)
 	{
+		assert (_code.get(pos) == 0x00);
+		assert (_code.get(pos + 1) == 0x00);
+
 		_code.set(pos, (byte)(n >> 8));
 		_code.set(pos + 1, (byte)n);
 	}
@@ -279,6 +284,11 @@ public class MethodCodeDeclation
 		_code.addAll(pos, byteList);
 	}
 
+	// コード領域からして範囲のコードを取得する
+	public List<Byte>	getCodeBlock(int from, int to)
+	{
+		return	_code.subList(from, to);
+	}
 
 	public int	getAccessFlag()
 	{
@@ -330,6 +340,16 @@ public class MethodCodeDeclation
 	}
 
 
+	public void	addExceptionTableEntry(int startPc, int endPc, int handlerPc, int catchType)
+	{
+		_exceptionTableEntryList.add(new ExceptionTableEntry(startPc, endPc, handlerPc, catchType));
+	}
+
+	public List<ExceptionTableEntry>	getExceptionTableList()
+	{
+		return	_exceptionTableEntryList;
+	}
+
 	public static class	MaxStack
 	{
 		private int	_currentStack = 0;
@@ -371,6 +391,22 @@ public class MethodCodeDeclation
 		{
 			_currentStack = 0;
 			_maxStack = 0;
+		}
+	}
+
+	public static class	ExceptionTableEntry
+	{
+		public final int	_startPc;
+		public final int	_endPc;
+		public final int	_handlerPc;
+		public final int	_catchType;		// anyの場合は 0
+
+		public ExceptionTableEntry(int startPc, int endPc, int handlerPc, int catchType)
+		{
+			_startPc = startPc;
+			_endPc = endPc;
+			_handlerPc = handlerPc;
+			_catchType = catchType;
 		}
 	}
 }

@@ -18,6 +18,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.compiler.type.ArrayType;
+import pyrite.compiler.type.AssocType;
 import pyrite.compiler.type.ClassType;
 import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
@@ -772,36 +774,89 @@ public class ClassResolver
 		return	false;
 	}
 
-	// baseClassにsubClassを代入可能か(subClass と baseClass が継承関係にあるか)を調べる
-	public boolean	isAssignable(FQCN baseClass, FQCN subClass)
+//	// baseClassにsubClassを代入可能か(subClass と baseClass が継承関係にあるか)を調べる
+//	public boolean	isAssignable(FQCN baseClass, FQCN subClass)
+//	{
+//		if (subClass == null)
+//		{	// nullの FQCN はnull。nullは常に代入可能
+//			return	true;
+//		}
+//
+//		// subClass について、baseClass と同じものがあるかを super class 方向に調べていく
+//		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
+//		{
+//			if (cfm._fqcn == baseClass || cfm._interfaceSet.contains(baseClass))
+//			{
+//				if (baseClass == FQCNParser.getFQCN(pyrite.lang.Array.CLASS_NAME))
+//				{
+//
+//				}
+//				else if (baseClass == FQCNParser.getFQCN(pyrite.lang.Assoc.CLASS_NAME))
+//				{
+//
+//				}
+//				else
+//				{
+//					return	true;
+//				}
+//			}
+//		}
+//		return	false;
+//	}
+
+	// lTypeにrTypeを代入可能か(rType が lType と同じか、継承しているか)を調べる
+	public boolean	isAssignable(VarType lType, VarType rType)
 	{
-		if (subClass == null)
-		{	// nullの FQCN はnull。nullは常に代入可能
+		// precond:lType._fqcnは、Array と Assoc の両方を継承することはない
+		if (rType == VarType.NULL)
+		{	// nullは常に代入可
 			return	true;
 		}
 
-		// subClass について、baseClass と同じものがあるかを super class 方向に調べていく
-		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
+		if (isInherited(lType._fqcn, rType._fqcn))
 		{
-			if (cfm._fqcn == baseClass || cfm._interfaceSet.contains(baseClass))
-			{
-				if (baseClass == FQCNParser.getFQCN(pyrite.lang.Array.CLASS_NAME))
-				{
-
-				}
-				else if (baseClass == FQCNParser.getFQCN(pyrite.lang.Assoc.CLASS_NAME))
-				{
-
-				}
-				else
+			if (lType._type == VarType.TYPE.ARRAY)
+			{	// 要素の型が一致しているかをチェックする
+				VarType	lElementType = ((ArrayType)lType)._arrayVarType;
+				VarType	rElementType = ((ArrayType)rType)._arrayVarType;
+				if (lElementType.equals(rElementType))
 				{
 					return	true;
 				}
 			}
+			else if (lType._type == VarType.TYPE.ASSOC)
+			{
+				VarType	lKeyType = ((AssocType)lType)._keyVarType;
+				VarType	rKeyType = ((AssocType)rType)._keyVarType;
+				VarType	lValType = ((AssocType)lType)._valVarType;
+				VarType	rValType = ((AssocType)rType)._valVarType;
+				if (lKeyType.equals(rKeyType) && lValType.equals(rValType))
+				{
+					return	true;
+				}
+			}
+			else
+			{
+				return	true;
+			}
 		}
+
+		// 型が違うので代入不可
 		return	false;
 	}
 
+	// fqcn が Throwable を継承しているかを返す
+	public boolean	isThrowable(FQCN fqcn)
+	{
+		for (ClassFieldMember cfm = getClassFieldMember(fqcn); cfm != null; cfm = cfm._superCFM)
+		{
+			if (cfm._fqcn == FQCNParser.getFQCN("java.lang.Throwable"))
+			{
+				return	true;
+			}
+		}
+		return	false;
+	}
 
 	//	public MethodDeclation dispatchMethodDeclation(
 //			String packageClassName,

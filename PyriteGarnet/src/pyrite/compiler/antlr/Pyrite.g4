@@ -1,8 +1,7 @@
 /*
  [The "BSD licence"]
  Copyright (c) 2013 Terence Parr, Sam Harwell
- All rights reserved.
-
+ All rights reserved.variableDeclarationStatement
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -580,14 +579,17 @@ statement
     :   block								# StatementBlock	// not used
     |   ';'									# StatementEmpty	// not used
     |   expression ';'						# StatementExpression
-    |   'return' expressionList? ';'		# StatementReturn
+    |   'var' variableDeclarationStatement ';' 		# StatementVar
+    |   'return' expressionList? ';'				# StatementReturn
     |   'if' ifStatement							# StatementIf		// not used
     |   label 'while' parExpression block			# StatementWhile
     |   label 'for' '(' forControl ')' block		# StatementFor
     |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'	# StatementSwitch
-    |   'break' label ';'				# StatementBreak
-    |   'continue' label ';'			# StatementContinue
-    |   'var' variableDeclarationStatement ';' 			# StatementVar
+    |   'break' label ';'							# StatementBreak
+    |   'continue' label ';'						# StatementContinue
+    |   'try' block (catchClause+ finallyBlock? | finallyBlock)	# StatementTry
+    |   'throw' expression ';'						# StatementThrow
+    |   'synchronized' parExpression block			# StatementSynchronized
     ;
 
 variableDeclarationStatement
@@ -624,9 +626,9 @@ ifStatement
 //	    |   Identifier ':' statement
 //	    ;
 
-//	catchClause
-//	    :   'catch' '(' catchType Identifier ')' block
-//	    ;
+catchClause
+	    :   'catch' '(' 'var' Identifier (':' qualifiedName)? ')' block
+	    ;
 
 //	catchClause
 //	    :   'catch' '(' variableModifier* catchType Identifier ')' block
@@ -637,9 +639,9 @@ ifStatement
 //	    :   qualifiedName ('|' qualifiedName)*
 //	    ;
 
-//	finallyBlock
-//	    :   'finally' block
-//	    ;
+finallyBlock
+    :   'finally' block
+    ;
 
 //	resourceSpecification
 //	    :   '(' resources ';'? ')'

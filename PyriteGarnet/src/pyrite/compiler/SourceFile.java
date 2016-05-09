@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.compiler.MethodCodeDeclation.ExceptionTableEntry;
 import pyrite.compiler.antlr.PyriteLexer;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
@@ -321,7 +322,17 @@ public class SourceFile extends ClassRelatedFile
 				os.write2(method.getMaxLocal());
 				os.write4(code.length);
 				os.write(code);
-				os.write2(0);	// exception_table_length
+
+				List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
+				os.write2(exceptionTableEntryList.size());	// exception_table_length
+				for (ExceptionTableEntry entry : exceptionTableEntryList)
+				{
+					os.write2(entry._startPc);
+					os.write2(entry._endPc);
+					os.write2(entry._handlerPc);
+					os.write2(entry._catchType);
+				}
+
 				os.write2(0);	// attributes_count
 			}
 		}

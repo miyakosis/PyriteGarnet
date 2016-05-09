@@ -122,31 +122,18 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		boolean	isStatic = (ctx.classInstanceModifier() != null);
 
-		VarType	type = (VarType)visit(ctx.variableDeclarationStatement());
+		// フィールドの初期化コードを保持する
+		_currentMethodCodeDeclation = new MethodCodeDeclation();
+		_currentMethodCodeDeclation.setStatic(isStatic);
+		_currentMethodCodeDeclation.setClassName(_fqcn._className);
+		_currentMethodCodeDeclation.setMethodName("<field>");			// dummy 値
+
+		visit(ctx.variableDeclarationStatement());
 
 		// TODO: コードをコンストラクタ/static初期化ブロックに追加するような仕組みが必要
 		return	null;
 	}
 
-
-	// variableDeclarationStatement
-    //	:   Identifier (':' typeOrArray)? ('=' expression)?
-    //	;
-	@Override
-	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
-	{
-		String	id = ctx.Identifier().getText();
-		VarType	type = (VarType)visit(ctx.typeOrArray());
-
-		if (ctx.expression() != null)
-		{
-			// TODO:コードをコンストラクタ/static初期化ブロックに追加するような仕組みが必要
-			VarType	rightExpressionType = (VarType)visit(ctx.expression());
-			throw new RuntimeException("not implemented.");
-		}
-
-		return	new VarTypeName(type, id);
-	}
 
 
 	//	constructorDeclaration
@@ -252,6 +239,59 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.popLocalVarStack();
 		return	null;
 	}
+
+
+
+    // 'var' variableDeclarationStatement ';'
+	@Override
+	public Object visitStatementVar(PyriteParser.StatementVarContext ctx)
+	{
+		VarTypeName	varTypeName = (VarTypeName)visit(ctx.variableDeclarationStatement());
+		if (_currentMethodCodeDeclation.isDuplicatedLocalVar(varTypeName._name))
+		{
+			throw new PyriteSyntaxException("duplicated local variable");
+		}
+
+		_currentMethodCodeDeclation.putLocalVar(varTypeName._name, varTypeName._type);
+		return	null;
+	}
+
+	// variableDeclarationStatement
+    //	:   Identifier (':' typeOrArray)? ('=' expression)?
+    //	;
+	@Override
+	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
+	{
+		String	id = ctx.Identifier().getText();
+		VarType	type;
+		if (ctx.typeOrArray() != null)
+		{
+			type = (VarType)visit(ctx.typeOrArray());
+
+			if (ctx.expression() != null)
+			{
+				VarType	rightExpressionType = (VarType)visit(ctx.expression());
+				if (_cr.isAssignable(type, rightExpressionType))
+				{
+					throw new PyriteSyntaxException("type unmatched.");
+				}
+			}
+		}
+		else
+		{
+			if (ctx.expression() != null)
+			{
+				type = (VarType)visit(ctx.expression());
+			}
+			else
+			{
+				throw new PyriteSyntaxException("type need.");
+			}
+		}
+
+		return	new VarTypeName(type, id);
+	}
+
 
 
 	// expression
@@ -444,6 +484,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionInvokeMethod(@NotNull PyriteParser.ExpressionInvokeMethodContext ctx)
 	{
+		// メソッド呼び出しのみ、Java変換メソッド呼び出しコードの挿入やオブジェクト参照など、バイトコードの増減操作をするが、
+		// メソッド引数は expression であり、GOTO は存在しないため、コードを挿入してもジャンプ位置がずれるようなことはない
 		if (isLValueExpressionElement(ctx))
 		{
 			throw new PyriteSyntaxException("LValue must be a variable or field.");
@@ -472,7 +514,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// コード生成
 		// Java メソッド呼び出し時の自動型変換
-		// 変換メソッド呼び出しコードを挿入するが、expressionListTypeに保持しているコード位置に影響を与えないために、末尾要素から判定・コード挿入していく
+		// 引数である expressionListType に保持しているコード位置に影響を与えないために、末尾要素から判定・コード挿入していく
 		BCContainer	cnvCode = new BCContainer();
 		for (int i = inputParams._paramTypeList.size() - 1; i >= 0; i -= 1)
 		{
@@ -771,6 +813,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 
 		return	expressionListType;
+	}
+
+	// '(' expression ')'
+	@Override
+	public Object visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx)
+	{
+		VarType	varType = (VarType)visit(ctx.expression());
+//		varType = varType.resolveType(this);
+
+		return	varType;
 	}
 
 	// 'new' creator
@@ -1472,35 +1524,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		// 代入チェック
 		VarType lType = lValueType._type;
-		if (rType == VarType.NULL)
-		{	// nullは常に代入可
-			;
-		}
-		else if (_cr.isInherited(lType._fqcn, rType._fqcn) == false)
-		{	// 型が違うので代入不可
+		if (_cr.isAssignable(lType, rType) == false)
+		{
 			throw new PyriteSyntaxException("assign type unmached.");
 		}
-		else if (lType._type == VarType.TYPE.ARRAY)
-		{	// 要素の型が一致しているかをチェックする
-			VarType	lElementType = ((ArrayType)lType)._arrayVarType;
-			VarType	rElementType = ((ArrayType)rType)._arrayVarType;
-			if (lElementType.equals(rElementType) == false)
-			{
-				throw new PyriteSyntaxException("assign type unmached.");
-			}
-		}
-		else if (lType._type == VarType.TYPE.ASSOC)
-		{
-			VarType	lKeyType = ((AssocType)lType)._keyVarType;
-			VarType	rKeyType = ((AssocType)rType)._keyVarType;
-			VarType	lValType = ((AssocType)lType)._valVarType;
-			VarType	rValType = ((AssocType)rType)._valVarType;
-			if (lKeyType.equals(rKeyType) == false || lValType.equals(rValType) == false)
-			{
-				throw new PyriteSyntaxException("assign type unmached.");
-			}
-		}
-		// precond:lType._fqcnは、Array と Assoc の両方を継承することはない
 
 		// 代入
 		switch (lValueType._lValueType)
@@ -2371,14 +2398,203 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 
-	// '(' expression ')'
+	// 'try' block (catchClause+ finallyBlock? | finallyBlock)
 	@Override
-	public Object visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx)
+	public Object visitStatementTry(PyriteParser.StatementTryContext ctx)
 	{
-		VarType	varType = (VarType)visit(ctx.expression());
-//		varType = varType.resolveType(this);
+		// block
+		int	blockStartPos = _currentMethodCodeDeclation.getCodePos();
+		visit(ctx.block());
+		int	blockEndPos = _currentMethodCodeDeclation.getCodePos();
+		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
 
-		return	varType;
+		// catchClause
+		List<Integer>	catchClauseEndPosList = new ArrayList<Integer>();
+		if (ctx.catchClause() != null)
+		{
+			for (PyriteParser.CatchClauseContext catchCtx : ctx.catchClause())
+			{
+				int	exceptionStartPos = _currentMethodCodeDeclation.getCodePos();
+				VarType	exceptionType = (VarType)visit(catchCtx);
+				catchClauseEndPosList.add(_currentMethodCodeDeclation.getCodePos());
+				_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+				_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
+
+				// Exception table 登録
+				_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, blockEndPos + 3, exceptionStartPos, _cpm.getClassRef(exceptionType._fqcn._fqcnStr));
+			}
+		}
+
+		// finally
+		int	jmpDistPos;
+		if (ctx.finallyBlock() != null)
+		{
+			// block 内で例外が発生した際のfinallyコード(最後に例外をathrowする)と、例外が発生しなかった際のfinallyコードの両方を作成する。
+			// バイトコードは、例外発生時のfinally → 通常のfinally(finally節を抜けて後続処理に続く) の順番にする。
+			int	finallyStartPos = _currentMethodCodeDeclation.getCodePos();
+			// スタック上の例外をローカル変数に保持する
+			VarTypeName	exceptionVar = _currentMethodCodeDeclation.putLocalVar("$finallyException" + ctx.hashCode(), ObjectType.getType("java.lang.Throwable"));	// Pyrite codeで定義できない変数名
+			_currentMethodCodeDeclation.addCodeOpASTORE(exceptionVar._localVarNum);
+
+			// block
+			int	finallyBlockStartPos = _currentMethodCodeDeclation.getCodePos();
+			visit(ctx.finallyBlock());
+			int	finallyBlockEndPos = _currentMethodCodeDeclation.getCodePos();
+
+			// 例外再送出コードの追加
+			_currentMethodCodeDeclation.addCodeOpALOAD(exceptionVar._localVarNum);
+			_currentMethodCodeDeclation.addCodeOp(BC.ATHROW);
+			int	finallyEndPos = _currentMethodCodeDeclation.getCodePos();
+
+			// 通常finally コードの追加
+			List<Byte>	finallyCodeList = _currentMethodCodeDeclation.getCodeBlock(finallyBlockStartPos, finallyBlockEndPos);
+			int	finallyNStartPos = _currentMethodCodeDeclation.getCodePos();
+			_currentMethodCodeDeclation.addCodeBlock(finallyCodeList, finallyNStartPos);
+
+			// Exception table 登録
+			_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, finallyStartPos, finallyStartPos, 0);	// anyの場合は0
+
+			jmpDistPos = finallyNStartPos;
+		}
+		else
+		{
+			jmpDistPos = _currentMethodCodeDeclation.getCodePos();
+		}
+
+
+		// ジャンプ位置の設定
+		int	jmpDistance = jmpDistPos - blockEndPos;
+		_currentMethodCodeDeclation.replaceCodeU2(blockEndPos + 1, jmpDistance);
+
+		for (int i = 0; i < catchClauseEndPosList.size(); ++i)
+		{
+			int	pos = catchClauseEndPosList.get(i);
+			jmpDistance = jmpDistPos - pos;
+			_currentMethodCodeDeclation.replaceCodeU2(pos + 1, jmpDistance);
+		}
+		// TODO: コード挿入で他のレベルのジャンプ位置がずれないか要検討。相対位置だから大丈夫かも?
+
+		return	null;
+	}
+
+	// catchClause
+    //  :   'catch' '(' 'var' Identifier (':' qualifiedName)? ')' block
+	@Override
+	public Object visitCatchClause(PyriteParser.CatchClauseContext ctx)
+	{
+		_currentMethodCodeDeclation.pushLocalVarStack();	// 例外変数名を有効にする
+
+		String	name = ctx.Identifier().getText();
+		VarType	exceptionType;
+		if (ctx.qualifiedName() != null)
+		{
+			String	qualifiedName = ctx.qualifiedName().getText();
+			FQCN	fqcn = _idm.resolveClassName(qualifiedName);
+			if (fqcn == null)
+			{
+				throw new PyriteSyntaxException("class not found.");
+			}
+			if (_cr.isThrowable(fqcn) == false)
+			{	// java.lang.Throwable を継承している必要がある
+				throw new PyriteSyntaxException("catch type must be exception");
+			}
+
+			exceptionType = ObjectType.getType(fqcn._fqcnStr);
+		}
+		else
+		{	// 未指定時のデフォルト
+			exceptionType = ObjectType.getType("java.lang.Throwable");
+		}
+
+		// スタック上の例外をローカル変数に保持
+		VarTypeName	exceptionVar = _currentMethodCodeDeclation.putLocalVar(name, exceptionType);
+		_currentMethodCodeDeclation.addCodeOpASTORE(exceptionVar._localVarNum);
+
+		// 例外処理コードブロック
+		visit(ctx.block());
+
+		_currentMethodCodeDeclation.popLocalVarStack();
+		return	exceptionType;
+	}
+
+
+	// finallyBlock
+	//  :   'finally' block
+	@Override
+	public Object visitFinallyBlock(PyriteParser.FinallyBlockContext ctx)
+	{
+		return visit(ctx.block());
+	}
+
+	// 'throw' expression ';'
+	@Override
+	public Object visitStatementThrow(PyriteParser.StatementThrowContext ctx)
+	{
+		VarType	exceptionType = (VarType)visit(ctx.expression());
+
+		if (_cr.isThrowable(exceptionType._fqcn) == false)
+		{	// java.lang.Throwable を継承している必要がある
+			throw new PyriteSyntaxException("throw type must be exception");
+		}
+		_currentMethodCodeDeclation.addCodeOp(BC.ATHROW);
+		return	null;
+	}
+
+	// 'synchronized' parExpression block
+	@Override
+	public Object visitStatementSynchronized(PyriteParser.StatementSynchronizedContext ctx)
+	{
+		_currentMethodCodeDeclation.pushLocalVarStack();	// lock変数名を有効にする
+
+		VarType	varType = (VarType)visit(ctx.parExpression());
+		switch (varType._type)
+		{
+		case OBJ:
+		case NUM:
+		case INT:
+		case FLT:
+		case STR:
+		case CHR:
+		case ARRAY:
+		case ASSOC:
+		case BOL:
+		case BYT:
+			break;	// OK
+		default:
+			throw new PyriteSyntaxException("lock object needs");
+		}
+
+		// monitorexitのため、オブジェクト参照をローカル変数に保持しておく
+		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
+		VarTypeName	lockVar = _currentMethodCodeDeclation.putLocalVar("$synchronized" + ctx.hashCode(), varType);	// Pyrite codeで定義できない変数名
+		_currentMethodCodeDeclation.addCodeOpASTORE(lockVar._localVarNum);
+		_currentMethodCodeDeclation.addCodeOp(BC.MONITORENTER);
+
+		// block
+		int	blockStartPos = _currentMethodCodeDeclation.getCodePos();
+		visit(ctx.block());
+		_currentMethodCodeDeclation.addCodeOpALOAD(lockVar._localVarNum);
+		_currentMethodCodeDeclation.addCodeOp(BC.MONITOREXIT);
+		int	blockEndPos = _currentMethodCodeDeclation.getCodePos();
+		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
+
+		// 例外発生時のモニタ解除コードを追加
+		_currentMethodCodeDeclation.addCodeOpALOAD(lockVar._localVarNum);
+		_currentMethodCodeDeclation.addCodeOp(BC.MONITOREXIT);
+		_currentMethodCodeDeclation.addCodeOp(BC.ATHROW);
+		int	exceptionBlockEndPos = _currentMethodCodeDeclation.getCodePos();
+
+		// ジャンプ位置の設定
+		int	jmpDistance = exceptionBlockEndPos - blockEndPos;
+		_currentMethodCodeDeclation.replaceCodeU2(blockEndPos + 1, jmpDistance);
+
+		// Exception table 登録
+		_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, blockEndPos, blockEndPos + 3, 0);	// anyの場合は0
+
+		_currentMethodCodeDeclation.popLocalVarStack();
+		return	null;
 	}
 
 
@@ -2470,13 +2686,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				case CHR:
 				case ARRAY:
 				case ASSOC:
+				case BOL:
+				case BYT:
 					_currentMethodCodeDeclation.addCodeOpALOAD(varTypeName._localVarNum);
 					break;
-				case BOL:
-					_currentMethodCodeDeclation.addCodeOpILOAD(varTypeName._localVarNum);
-					break;
-				case BYT:
-					throw new RuntimeException("not implemented.");
 				default:
 					throw new RuntimeException("assert:");
 					}
