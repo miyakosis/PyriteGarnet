@@ -112,6 +112,7 @@ public class MethodType extends VarType
 		return	sb.toString();
 	}
 
+	// 引数の型で戻り値の型は一意に決まるため、戻り値の型はシグネチャに含めない
 	public static String	createMethodSignature(String packageClassName, String methodName, VarType[] paramTypes)
 	{
 		StringBuilder	sb = new StringBuilder();

@@ -1615,71 +1615,32 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			paramTypeList = new ArrayList<VarType>();
 		}
 
+		// メソッド返り値定義と一致しているか型チェック
 		if (paramTypeList.size() != decTypeList.size())
 		{
-			throw new RuntimeException("method parameter is different.");
+			throw new PyriteSyntaxException("method parameter number is different.");
 		}
-		// メソッド定義と一致しているか型チェック
-		// 入力パラメータを解決
-		// paramTypeList は PartialIdType の可能性があるため、型解決する
-		// メソッド解決のために参照する入力パラメータの型情報
-		List<VarType>	inputParamTypeList = new ArrayList<VarType>();
-		for (VarType inputParamType : paramTypeList)
+		for (int i = 0; i < decTypeList.size(); ++i)
 		{
-//			VarType	inputParamType = type.resolveType(this);
-
-			switch (inputParamType._type)
+			if (_cr.isAssignable(decTypeList.get(i)._type, paramTypeList.get(i)) == false)
 			{
-			case NULL:
-				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
-				inputParamType = ObjectType.getType("java.lang.Object");
-				break;
-			case INT:
-			case STR:
-			case BOL:
-			case OBJ:
-				// OK
-				break;
-			default:
-				throw new RuntimeException("method parameter unsuitable.");
-			}
-
-			inputParamTypeList.add(inputParamType);
-		}
-
-		for (int i = 0; i < inputParamTypeList.size(); ++i)
-		{
-			if (inputParamTypeList.get(i) != decTypeList.get(i)._type)
-			{
-				throw new RuntimeException("method parameter is different.");
+				throw new PyriteSyntaxException("method putput parameter type unmatched.");
 			}
 		}
 
 		// コード生成
-
 		if (decTypeList.size() == 0)
 		{
 			_currentMethodCodeDeclation.addCodeOp(BC.RETURN);
 		}
-		else if (decTypeList.size() > 1)
+		else if (decTypeList.size() == 1)
 		{
-			throw new RuntimeException("not supported yet");	// TODO
+			_currentMethodCodeDeclation.addCodeOp(BC.ARETURN);
 		}
 		else
 		{
-			switch (inputParamTypeList.get(0)._type)
-			{
-			case INT:
-			case BOL:
-				_currentMethodCodeDeclation.addCodeOp(BC.IRETURN);
-				break;
-			case STR:
-			case OBJ:
-				_currentMethodCodeDeclation.addCodeOp(BC.ARETURN);
-				break;
-			default:
-				throw new RuntimeException("method parameter unsuitable.");
-			}
+
+			_currentMethodCodeDeclation.addCodeOp(BC.ARETURN);
 		}
 
 		return	null;
@@ -1891,6 +1852,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitForControlICU(@NotNull PyriteParser.ForControlICUContext ctx)
 	{
+		// TODO: forInit, forUpdate でexpressionListの解析でスタックに残った値を除去する必要がありそう?
+
 		// forInitで定義した変数を for 文の有効範囲で生かす
 		_currentMethodCodeDeclation.pushLocalVarStack();
 		visit(ctx.forInit());

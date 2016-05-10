@@ -700,10 +700,13 @@ forInit
 
 forInitSpec
 	:	'var' variableDeclarationStatement
-	|	expression
+	|	expressionList
 	;
 
-// TODO:forInit orig exists?
+//	forInit
+//	    :   localVariableDeclaration
+//	    |   expressionList
+//	    ;
 
 //	enhancedForControl
 //	    :   type variableDeclaratorId ':' expression
