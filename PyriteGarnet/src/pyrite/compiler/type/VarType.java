@@ -168,9 +168,9 @@ public class VarType
 
 // instance
 	public final TYPE	_type;
+	public final String	_typeId;	// オブジェクトを一意に識別する文字列。大抵は_jvmExpressionと同じだが、ArrayやAssocは保持する型情報もこの文字列に含め、一意性を確保している。
 	public final FQCN	_fqcn;
-	public final String	_jvmExpression;
-	public final String	_typeId;
+	public final String	_jvmExpression;	// オブジェクトをjava vmで参照するための文字列。
 
 //	// for PARTIALID
 //	protected String	_id;
@@ -186,11 +186,22 @@ public class VarType
 	protected VarType(TYPE type, String typeId, FQCN fqcn, String jvmExpression)
 	{
 		_type = type;
+		_typeId = typeId;
 		_fqcn = fqcn;
 		_jvmExpression = jvmExpression;
-		_typeId = typeId;
 
-		__varTypeMap.put(typeId, this);
+		if (typeId != null)
+		{
+			__varTypeMap.put(typeId, this);
+		}
+	}
+
+	protected VarType()
+	{
+		_type = null;
+		_typeId = null;
+		_fqcn = null;
+		_jvmExpression = null;
 	}
 
 	private VarType(TYPE type)

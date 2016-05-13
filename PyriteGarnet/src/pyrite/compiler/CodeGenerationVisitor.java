@@ -257,49 +257,82 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	}
 
 	// variableDeclarationStatement
-    //	:   Identifier (':' typeOrArray)? ('=' expression)?
+    //	:   variableDeclaration (',' variableDeclaration)* ('=' expression)?
     //	;
 	@Override
 	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
+	{
+		List<VarTypeName>	varTypeNameList = new ArrayList<VarTypeName>();
+
+		for (PyriteParser.VariableDeclarationContext varCtx : ctx.variableDeclaration())
+		{
+			varTypeNameList.add((VarTypeName)visit(varCtx));
+		}
+
+		// TODO:型チェックなど
+		if (ctx.expression() != null)
+		{
+		}
+		else
+		{
+
+		}
+
+		return	null;
+//		String	id = ctx.Identifier().getText();
+//		VarType	type;
+//		if (ctx.typeOrArray() != null)
+//		{
+//			type = (VarType)visit(ctx.typeOrArray());
+//
+//			if (ctx.expression() != null)
+//			{
+//				VarType	rightExpressionType = (VarType)visit(ctx.expression());
+//				if (_cr.isAssignable(type, rightExpressionType))
+//				{
+//					throw new PyriteSyntaxException("type unmatched.");
+//				}
+//			}
+//		}
+//		else
+//		{
+//			if (ctx.expression() != null)
+//			{
+//				type = (VarType)visit(ctx.expression());
+//			}
+//			else
+//			{
+//				throw new PyriteSyntaxException("type need.");
+//			}
+//		}
+
+//		return	new VarTypeName(type, id);
+	}
+
+	// variableDeclaration
+	//	:   Identifier (':' typeOrArray)?
+	@Override
+	public Object visitVariableDeclaration(PyriteParser.VariableDeclarationContext ctx)
 	{
 		String	id = ctx.Identifier().getText();
 		VarType	type;
 		if (ctx.typeOrArray() != null)
 		{
 			type = (VarType)visit(ctx.typeOrArray());
-
-			if (ctx.expression() != null)
-			{
-				VarType	rightExpressionType = (VarType)visit(ctx.expression());
-				if (_cr.isAssignable(type, rightExpressionType))
-				{
-					throw new PyriteSyntaxException("type unmatched.");
-				}
-			}
 		}
 		else
 		{
-			if (ctx.expression() != null)
-			{
-				type = (VarType)visit(ctx.expression());
-			}
-			else
-			{
-				throw new PyriteSyntaxException("type need.");
-			}
+			type = null;
 		}
-
 		return	new VarTypeName(type, id);
 	}
-
 
 
 	// expression
 	//  expression ';'
 	public Object visitStatementExpression(PyriteParser.StatementExpressionContext ctx)
 	{
-		visit(ctx.expression());
-		return	null;
+		return	visit(ctx.expression());
 	}
 
 	// expression '.' Identifier
@@ -798,8 +831,45 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	}
 
 
+	// expression
+	// : expression (',' expression)+
+	// expressionの展開として、代入演算子における複数の値を表現するためのカンマ区切りのexpression
+	// 親要素が代入の場合は、全てのexpressionの型を返す。
+	// 親要素が代入ではない場合、最初のexpressionの値を返す。スタック上からも最初以外の値を除外する。
+	@Override
+	public Object visitExpressionMultipleValue(PyriteParser.ExpressionMultipleValueContext ctx)
+	{
+		List<VarType>	varTypeList = new ArrayList<VarType>();
+		List<PyriteParser.ExpressionContext>	exprs = ctx.expression();
 
-	// expression (',' expression)*
+		for (PyriteParser.ExpressionContext expr : exprs)
+		{
+			varTypeList.add((VarType)visit(expr));
+		}
+
+		if (isMultipleValueAcceptable(ctx))
+		{	// 複数の値を許容しているので、そのまま返す
+			return	varTypeList;
+		}
+		else
+		{	// 最初以外の値について、スタック上から除外する
+			for (VarType varType : varTypeList)
+			{
+				if (varType._type != VarType.TYPE.VOID)
+				{
+					_currentMethodCodeDeclation.addCodeOp(BC.POP);
+				}
+				// メソッド戻り値かつvoidの場合のみ、スタック上に値が無いのでなにもしない
+			}
+
+			// 最初の値だけを返す
+			return	varTypeList.get(0);
+		}
+	}
+
+	// expressionList
+	// : expression (',' expression)*
+	// 引数や for文など、複数のexpressionをカンマ区切りで記述ができる場所の構文
 	@Override
 	public Object visitExpressionList(@NotNull PyriteParser.ExpressionListContext ctx)
 	{
@@ -815,15 +885,24 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	expressionListType;
 	}
 
-	// '(' expression ')'
+	// parExpression
+	// : '(' expression ')'
 	@Override
 	public Object visitParExpression(@NotNull PyriteParser.ParExpressionContext ctx)
 	{
 		VarType	varType = (VarType)visit(ctx.expression());
-//		varType = varType.resolveType(this);
-
 		return	varType;
 	}
+
+	// primary
+	// : '(' expression ')'
+	@Override
+	public Object visitPrimaryParens(PyriteParser.PrimaryParensContext ctx)
+	{
+		VarType	varType = (VarType)visit(ctx.expression());
+		return	varType;
+	}
+
 
 	// 'new' creator
 	@Override
@@ -1422,6 +1501,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	// 親要素を参照し、スタックに値を残す必要があるかどうかを返す。
 	// 親要素が StatementExpression の場合は、スタックに値を残してはいけない。
+	// 親要素が StatementExpression 以外の場合は、スタックに値を残す。
 	// c.f. StatementExpression
 	// statement : expression ';'
 	public static boolean	isRemainStackValue(RuleContext ctx)
@@ -1429,15 +1509,58 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	!(ctx.parent instanceof PyriteParser.StatementExpressionContext);
 	}
 
+	// expressionが左辺値かどうかを返す。
 	// expressionが左辺値かどうかによって、式の最後の要素の式解析が異なる
 	// ローカル変数参照が
 	//   左辺値にある場合：ローカル変数への値設定(ローカル変数インデクスの取得) 右辺値にある場合：ローカル変数参照をスタックに積む
 	// フィールド参照が
 	//   左辺値にある場合：フィールドへの値設定(スタックにオブジェクト参照を残したままにする) 右辺値にある場合：フィールド参照をスタックに詰む
 	// 左辺値の場合は、式の最後の要素がローカル変数またはフィールドでなければならない。
+	//
 	public boolean	isLValueExpressionElement(ParseTree ctx)
 	{
-		return	(ctx.getParent() instanceof PyriteParser.ExpressionAssignContext);
+		// 現在のnodeから、木を上位に辿り、左辺値か判定する
+		ParseTree	current;
+		ParseTree	parent;
+		for (current = ctx, parent = current.getParent();; current = parent, parent = current.getParent())
+		{
+			assert (parent != null);
+			if (parent instanceof PyriteParser.ExpressionAssignContext)
+			{	// <assoc=right> expression '=' expression
+				PyriteParser.ExpressionAssignContext	parCtx = (PyriteParser.ExpressionAssignContext)parent;
+				if (parCtx.expression(0) == current)
+				{
+					return	true;
+				}
+				else
+				{
+					return	false;	// 右辺値
+				}
+			}
+			else if (parent instanceof PyriteParser.ExpressionClassFieldRefContext)
+			{	// expression '.' Identifier
+				// 自nodeが Identiferの場合、一つ上に上がる
+				PyriteParser.ExpressionClassFieldRefContext	parCtx = (PyriteParser.ExpressionClassFieldRefContext)parent;
+				if (parCtx.Identifier() == current)
+				{
+					;	// 一つ上に上がる
+				}
+				else
+				{
+					return	false;	// expressionの方であれば、右辺値として扱う(参照をスタックに積む)
+				}
+			}
+			else if (parent instanceof PyriteParser.ExpressionMultipleValueContext
+					|| parent instanceof PyriteParser.PrimaryParensContext)
+			{	// expression (',' expression)+
+				// '(' expression ')'
+				;	// 一つ上に上がる
+			}
+			else
+			{
+				return	false;	// 上記以外のnode配下は、右辺値として扱う(参照をスタックに積む)
+			}
+		}
 //		if (ctx.getParent() instanceof PyriteParser.ExpressionAssignContext)
 //		{
 //			PyriteParser.ExpressionAssignContext	parent = (PyriteParser.ExpressionAssignContext)ctx.getParent();
@@ -1455,66 +1578,156 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		return	false;
 	}
 
+	// 複数値を持つ式を許容するかを返す
+	public boolean	isMultipleValueAcceptable(ParseTree ctx)
+	{
+		// 現在のnodeから、木を上位に辿り、複数値を許容するかを調べる
+		ParseTree	current;
+		ParseTree	parent;
+		for (current = ctx, parent = current.getParent();; current = parent, parent = current.getParent())
+		{
+			assert (parent != null);
+			if (parent instanceof PyriteParser.ExpressionAssignContext
+					|| parent instanceof PyriteParser.VariableDeclarationStatementContext)
+			{	// <assoc=right> expression '=' expression
+				// variableDeclaration (',' variableDeclaration)* ('=' expression)?
+				return	true;	// 複数値を許容する
+			}
+			else if (parent instanceof PyriteParser.ExpressionMultipleValueContext
+					|| parent instanceof PyriteParser.PrimaryParensContext)
+			{	// expression (',' expression)+
+				// '(' expression ')'
+				;	// 一つ上に上がる
+			}
+			else
+			{
+				return	false;	// 上記以外のnode配下は、複数値を許容しない
+			}
+		}
+	}
+
 
 	// <assoc=right> expression '=' expression
 	@Override
 	public Object visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx)
 	{
 		// 左辺値
-//		_isLValueExpression = true;
 		Object	lType = visit(ctx.expression(0));	// get value of left subexpression
-		if (lType instanceof LValueType == false)
+		// 左辺値のチェック
+		List<LValueType>	lValueTypeList;
+		if (lType instanceof List)
+		{
+			for (VarType lVarType : (List<VarType>)lType)
+			{
+				if (lVarType instanceof LValueType == false)
+				{
+					throw new PyriteSyntaxException("Left expression is not left value type.");
+				}
+			}
+			lValueTypeList = (List<LValueType>)lType;
+		}
+		else if (lType instanceof LValueType)
+		{
+			lValueTypeList = new ArrayList<LValueType>();
+			lValueTypeList.add((LValueType)lType);	// ok
+		}
+		else
 		{
 			throw new PyriteSyntaxException("Left expression is not left value type.");
 		}
-		LValueType	lValueType = (LValueType)lType;
 
+		// 右辺値
+		Object	rType = visit(ctx.expression(1));	// get value of right subexpression
+		// 右辺値の設定
+		List<VarType>	rTypeList;
+		if (rType instanceof List)
+		{
+			rTypeList = (List<VarType>)rType;
+		}
+		else
+		{
+			rTypeList = new ArrayList<VarType>();
+			rTypeList.add((VarType)rType);
+		}
+
+		// オペレータのチェック
 		switch (ctx.op.getType())
 		{
 		case PyriteParser.ASSIGN:
-			// ok
+			if (lValueTypeList.size() > rTypeList.size())
+			{
+				throw new PyriteSyntaxException("un assignable left value.");
+			}
+			// 余分な右辺値を捨てる
+			for (int i = lValueTypeList.size(); i < rTypeList.size(); ++i)
+			{
+				_currentMethodCodeDeclation.addCodeOp(BC.POP);
+			}
 			break;
+
 		default:
 			// 演算代入自体が左辺要素であるかを調べる
 			if (isLValueExpressionElement(ctx))
-			{	// 演算代入自体は、左辺要素にはならない
+			{	// 演算代入自体が左辺要素になる場合の挙動も不明
+				// ex. x += y = z
+				// TODO: y = z で値が確定するから、それを+=する?
+				// ex. x = y += z
 				throw new PyriteSyntaxException("LValue must be a variable or field.");
+			}
+
+			if (lValueTypeList.size() > 1 || rTypeList.size() > 1)
+			{	// 演算代入の多値代入はどうやったらよいか良くわからない
+				throw new PyriteSyntaxException("multiple value operative assignment");
 			}
 
 			// 左辺値への参照をスタックに積む
 			CodeGenerateOperationalAssignmentVisitor visitor = new CodeGenerateOperationalAssignmentVisitor(_cr, _cpm, _idm, _fqcn, _thisClassFieldMember);
 			visitor.visit(ctx.expression(0));	// parse
-		}
 
-		// 右辺値
-		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
-
-		// 演算を行う
-		// TODO
-		switch (ctx.op.getType())
-		{
-		case PyriteParser.ASSIGN:
-			break;
-		case PyriteParser.ADD_ASSIGN:
-		case PyriteParser.SUB_ASSIGN:
-		case PyriteParser.MUL_ASSIGN:
-		case PyriteParser.DIV_ASSIGN:
-		case PyriteParser.AND_ASSIGN:
-		case PyriteParser.OR_ASSIGN:
-		case PyriteParser.XOR_ASSIGN:
-		case PyriteParser.MOD_ASSIGN:
-		case PyriteParser.LSHIFT_ASSIGN:
-		case PyriteParser.RSHIFT_ASSIGN:
-		case PyriteParser.URSHIFT_ASSIGN:
-			throw new RuntimeException("not implemented");
-		default:
-			throw new RuntimeException("assert");
+			// 演算を行う
+			// TODO
+			switch (ctx.op.getType())
+			{
+			case PyriteParser.ADD_ASSIGN:
+			case PyriteParser.SUB_ASSIGN:
+			case PyriteParser.MUL_ASSIGN:
+			case PyriteParser.DIV_ASSIGN:
+			case PyriteParser.AND_ASSIGN:
+			case PyriteParser.OR_ASSIGN:
+			case PyriteParser.XOR_ASSIGN:
+			case PyriteParser.MOD_ASSIGN:
+			case PyriteParser.LSHIFT_ASSIGN:
+			case PyriteParser.RSHIFT_ASSIGN:
+			case PyriteParser.URSHIFT_ASSIGN:
+				throw new RuntimeException("not implemented");
+			default:
+				throw new RuntimeException("assert");
+			}
 		}
 
 		// assign
-		createAssignCode(lValueType, rType, isRemainStackValue(ctx));
+		boolean	isRemainStackValue = isRemainStackValue(ctx);
+		// TODO: isRemainStackValue と スタックの dup を再検討
+		// スタックには、a, b = c, d; の場合、スタックには (TOP) d > c の順で積まれているため、b > a の順で代入する
+		for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+		{
+			createAssignCode(lValueTypeList.get(i), rTypeList.get(i), isRemainStackValue);
+		}
 
-		return	lValueType._type;
+		// 戻り値の設定
+		if (lValueTypeList.size() == 1)
+		{
+			return	lValueTypeList.get(0)._lValueVarType;
+		}
+		else
+		{
+			List<VarType>	expressionValueList = new ArrayList<VarType>();
+			for (LValueType lValueType : lValueTypeList)
+			{
+				expressionValueList.add(lValueType._lValueVarType);
+			}
+			return	expressionValueList;
+		}
 	}
 
 
@@ -1523,7 +1736,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isRemainStackValue)
 	{
 		// 代入チェック
-		VarType lType = lValueType._type;
+		VarType lType = lValueType._lValueVarType;
 		if (_cr.isAssignable(lType, rType) == false)
 		{
 			throw new PyriteSyntaxException("assign type unmached.");

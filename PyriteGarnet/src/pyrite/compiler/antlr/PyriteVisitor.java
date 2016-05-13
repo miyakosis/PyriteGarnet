@@ -261,6 +261,12 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVariableDeclarationStatement(PyriteParser.VariableDeclarationStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#variableDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDeclaration(PyriteParser.VariableDeclarationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#label}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -331,12 +337,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForInit(PyriteParser.ForInitContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forInitSpec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForInitSpec(PyriteParser.ForInitSpecContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PyriteParser#forUpdate}.
 	 * @param ctx the parse tree
@@ -453,6 +453,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpressionBitAnd(PyriteParser.ExpressionBitAndContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionMultipleValue}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionMultipleValue(PyriteParser.ExpressionMultipleValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ExpressionBolAnd}
 	 * labeled alternative in {@link PyriteParser#expression}.

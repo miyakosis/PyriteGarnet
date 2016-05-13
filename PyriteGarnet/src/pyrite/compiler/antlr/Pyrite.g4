@@ -593,8 +593,12 @@ statement
     ;
 
 variableDeclarationStatement
-    :   Identifier (':' typeOrArray)? ('=' expression)?
+    :   variableDeclaration (',' variableDeclaration)* ('=' expression)?
     ;
+    
+variableDeclaration
+	:   Identifier (':' typeOrArray)?
+	;
 
 label
     :    Identifier?
@@ -603,8 +607,6 @@ label
 ifStatement
     :	parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
     ;
-
-//TODO:try-catch, synchronized, throw
 
 //	statement
 //	    :   block
@@ -695,10 +697,6 @@ forControl
 //	    ;
 
 forInit
-    :   forInitSpec+
-    ;
-
-forInitSpec
 	:	'var' variableDeclarationStatement
 	|	expressionList
 	;
@@ -754,6 +752,7 @@ expression
     |   expression '|' expression	# ExpressionBitOr
     |   expression '&&' expression	# ExpressionBolAnd
     |   expression '||' expression	# ExpressionBolOr
+    |   expression (',' expression)+	# ExpressionMultipleValue
     |   <assoc=right> expression
         op=('='
         |   '+='
@@ -769,6 +768,7 @@ expression
         |   '%='
         )
         expression					# ExpressionAssign
+//    |   <assoc=right> expression (',' expression)+ '=' expressionList	# ExpressionAssignList
     ;
 
 
