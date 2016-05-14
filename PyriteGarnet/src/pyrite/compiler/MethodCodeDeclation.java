@@ -89,6 +89,10 @@ public class MethodCodeDeclation
 	// ローカル変数を追加
 	public VarTypeName	putLocalVar(String name, VarType type)
 	{
+		if (_localVarMapStack.size() >= 255)
+		{
+			throw new RuntimeException("not suppoted over 255 local variables");
+		}
 		VarTypeName	addVar = new VarTypeName(type, name, _localVarMapStack.size(), _localVarMapStack.stackSize());
 
 		// 同名のローカル変数が存在している場合は上書き

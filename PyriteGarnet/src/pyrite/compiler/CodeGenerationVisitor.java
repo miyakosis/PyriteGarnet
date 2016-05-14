@@ -246,14 +246,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitStatementVar(PyriteParser.StatementVarContext ctx)
 	{
-		VarTypeName	varTypeName = (VarTypeName)visit(ctx.variableDeclarationStatement());
-		if (_currentMethodCodeDeclation.isDuplicatedLocalVar(varTypeName._name))
-		{
-			throw new PyriteSyntaxException("duplicated local variable");
-		}
-
-		_currentMethodCodeDeclation.putLocalVar(varTypeName._name, varTypeName._type);
-		return	null;
+		return	visit(ctx.variableDeclarationStatement());
 	}
 
 	// variableDeclarationStatement
@@ -263,19 +256,61 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
 	{
 		List<VarTypeName>	varTypeNameList = new ArrayList<VarTypeName>();
-
 		for (PyriteParser.VariableDeclarationContext varCtx : ctx.variableDeclaration())
 		{
 			varTypeNameList.add((VarTypeName)visit(varCtx));
 		}
 
-		// TODO:型チェックなど
+		List<VarType>	rTypeList = null;
 		if (ctx.expression() != null)
 		{
-		}
-		else
-		{
+			Object	rType = visit(ctx.expression());	// 初期値代入コードを解析。代入する値はスタック上に残っている
+			if (rType instanceof List)
+			{
+				rTypeList = (List<VarType>)rType;
+			}
+			else
+			{
+				rTypeList = new ArrayList<VarType>();
+				rTypeList.add((VarType)rType);
+			}
 
+			// スタック上にある左辺値の個数を超える分の右辺値を捨てる
+			for (int i = varTypeNameList.size(); i < rTypeList.size(); ++i)
+			{
+				_currentMethodCodeDeclation.addCodeOp(BC.POP);
+			}
+		}
+
+		// ローカル変数宣言、初期値代入コードを実施
+		for (int i = varTypeNameList.size() - 1; i >= 0; --i)
+		{
+			VarTypeName	varTypeName = varTypeNameList.get(i);
+			String	name = varTypeName._name;
+			VarType	type = varTypeName._type;
+			if (type == null)
+			{	// 変数の型宣言省略時
+				if (rTypeList != null)
+				{	// expressionの型を移送
+					type = rTypeList.get(i);
+				}
+				else
+				{	// 変数の型宣言省略時、expressionから移送できないのでエラー
+					throw new PyriteSyntaxException("local variable type undefined.");
+				}
+			}
+			if (_currentMethodCodeDeclation.isDuplicatedLocalVar(varTypeName._name))
+			{
+				throw new PyriteSyntaxException("duplicated local variable");
+			}
+
+			VarTypeName	lVarTypeName = _currentMethodCodeDeclation.putLocalVar(name, type);	// ローカル変数番号を割り当てる
+
+			if (rTypeList != null)
+			{	// 初期値代入コードを作成
+				LValueType	lValueType = new LValueType(LValueType.TYPE.LOCAL, lVarTypeName._type, lVarTypeName._localVarNum);
+				createAssignCode(lValueType, rTypeList.get(i), false);	// 代入のコード作成。スタック上に値は残さない。
+			}
 		}
 
 		return	null;
@@ -660,73 +695,78 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			return	VarType.VOID;
 		}
-		else
-		{
-			if (isRemainStackValue(ctx) == false)
-			{	// 残っている戻り値が不要のため、除去する
-				_currentMethodCodeDeclation.addCodeOp(BC.POP);
-			}
-			else if (methodType._returnTypes.length == 1)
-			{	// Javaメソッド呼び出しで、戻り値がJava primitive型の場合は、Pyrite型へ変換する
-				switch (methodType._returnTypes[0]._type)
+
+		if (isRemainStackValue(ctx) == false)
+		{	// 残っている戻り値が不要のため、除去する
+			_currentMethodCodeDeclation.addCodeOp(BC.POP);
+
+		}
+		else if (methodType._returnTypes.length == 1)
+		{	// Javaメソッド呼び出しで、戻り値がJava primitive型の場合は、Pyrite型へ変換する
+			switch (methodType._returnTypes[0]._type)
+			{
+			case JVM_INT:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+				return	VarType.INT;
+
+			case JVM_LONG:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+				return	VarType.INT;
+
+			case JVM_SHORT:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+				return	VarType.INT;
+
+			case JVM_FLOAT:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(F)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+				return	VarType.DEC;
+
+			case JVM_DOUBLE:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(D)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+				return	VarType.DEC;
+
+			case JVM_CHAR:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
+				return	VarType.CHR;
+
+			case JVM_BYTE:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteByte", "(B)L" + pyrite.lang.Byte.CLASS_NAME + ";"));
+				return	VarType.BYT;
+
+			case JVM_BOOLEAN:
+				cnvCode.addCodeOp(BC.INVOKESTATIC);
+				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteBoolean", "(Z)L" + pyrite.lang.Boolean.CLASS_NAME + ";"));
+				return	VarType.BOL;
+
+			case OBJ:
+				if (methodType._returnTypes[0] == ObjectType.getType("java.lang.String"))
 				{
-				case JVM_INT:
 					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-					break;
-
-				case JVM_LONG:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-					break;
-
-				case JVM_SHORT:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-					break;
-
-				case JVM_FLOAT:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(F)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
-					break;
-
-				case JVM_DOUBLE:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(D)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
-					break;
-
-				case JVM_CHAR:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
-					break;
-
-				case JVM_BYTE:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteByte", "(B)L" + pyrite.lang.Byte.CLASS_NAME + ";"));
-					break;
-
-				case JVM_BOOLEAN:
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteBoolean", "(Z)L" + pyrite.lang.Boolean.CLASS_NAME + ";"));
-					break;
-
-				case OBJ:
-					if (methodType._returnTypes[0] == ObjectType.getType("java.lang.String"))
-					{
-						cnvCode.addCodeOp(BC.INVOKESTATIC);
-						cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
-					}
-					break;
-
-				default:
-					break;
+					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
+					return	VarType.STR;
 				}
+				break;
 
+			default:
+				break;
 			}
-
-			// TODO: 複数パラメータ対応
 			return	methodType._returnTypes[0];
 		}
+		else
+		{	// スタック上には、JVMReturnType型のオブジェクトがある。これを分解してスタックに乗せ、返す
+			// TODO: 複数パラメータ対応
+
+
+		}
+
+			return	methodType._returnTypes[0];
 
 
 /*
@@ -1655,10 +1695,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 		case PyriteParser.ASSIGN:
 			if (lValueTypeList.size() > rTypeList.size())
-			{
+			{	// 値が設定されない左辺値がある場合
 				throw new PyriteSyntaxException("un assignable left value.");
 			}
-			// 余分な右辺値を捨てる
+			// 左辺値の個数を超える分の右辺値を捨てる
 			for (int i = lValueTypeList.size(); i < rTypeList.size(); ++i)
 			{
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
@@ -1707,26 +1747,56 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// assign
 		boolean	isRemainStackValue = isRemainStackValue(ctx);
-		// TODO: isRemainStackValue と スタックの dup を再検討
-		// スタックには、a, b = c, d; の場合、スタックには (TOP) d > c の順で積まれているため、b > a の順で代入する
+		// 元コードとスタック上の値の関係：
+		// local1, class.x = a, b; の場合、スタックには (TOP) b > a の順で積まれている
+		// obj1.x, obj2.x = a, b; の場合、スタックには (TOP) b > a > obj2 > obj1 の順で参照が積まれている
+		// array[n] = a; の場合、スタックには (TOP) a > n > array の順で参照が積まれている。
+		// assoc[x] = a; の場合、スタックには (TOP) a > x > assoc の順で参照が積まれている。
+		//
 		for (int i = lValueTypeList.size() - 1; i >= 0; --i)
 		{
 			createAssignCode(lValueTypeList.get(i), rTypeList.get(i), isRemainStackValue);
 		}
 
-		// 戻り値の設定
 		if (lValueTypeList.size() == 1)
-		{
-			return	lValueTypeList.get(0)._lValueVarType;
+		{	// 代入
+			createAssignCode(lValueTypeList.get(0), rTypeList.get(0), isRemainStackValue);
+			return	lValueTypeList.get(0)._lValueVarType;	// 式の値は単独
 		}
 		else
-		{
+		{	// 代入の順番にスタック上の値を入れ替えたり、式の値をスタック上に残したりするため、ローカル変数を用いてコードを生成する
+			_currentMethodCodeDeclation.pushLocalVarStack();
+			// ローカル変数に代入値を保持
+			VarTypeName[]	assignVar = new VarTypeName[lValueTypeList.size()];
+			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+			{
+				assignVar[i] = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode() + i, null);	// ローカル変数を割り当てるだけのためで、特に名前と型は使用しないので適当な値
+				_currentMethodCodeDeclation.addCodeOpASTORE(assignVar[i]._localVarNum);	// スタック上の値をローカル変数に保持
+			}
+			// ローカル変数から値を復元しつつ、代入コードを実施
+			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+			{
+				_currentMethodCodeDeclation.addCodeOpALOAD(assignVar[i]._localVarNum);	// ローカル変数からスタックに値を復帰
+				createAssignCode(lValueTypeList.get(i), rTypeList.get(i), false);	// 代入のコード作成。スタック上に値は残さない。
+			}
+
+			// 式の値が必要な場合は、ローカル変数から復帰
+			if (isRemainStackValue)
+			{
+				for (int i = 0; i < lValueTypeList.size(); ++i)
+				{
+					_currentMethodCodeDeclation.addCodeOpALOAD(assignVar[i]._localVarNum);	// ローカル変数からスタックに値を復帰
+				}
+			}
+			_currentMethodCodeDeclation.popLocalVarStack();
+
+			// 式の値の設定
 			List<VarType>	expressionValueList = new ArrayList<VarType>();
 			for (LValueType lValueType : lValueTypeList)
 			{
 				expressionValueList.add(lValueType._lValueVarType);
 			}
-			return	expressionValueList;
+			return	expressionValueList;	// 式の値は複数
 		}
 	}
 
@@ -1752,17 +1822,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation.addCodeOp(BC.DUP);
 			}
 
-			switch (lType._type)
-			{
-			case INT:
-			case BOL:
-				_currentMethodCodeDeclation.addCodeOpISTORE(lValueType._refNum);
-				break;
-
-			default:
-				_currentMethodCodeDeclation.addCodeOpASTORE(lValueType._refNum);
-				break;
-			}
+			_currentMethodCodeDeclation.addCodeOpASTORE(lValueType._refNum);
 			break;
 
 		case INSTANCE:
@@ -1792,7 +1852,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
 			if (isRemainStackValue == false)
-			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
+			{	// 代入ではない場合は、メソッド戻り値(＝設定した値)をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
 			break;
@@ -1802,7 +1862,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.addCodeU2(lValueType._refNum);
 
 			if (isRemainStackValue == false)
-			{	// 代入ではない場合は、メソッド戻り値である、設定した値をスタックから除去する
+			{	// 代入ではない場合は、メソッド戻り値(＝設定した値)をスタックから除去する
 				_currentMethodCodeDeclation.addCodeOp(BC.POP);
 			}
 			break;
