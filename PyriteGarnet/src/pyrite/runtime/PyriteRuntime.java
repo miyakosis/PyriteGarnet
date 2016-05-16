@@ -11,7 +11,9 @@ public class PyriteRuntime
 	private final static pyrite.lang.Character.CompilerAccessor	__cca = new pyrite.lang.Character.CompilerAccessor();
 	private final static pyrite.lang.Byte.CompilerAccessor	__bca = new pyrite.lang.Byte.CompilerAccessor();
 
-	public static int	cnvJVMValue(pyrite.lang.Boolean b)
+	private final static pyrite.lang.MultipleValue.CompilerAccessor	__mvca = new pyrite.lang.MultipleValue.CompilerAccessor();
+
+	public static int	toJVMValue(pyrite.lang.Boolean b)
 	{
 		return	__zca.javaValue(b) ? 1 : 0;
 	}
@@ -108,4 +110,19 @@ public class PyriteRuntime
 		return	__bca.pyriteValue(b);
 	}
 
+
+	public static pyrite.lang.MultipleValue	createMultipleValue(int size)
+	{
+		return	__mvca.createInstance(size);
+	}
+
+	public static pyrite.lang.MultipleValue	setValue(pyrite.lang.MultipleValue mv, int n, java.lang.Object obj)
+	{
+		return	__mvca.setValue(mv, n, obj);
+	}
+
+	public static java.lang.Object	toSingleValue(pyrite.lang.MultipleValue mv)
+	{
+		return	__mvca.toSingleValue(mv);
+	}
 }

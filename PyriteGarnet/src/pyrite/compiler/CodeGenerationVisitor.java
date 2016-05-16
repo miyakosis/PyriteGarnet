@@ -15,13 +15,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import pyrite.compiler.ClassResolver.MethodParamSignature;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
+import pyrite.compiler.type.Arguments;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
 import pyrite.compiler.type.ClassType;
-import pyrite.compiler.type.ExpressionListType;
 import pyrite.compiler.type.LValueType;
 import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
+import pyrite.compiler.type.MultipleValueType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.PackageType;
 import pyrite.compiler.type.SwitchBlock;
@@ -263,23 +264,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		List<VarType>	rTypeList = null;
 		if (ctx.expression() != null)
-		{
-			Object	rType = visit(ctx.expression());	// 初期値代入コードを解析。代入する値はスタック上に残っている
-			if (rType instanceof List)
-			{
-				rTypeList = (List<VarType>)rType;
-			}
-			else
-			{
-				rTypeList = new ArrayList<VarType>();
-				rTypeList.add((VarType)rType);
-			}
-
-			// スタック上にある左辺値の個数を超える分の右辺値を捨てる
-			for (int i = varTypeNameList.size(); i < rTypeList.size(); ++i)
-			{
-				_currentMethodCodeDeclation.addCodeOp(BC.POP);
-			}
+		{	// TODOどう扱うか検討
+			MultipleValueType	rType = toMultipleValueType((VarType)visit(ctx.expression()));	// 初期値代入コードを解析。代入する値はスタック上に残っている
 		}
 
 		// ローカル変数宣言、初期値代入コードを実施
@@ -374,7 +360,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionClassFieldRef(@NotNull PyriteParser.ExpressionClassFieldRefContext ctx)
 	{
-		VarType	expressionVarType = (VarType)visit(ctx.expression());
+		VarType	expressionVarType = toSingleValueType((VarType)visit(ctx.expression()));
 
 		VarType	varType;	// result var type
 		TerminalNode	idNode = ctx.Identifier();
@@ -562,14 +548,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		int	expressionCodePosFrom = _currentMethodCodeDeclation.getCodePos();	// レシーバのコード開始位置
 		VarType	expressionVarType = (VarType)visit(ctx.expression());
 		int	expressionCodePosTo = _currentMethodCodeDeclation.getCodePos();	// レシーバのコード終了位置
-		if (expressionVarType._type != TYPE.METHOD)
+		if (expressionVarType._type != TYPE.METHOD_NAME)
 		{
 			throw new PyriteSyntaxException("no such method");
 		}
 		MethodNameType	methodNameType = (MethodNameType)expressionVarType;
 
 		// methodParameter
-		ExpressionListType	inputParams = (ExpressionListType)visit(ctx.arguments());
+		Arguments	inputParams = (Arguments)visit(ctx.arguments());
 
 		// メソッド定義・出力パラメータを解決
 		MethodParamSignature	methodParamSignature = _cr.resolveMethodVarType(methodNameType, inputParams._paramTypeList);
@@ -577,11 +563,155 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			throw new PyriteSyntaxException("no such method");
 		}
-		// メソッド呼び出しリストに追加
-//		_methodCallMap.put(ctx, methodType);
 
 		// コード生成
-		// Java メソッド呼び出し時の自動型変換
+		// Java メソッド呼び出し時の、引数型自動変換
+		convertJavaPrimitiveTypeParameter(inputParams, methodParamSignature);
+
+		// メソッド呼び出し
+		MethodType	methodType = methodParamSignature.getMethodType();
+		if (methodType._isStatic)
+		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
+			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
+			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
+			_currentMethodCodeDeclation.removeCode(expressionCodePosFrom, expressionCodePosTo);
+		}
+		byte	opCode = methodType._isStatic ? BC.INVOKESTATIC : BC.INVOKEVIRTUAL;
+		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
+
+		// 返り値
+		if (methodType._returnTypes.length == 0)
+		{
+			return	VarType.VOID;
+		}
+
+		if (isRemainStackValue(ctx) == false)
+		{	// 残っている戻り値が不要のため、除去する
+			_currentMethodCodeDeclation.addCodeOp(BC.POP);
+		}
+
+		if (methodType._returnTypes.length == 1)
+		{	// Javaメソッド呼び出しで、戻り値がJava primitive型の場合は、Pyrite型へ変換する
+			if (isRemainStackValue(ctx))
+			{
+				switch (methodType._returnTypes[0]._type)
+				{
+				case JVM_INT:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					return	VarType.INT;
+
+				case JVM_LONG:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					return	VarType.INT;
+
+				case JVM_SHORT:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					return	VarType.INT;
+
+				case JVM_FLOAT:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(F)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+					return	VarType.DEC;
+
+				case JVM_DOUBLE:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(D)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
+					return	VarType.DEC;
+
+				case JVM_CHAR:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
+					return	VarType.CHR;
+
+				case JVM_BYTE:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteByte", "(B)L" + pyrite.lang.Byte.CLASS_NAME + ";"));
+					return	VarType.BYT;
+
+				case JVM_BOOLEAN:
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteBoolean", "(Z)L" + pyrite.lang.Boolean.CLASS_NAME + ";"));
+					return	VarType.BOL;
+
+				case OBJ:
+					if (methodType._returnTypes[0] == ObjectType.getType("java.lang.String"))
+					{
+						_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+						_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
+						return	VarType.STR;
+					}
+					break;
+
+				default:
+					break;
+				}
+			}
+
+			return	methodType._returnTypes[0];
+		}
+		else
+		{	// スタック上には、MultipleValue型のオブジェクトがある。それをそのまま返す
+			List<VarType>	returnTypeList = Arrays.asList(methodType._returnTypes);
+			MultipleValueType	multipleValueType = new MultipleValueType(returnTypeList);
+			return	multipleValueType;
+		}
+
+
+
+/*
+//		// メソッド定義・出力パラメータを解決
+//		MethodDeclation	methodDeclation = dispatchMethodVarType(expressionVarType, dispachedParamTypeList);
+
+//		boolean	isStaticOnly = (status == 3);		// true:かならずstaticメソッドでないといけない false:staticでもinstanceでもよい
+//		String	methodName = ids[ids.length - 1];
+//
+//		MethodDeclation	methodDeclationCalled = new MethodDeclation();
+//		methodDeclationCalled.setClassName(varType._className);
+//		methodDeclationCalled.setMethodName(methodName);
+//		methodDeclationCalled.setInParamList(dispachedParamTypeList);
+//
+//		MethodDeclation	methodDeclation = _methodDeclationMap.get(methodDeclationCalled);
+//		if (methodDeclation != null)
+//		{	// このファイルで定義されている
+//			if (isStaticOnly && methodDeclation._isStatic == false)
+//			{
+//				throw new RuntimeException("no such static method.");
+//			}
+//			return	methodDeclation;
+//		}
+//		else
+//		{	// メソッド参照をチェックする
+//			return	_cd.dispatchMethodDeclation(varType._className, methodName, dispachedParamTypeList, isStaticOnly);
+//		}
+
+
+//		if (methodDeclation == null)
+//		{
+//			throw new RuntimeException("no such method");
+//		}
+
+//		// メソッド呼び出しリストに追加
+//		_methodCallMap.put(ctx, expressionVarType);
+//
+//		// TODO:とりあえず暫定で。要複数パラメータ対応
+//		if (methodDeclation._outParamList.size() == 0)
+//		{
+//			return	VarType.VOID;
+//		}
+//		else
+//		{
+//			return	methodDeclation._outParamList.get(0);
+//		}
+ *
+ */
+	}
+
+	public void	convertJavaPrimitiveTypeParameter(Arguments inputParams, MethodParamSignature methodParamSignature)
+	{
 		// 引数である expressionListType に保持しているコード位置に影響を与えないために、末尾要素から判定・コード挿入していく
 		BCContainer	cnvCode = new BCContainer();
 		for (int i = inputParams._paramTypeList.size() - 1; i >= 0; i -= 1)
@@ -678,144 +808,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 		}
 
-		// メソッド呼び出し
-		MethodType	methodType = methodParamSignature.getMethodType();
-		if (methodType._isStatic)
-		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
-			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
-			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
-			_currentMethodCodeDeclation.removeCode(expressionCodePosFrom, expressionCodePosTo);
-		}
-		byte	opCode = methodType._isStatic ? BC.INVOKESTATIC : BC.INVOKEVIRTUAL;
-		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
-
-		// 返り値
-		if (methodType._returnTypes.length == 0)
-		{
-			return	VarType.VOID;
-		}
-
-		if (isRemainStackValue(ctx) == false)
-		{	// 残っている戻り値が不要のため、除去する
-			_currentMethodCodeDeclation.addCodeOp(BC.POP);
-
-		}
-		else if (methodType._returnTypes.length == 1)
-		{	// Javaメソッド呼び出しで、戻り値がJava primitive型の場合は、Pyrite型へ変換する
-			switch (methodType._returnTypes[0]._type)
-			{
-			case JVM_INT:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-				return	VarType.INT;
-
-			case JVM_LONG:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-				return	VarType.INT;
-
-			case JVM_SHORT:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
-				return	VarType.INT;
-
-			case JVM_FLOAT:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(F)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
-				return	VarType.DEC;
-
-			case JVM_DOUBLE:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteDecimal", "(D)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
-				return	VarType.DEC;
-
-			case JVM_CHAR:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
-				return	VarType.CHR;
-
-			case JVM_BYTE:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteByte", "(B)L" + pyrite.lang.Byte.CLASS_NAME + ";"));
-				return	VarType.BYT;
-
-			case JVM_BOOLEAN:
-				cnvCode.addCodeOp(BC.INVOKESTATIC);
-				cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteBoolean", "(Z)L" + pyrite.lang.Boolean.CLASS_NAME + ";"));
-				return	VarType.BOL;
-
-			case OBJ:
-				if (methodType._returnTypes[0] == ObjectType.getType("java.lang.String"))
-				{
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
-					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
-					return	VarType.STR;
-				}
-				break;
-
-			default:
-				break;
-			}
-			return	methodType._returnTypes[0];
-		}
-		else
-		{	// スタック上には、JVMReturnType型のオブジェクトがある。これを分解してスタックに乗せ、返す
-			// TODO: 複数パラメータ対応
-
-
-		}
-
-			return	methodType._returnTypes[0];
-
-
-/*
-//		// メソッド定義・出力パラメータを解決
-//		MethodDeclation	methodDeclation = dispatchMethodVarType(expressionVarType, dispachedParamTypeList);
-
-//		boolean	isStaticOnly = (status == 3);		// true:かならずstaticメソッドでないといけない false:staticでもinstanceでもよい
-//		String	methodName = ids[ids.length - 1];
-//
-//		MethodDeclation	methodDeclationCalled = new MethodDeclation();
-//		methodDeclationCalled.setClassName(varType._className);
-//		methodDeclationCalled.setMethodName(methodName);
-//		methodDeclationCalled.setInParamList(dispachedParamTypeList);
-//
-//		MethodDeclation	methodDeclation = _methodDeclationMap.get(methodDeclationCalled);
-//		if (methodDeclation != null)
-//		{	// このファイルで定義されている
-//			if (isStaticOnly && methodDeclation._isStatic == false)
-//			{
-//				throw new RuntimeException("no such static method.");
-//			}
-//			return	methodDeclation;
-//		}
-//		else
-//		{	// メソッド参照をチェックする
-//			return	_cd.dispatchMethodDeclation(varType._className, methodName, dispachedParamTypeList, isStaticOnly);
-//		}
-
-
-//		if (methodDeclation == null)
-//		{
-//			throw new RuntimeException("no such method");
-//		}
-
-//		// メソッド呼び出しリストに追加
-//		_methodCallMap.put(ctx, expressionVarType);
-//
-//		// TODO:とりあえず暫定で。要複数パラメータ対応
-//		if (methodDeclation._outParamList.size() == 0)
-//		{
-//			return	VarType.VOID;
-//		}
-//		else
-//		{
-//			return	methodDeclation._outParamList.get(0);
-//		}
- *
- */
 	}
+
 
 	//	arguments
 	//    :   '(' expressionList? ')'
@@ -823,17 +817,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitArguments(@NotNull PyriteParser.ArgumentsContext ctx)
 	{
-		ExpressionListType	expressionListType;
-		PyriteParser.ExpressionListContext	expressionListContext = ctx.expressionList();
-		if (expressionListContext != null)
+		if (ctx.expressionList() != null)
 		{
-			expressionListType = (ExpressionListType)visit(expressionListContext);
+			return	(MultipleValueType)visit(ctx.expressionList());
 		}
 		else
 		{
-			expressionListType = new ExpressionListType();
+			return	new MultipleValueType();
 		}
-		return	expressionListType;
 
 
 //		// 入力パラメータを解決
@@ -874,12 +865,47 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	// expression
 	// : expression (',' expression)+
 	// expressionの展開として、代入演算子における複数の値を表現するためのカンマ区切りのexpression
-	// 親要素が代入の場合は、全てのexpressionの型を返す。
-	// 親要素が代入ではない場合、最初のexpressionの値を返す。スタック上からも最初以外の値を除外する。
+	// expressionの値はスタック上に一つの MultipleValue オブジェクトが作成され、そこに保持される
 	@Override
 	public Object visitExpressionMultipleValue(PyriteParser.ExpressionMultipleValueContext ctx)
 	{
-		List<VarType>	varTypeList = new ArrayList<VarType>();
+		List<PyriteParser.ExpressionContext>	expressionList = ctx.expression();
+
+		// 型としての返り値
+		MultipleValueType	multipleValueType = new MultipleValueType();
+
+		// スタック上にMultipleValue オブジェクトを作成する
+		_currentMethodCodeDeclation.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
+
+		for (int i = 0; i < expressionList.size(); ++i)
+		{
+			_currentMethodCodeDeclation.addCodeOpBIPUSH(i);	// setValue()の第二引数
+
+			// expressionの解析 (戻り値がsetValue()の第三引数)
+			VarType	varType = (VarType)visit(expressionList.get(i));
+			assert (varType._type != VarType.TYPE.MULTIPLE);
+
+			if (varType._type == TYPE.VOID)
+			{
+				return	new PyriteSyntaxException("void method is not suitable");
+			}
+
+			// setValue() 呼び出し
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
+					+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
+					+ "I"
+					+ "Ljava.lang.Object;"
+					+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
+
+			multipleValueType.addType(varType);
+		}
+
+		return	multipleValueType;
+
+		/*
 		List<PyriteParser.ExpressionContext>	exprs = ctx.expression();
 
 		for (PyriteParser.ExpressionContext expr : exprs)
@@ -905,24 +931,67 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// 最初の値だけを返す
 			return	varTypeList.get(0);
 		}
+		*/
 	}
 
 	// expressionList
 	// : expression (',' expression)*
 	// 引数や for文など、複数のexpressionをカンマ区切りで記述ができる場所の構文
+	// expressionの値はスタック上にそれぞれ残される
 	@Override
 	public Object visitExpressionList(@NotNull PyriteParser.ExpressionListContext ctx)
 	{
-		ExpressionListType	expressionListType = new ExpressionListType();
-		List<PyriteParser.ExpressionContext>	exprs = ctx.expression();
+		Arguments	arguments = new Arguments();
 
-		for (PyriteParser.ExpressionContext expr : exprs)
+		for (PyriteParser.ExpressionContext expr : ctx.expression())
 		{
-			expressionListType._paramTypeList.add((VarType)visit(expr));
-			expressionListType._paramCodePosList.add(_currentMethodCodeDeclation.getCodePos());
+			VarType	varType = (VarType)visit(expr);
+			assert (varType._type != VarType.TYPE.MULTIPLE);
+			int	codePos = _currentMethodCodeDeclation.getCodePos();
+
+			arguments._paramTypeList.add(varType);
+			arguments._paramCodePosList.add(codePos);
 		}
 
-		return	expressionListType;
+		return	arguments;
+	}
+
+	// 引数が複数値型の場合は最初の要素を返す。このとき、スタック上のオブジェクトも最初の要素のものにする。
+	// 引数が単値型の場合はそのまま返す。
+	public VarType	toSingleValueType(VarType varType)
+	{
+		if (varType._type == VarType.TYPE.MULTIPLE)
+		{
+			List<VarType>	varTypeList = ((MultipleValueType)varType)._varTypeList;
+
+			// スタック上の MultipleValue も最初の要素で置換する
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue",
+					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";)Ljava,lang.Object;"));
+
+			return	varTypeList.get(0);
+		}
+		else
+		{
+			return	varType;
+		}
+	}
+
+	// 引数が複数値型の場合はそのまま返す
+	// 引数が単値型の場合は複数値型に変換して返す。
+	// (ただしスタック上の値は何もしない。左辺値の場合、スタック上には何もないことがある)
+	public MultipleValueType	toMultipleValueType(VarType varType)
+	{
+		if (varType._type == VarType.TYPE.MULTIPLE)
+		{
+			return	(MultipleValueType)varType;
+		}
+		else
+		{
+			MultipleValueType	multipleValueType = new MultipleValueType();
+			multipleValueType.addType(varType);
+			return	multipleValueType;
+		}
 	}
 
 	// parExpression
@@ -965,7 +1034,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			throw new PyriteSyntaxException("class not found.");
 		}
-		ClassType	classType = (ClassType)ClassType.getType(fqcn);
 
 		// code
 		// パラメータの解析の前に、レシーバとなるオブジェクトを生成しておく必要がある
@@ -975,15 +1043,19 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// メソッド引数を解析し、スタックに積む
 		// methodParameter
-		List<VarType>	inputParamTypeList = (List<VarType>)visit(ctx.arguments());
-
-		MethodType	methodType = _cr.dispatchConstructor(classType, inputParamTypeList);
-		if (methodType == null)
+		Arguments	inputParams = (Arguments)visit(ctx.arguments());
+		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(fqcn, inputParams._paramTypeList);
+		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("constructor not found.");
 		}
 
-		// code
+		// コード生成
+		// Java メソッド呼び出し時の、引数型自動変換
+		convertJavaPrimitiveTypeParameter(inputParams, methodParamSignature);
+
+		// メソッド呼び出し
+		MethodType	methodType = methodParamSignature.getMethodType();
 		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, "<init>", methodType.createConstructorJvmMethodParamExpression()));
 
@@ -1206,8 +1278,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// debug:
 		String s = ctx.getText() + " " + ctx.expression(0).getText() + " + " + ctx.expression(1).getText();
 
-		VarType	expressionType = (VarType)visit(ctx.expression(0));
-		VarType	indexType = (VarType)visit(ctx.expression(1));
+		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression(0)));
+		VarType	indexType = toSingleValueType((VarType)visit(ctx.expression(1)));
 
 		if (expressionType._type == TYPE.ARRAY)
 		{
@@ -1334,9 +1406,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new PyriteSyntaxException("LValue must be a variable or field.");
 		}
 
-		VarType	lType = (VarType)visit(ctx.expression(0));	// get value of left subexpression
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
-		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
 //		rType = rType.resolveType(this);
 
 		if (lType._type != rType._type)
@@ -1372,9 +1444,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new PyriteSyntaxException("LValue must be a variable or field.");
 		}
 
-		VarType	lType = (VarType)visit(ctx.expression(0));	// get value of left subexpression
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
-		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
 //		rType = rType.resolveType(this);
 
 		if (lType._type != rType._type)
@@ -1407,9 +1479,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionCompare(@NotNull PyriteParser.ExpressionCompareContext ctx)
 	{
-		VarType	lType = (VarType)visit(ctx.expression(0));	// get value of left subexpression
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
-		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
 //		rType = rType.resolveType(this);
 
 		if (lType._type != rType._type)
@@ -1456,9 +1528,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionEqual(@NotNull PyriteParser.ExpressionEqualContext ctx)
 	{
-		VarType	lType = (VarType)visit(ctx.expression(0));	// get value of left subexpression
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
-		VarType	rType = (VarType)visit(ctx.expression(1));	// get value of right subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
 //		rType = rType.resolveType(this);
 
 		// 型チェック
@@ -1618,77 +1690,55 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		return	false;
 	}
 
-	// 複数値を持つ式を許容するかを返す
-	public boolean	isMultipleValueAcceptable(ParseTree ctx)
-	{
-		// 現在のnodeから、木を上位に辿り、複数値を許容するかを調べる
-		ParseTree	current;
-		ParseTree	parent;
-		for (current = ctx, parent = current.getParent();; current = parent, parent = current.getParent())
-		{
-			assert (parent != null);
-			if (parent instanceof PyriteParser.ExpressionAssignContext
-					|| parent instanceof PyriteParser.VariableDeclarationStatementContext)
-			{	// <assoc=right> expression '=' expression
-				// variableDeclaration (',' variableDeclaration)* ('=' expression)?
-				return	true;	// 複数値を許容する
-			}
-			else if (parent instanceof PyriteParser.ExpressionMultipleValueContext
-					|| parent instanceof PyriteParser.PrimaryParensContext)
-			{	// expression (',' expression)+
-				// '(' expression ')'
-				;	// 一つ上に上がる
-			}
-			else
-			{
-				return	false;	// 上記以外のnode配下は、複数値を許容しない
-			}
-		}
-	}
+//	// 複数値を持つ式を許容するかを返す
+//	public boolean	isMultipleValueAcceptable(ParseTree ctx)
+//	{
+//		// 現在のnodeから、木を上位に辿り、複数値を許容するかを調べる
+//		ParseTree	current;
+//		ParseTree	parent;
+//		for (current = ctx, parent = current.getParent();; current = parent, parent = current.getParent())
+//		{
+//			assert (parent != null);
+//			if (parent instanceof PyriteParser.ExpressionAssignContext
+//					|| parent instanceof PyriteParser.VariableDeclarationStatementContext)
+//			{	// <assoc=right> expression '=' expression
+//				// variableDeclaration (',' variableDeclaration)* ('=' expression)?
+//				return	true;	// 複数値を許容する
+//			}
+//			else if (parent instanceof PyriteParser.ExpressionMultipleValueContext
+//					|| parent instanceof PyriteParser.PrimaryParensContext)
+//			{	// expression (',' expression)+
+//				// '(' expression ')'
+//				;	// 一つ上に上がる
+//			}
+//			else
+//			{
+//				return	false;	// 上記以外のnode配下は、複数値を許容しない
+//			}
+//		}
+//	}
 
 
 	// <assoc=right> expression '=' expression
 	@Override
 	public Object visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx)
 	{
+		List<LValueType>	lValueTypeList = new ArrayList<>();
 		// 左辺値
-		Object	lType = visit(ctx.expression(0));	// get value of left subexpression
+		MultipleValueType	lType = toMultipleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 		// 左辺値のチェック
-		List<LValueType>	lValueTypeList;
-		if (lType instanceof List)
+		for (VarType lVarType : lType._varTypeList)
 		{
-			for (VarType lVarType : (List<VarType>)lType)
+			if (lVarType instanceof LValueType == false)
 			{
-				if (lVarType instanceof LValueType == false)
-				{
-					throw new PyriteSyntaxException("Left expression is not left value type.");
-				}
+				throw new PyriteSyntaxException("Left expression is not left value type.");
 			}
-			lValueTypeList = (List<LValueType>)lType;
-		}
-		else if (lType instanceof LValueType)
-		{
-			lValueTypeList = new ArrayList<LValueType>();
-			lValueTypeList.add((LValueType)lType);	// ok
-		}
-		else
-		{
-			throw new PyriteSyntaxException("Left expression is not left value type.");
+			lValueTypeList.add((LValueType)lVarType);
 		}
 
 		// 右辺値
-		Object	rType = visit(ctx.expression(1));	// get value of right subexpression
-		// 右辺値の設定
-		List<VarType>	rTypeList;
-		if (rType instanceof List)
-		{
-			rTypeList = (List<VarType>)rType;
-		}
-		else
-		{
-			rTypeList = new ArrayList<VarType>();
-			rTypeList.add((VarType)rType);
-		}
+		MultipleValueType	rType = toMultipleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+		List<VarType>	rTypeList = rType._varTypeList;
 
 		// オペレータのチェック
 		switch (ctx.op.getType())
@@ -1770,7 +1820,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			VarTypeName[]	assignVar = new VarTypeName[lValueTypeList.size()];
 			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
 			{
-				assignVar[i] = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode() + i, null);	// ローカル変数を割り当てるだけのためで、特に名前と型は使用しないので適当な値
+				assignVar[i] = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode() + i, null);	// ローカル変数番号を割り当てる。名前と型は使用しないので適当な値
 				_currentMethodCodeDeclation.addCodeOpASTORE(assignVar[i]._localVarNum);	// スタック上の値をローカル変数に保持
 			}
 			// ローカル変数から値を復元しつつ、代入コードを実施
@@ -1791,12 +1841,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation.popLocalVarStack();
 
 			// 式の値の設定
-			List<VarType>	expressionValueList = new ArrayList<VarType>();
+			MultipleValueType	multipleValueType = new MultipleValueType();
 			for (LValueType lValueType : lValueTypeList)
 			{
-				expressionValueList.add(lValueType._lValueVarType);
+				multipleValueType.addType(lValueType._lValueVarType);
 			}
-			return	expressionValueList;	// 式の値は複数
+			return	multipleValueType;	// 式の値は複数
 		}
 	}
 
@@ -1881,7 +1931,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		PyriteParser.ExpressionListContext	expressionListContext = ctx.expressionList();
 		if (expressionListContext != null)
 		{
-			paramTypeList = (List<VarType>)visit(expressionListContext);
+			MultipleValueType	multipleValueType = (MultipleValueType)visit(expressionListContext);
+			paramTypeList = multipleValueType._varTypeList;
 		}
 		else
 		{
@@ -1912,7 +1963,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 		else
 		{
-
 			_currentMethodCodeDeclation.addCodeOp(BC.ARETURN);
 		}
 
@@ -1956,7 +2006,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public Object visitIfStatement(@NotNull PyriteParser.IfStatementContext ctx)
 	{
 		// 条件節
-		VarType	varType = (VarType)visit(ctx.parExpression());
+		VarType	varType = toSingleValueType((VarType)visit(ctx.parExpression()));
 		if (varType != VarType.BOL)
 		{
 			throw new PyriteSyntaxException("condition must be boolean.");
@@ -2060,7 +2110,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// 条件節
 		int	condPos = _currentMethodCodeDeclation.getCodePos();			  // 条件式バイト位置
-		VarType	varType = (VarType)visit(ctx.parExpression());
+		VarType	varType = toSingleValueType((VarType)visit(ctx.parExpression()));
 		if (varType != VarType.BOL)
 		{
 			throw new PyriteSyntaxException("condition must be boolean.");
@@ -2133,15 +2183,20 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// 条件節
 		int	condPos = _currentMethodCodeDeclation.getCodePos();			// 条件式バイト位置
-		VarType	 expressionType = (VarType)visit(ctx.expression());
-		int	condBranchPos = -1;			// 条件が満たされない場合のジャンプ命令位置。条件が無い場合は -1
-		if (expressionType != null)
+		int	condBranchPos;	// 条件が満たされない場合のジャンプ命令位置。条件が無い場合は -1
+		if (ctx.expression() == null)
 		{
+			condBranchPos = -1;
+		}
+		else
+		{
+			VarType	 expressionType = toSingleValueType((VarType)visit(ctx.expression()));
 			if (expressionType != VarType.BOL)
 			{
 				throw new PyriteSyntaxException("condition must be boolean.");
 			}
 			condBranchPos = _currentMethodCodeDeclation.getCodePos();	  // 条件が満たされない場合のジャンプ命令
+
 			// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
 			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "cnvJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
@@ -2159,7 +2214,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
 		_currentMethodCodeDeclation.addCodeU2(jmpDistance);
 
-		if (expressionType != null)
+		if (condBranchPos >= 0)
 		{	// 条件がある場合は、条件が満たされない場合のとび先を設定する
 			blockEndPos = _currentMethodCodeDeclation.getCodePos();
 			jmpDistance = blockEndPos - condBranchPos;
@@ -2203,7 +2258,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		VarTypeName	lTypeName = _currentMethodCodeDeclation.putLocalVar(id, type);
 
 		// 集合要素
-		VarType	expressionType = (VarType)visit(ctx.expression());
+		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression()));
 //		expressionType = expressionType.resolveType(this);
 
 		// 型チェック
@@ -2450,7 +2505,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_controlBlockManager.push(ControlBlockManager.TYPE.SWITCH, null);	// ラベルの有効範囲を設定(制御構文位置を一レベル深くする)
 
 		// parExpression
-		VarType	varType = (VarType)visit(ctx.parExpression());
+		VarType	varType = toSingleValueType((VarType)visit(ctx.parExpression()));
 		// type は int か str
 		switch (varType._type)
 		{
@@ -2767,7 +2822,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitStatementThrow(PyriteParser.StatementThrowContext ctx)
 	{
-		VarType	exceptionType = (VarType)visit(ctx.expression());
+		VarType	exceptionType = toSingleValueType((VarType)visit(ctx.expression()));
 
 		if (_cr.isThrowable(exceptionType._fqcn) == false)
 		{	// java.lang.Throwable を継承している必要がある
@@ -2783,7 +2838,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		_currentMethodCodeDeclation.pushLocalVarStack();	// lock変数名を有効にする
 
-		VarType	varType = (VarType)visit(ctx.parExpression());
+		VarType	varType = toSingleValueType((VarType)visit(ctx.parExpression()));
 		switch (varType._type)
 		{
 		case OBJ:

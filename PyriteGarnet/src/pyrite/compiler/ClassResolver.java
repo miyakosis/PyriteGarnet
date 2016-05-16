@@ -20,7 +20,6 @@ import java.util.zip.ZipFile;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
-import pyrite.compiler.type.ClassType;
 import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
@@ -738,26 +737,46 @@ public class ClassResolver
 		return	resultMethodParamSignatureList.get(minIdx);
 	}
 
-	public MethodType	dispatchConstructor(
-			ClassType classType,
+	public MethodParamSignature	resolveConstructor(
+			FQCN fqcn,
 			List<VarType> inputParamTypeList)
 	{
-		String	methodSignature = MethodType.createMethodSignature(classType._fqcn._fqcnStr, classType._fqcn._className, inputParamTypeList.toArray(new VarType[0]));
+		// 入力パラメータから、メソッドパラメータ識別子の組み合わせを作る
+		List<MethodParamSignature>	methodParamSignatureList = createMethodParamSignarureList(inputParamTypeList);
 
-		MethodType	resultType = null;
+		// メソッドが存在するかチェックする
+		ClassFieldMember cls = getClassFieldMember(fqcn);
 
-		ClassFieldMember	cls = getClassFieldMember(classType._fqcn);
-		assert (cls != null);
+		List<MethodType>	resultTypeList = new ArrayList<MethodType>();
+		List<MethodParamSignature>	resultMethodParamSignatureList = new ArrayList<MethodParamSignature>();
 
-		resultType = (MethodType)cls._constructorMap.get(methodSignature);
-		if (resultType != null)
+		for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 		{
-			return	resultType;
+			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
+			String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, fqcn._className, methodParamSignature._methodParamSignarure);
+
+			for (MethodType m : cls._constructorMap.values())
+			{
+				if (m._methodSignature.matches(methodSignature))
+				{
+					if (methodParamSignature.getMethodType() != null)
+					{	// このメソッド引数パラメータに複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+						throw new PyriteSyntaxException("method ambiguity.");
+					}
+					methodParamSignature.setMethodType(m);
+
+					resultMethodParamSignatureList.add(methodParamSignature);
+				}
+			}
+		}
+
+		if (resultTypeList.size() > 0)
+		{	// 最適なメソッド定義がどれかを判別して返す
+			return	checkClassPriority(resultMethodParamSignatureList);
 		}
 
 		return	null;	// no such method
 	}
-
 
 
 	// subClass が baseClass が継承しているか
