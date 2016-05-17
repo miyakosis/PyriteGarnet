@@ -32,10 +32,9 @@ public class MultipleValue extends pyrite.lang.Object
 			return	mv;
 		}
 
-		public java.lang.Object	toSingleValue(MultipleValue mv)
+		public java.lang.Object	getValue(MultipleValue mv, int n)
 		{
-			return	mv.values[0];
+			return	mv.values[n];
 		}
-
 	}
 }

@@ -138,14 +138,46 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	}
 
 	// variableDeclarationStatement
-	//	:  Identifier (':' typeOrArray)? ('=' expression)?
+	//	:  variableDeclaration (',' variableDeclaration)* ('=' expression)?
 	@Override
 	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
 	{
-		String	name = ctx.Identifier().getText();
-		VarType	type = (VarType)visit(ctx.typeOrArray());
+		List<VarTypeName>	varTypeNameList = new ArrayList<VarTypeName>();
+		for (PyriteParser.VariableDeclarationContext varCtx : ctx.variableDeclaration())
+		{
+			varTypeNameList.add((VarTypeName)visit(varCtx));
+		}
 
-		return	new VarTypeName(type, name);
+		if (varTypeNameList.size() > 1)
+		{
+			throw new PyriteSyntaxException("field must be single value");
+		}
+
+		VarTypeName	varTypeName = varTypeNameList.get(0);
+		if (varTypeName._type == null)
+		{
+			throw new PyriteSyntaxException("field needs type.");
+		}
+
+		return	varTypeName;
+	}
+
+	// variableDeclaration
+	//	:   Identifier (':' typeOrArray)?
+	@Override
+	public Object visitVariableDeclaration(PyriteParser.VariableDeclarationContext ctx)
+	{
+		String	id = ctx.Identifier().getText();
+		VarType	type;
+		if (ctx.typeOrArray() != null)
+		{
+			type = (VarType)visit(ctx.typeOrArray());
+		}
+		else
+		{
+			type = null;
+		}
+		return	new VarTypeName(type, id);
 	}
 
 

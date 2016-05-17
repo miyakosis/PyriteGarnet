@@ -18,94 +18,94 @@ public class PyriteRuntime
 		return	__zca.javaValue(b) ? 1 : 0;
 	}
 
-	public static boolean	cnvJavaBoolean(pyrite.lang.Boolean b)
+	public static boolean	toJavaBoolean(pyrite.lang.Boolean b)
 	{
 		return	__zca.javaValue(b);
 	}
 
-	public static int	cnvJavaInt(pyrite.lang.Integer i)
+	public static int	toJavaInt(pyrite.lang.Integer i)
 	{
 		return	__ica.javaIntValue(i);
 	}
 
-	public static long	cnvJavaLong(pyrite.lang.Integer i)
+	public static long	toJavaLong(pyrite.lang.Integer i)
 	{
 		return	__ica.javaLongValue(i);
 	}
 
-	public static short	cnvJavaShort(pyrite.lang.Integer i)
+	public static short	toJavaShort(pyrite.lang.Integer i)
 	{
 		return	__ica.javaShortValue(i);
 	}
 
-	public static double	cnvJavaDouble(pyrite.lang.Decimal d)
+	public static double	toJavaDouble(pyrite.lang.Decimal d)
 	{
 		return	__dca.javaDoubleValue(d);
 	}
 
-	public static float	cnvJavaFloat(pyrite.lang.Decimal d)
+	public static float	toJavaFloat(pyrite.lang.Decimal d)
 	{
 		return	__dca.javaFloatValue(d);
 	}
 
-	public static String	cnvJavaString(pyrite.lang.String s)
+	public static String	toJavaString(pyrite.lang.String s)
 	{
 		return	__sca.javaString(s);
 	}
 
-	public static char	cnvJavaChar(pyrite.lang.Character c)
+	public static char	toJavaChar(pyrite.lang.Character c)
 	{
 		return	__cca.javaValue(c);
 	}
 
-	public static byte	cnvJavaByte(pyrite.lang.Byte b)
+	public static byte	toJavaByte(pyrite.lang.Byte b)
 	{
 		return	__bca.javaValue(b);
 	}
 
 
 
-	public static pyrite.lang.Boolean	cnvPyriteBoolean(boolean b)
+	public static pyrite.lang.Boolean	toPyriteBoolean(boolean b)
 	{
 		return	__zca.pyriteValue(b);
 	}
 
-	public static pyrite.lang.Integer	cnvPyriteInt(int i)
+	public static pyrite.lang.Integer	toPyriteInt(int i)
 	{
 		return	__ica.pyriteValue(i);
 	}
 
-	public static pyrite.lang.Integer	cnvPyriteInt(long l)
+	public static pyrite.lang.Integer	toPyriteInt(long l)
 	{
 		return	__ica.pyriteValue(l);
 	}
 
-	public static pyrite.lang.Integer	cnvPyriteInt(short s)
+	public static pyrite.lang.Integer	toPyriteInt(short s)
 	{
 		return	__ica.pyriteValue(s);
 	}
 
-	public static pyrite.lang.Decimal	cnvPyriteDecimal(double d)
+	public static pyrite.lang.Decimal	toPyriteDecimal(double d)
 	{
 		return	__dca.pyriteValue(d);
 	}
 
-	public static pyrite.lang.Decimal	cnvPyriteDecimal(float f)
+	public static pyrite.lang.Decimal	toPyriteDecimal(float f)
 	{
 		return	__dca.pyriteValue(f);
 	}
 
-	public static pyrite.lang.String	cnvPyriteString(String s)
+	public static pyrite.lang.String	toPyriteString(String s)
 	{
 		return	__sca.pyriteString(s);
 	}
 
-	public static pyrite.lang.Character	cnvPyriteChar(char c)
+	public static pyrite.lang.Character	toPyriteChar(char c)
 	{
 		return	__cca.pyriteValue(c);
 	}
 
-	public static pyrite.lang.Byte	cnvPyriteByte(byte b)
+	public static pyrite.lang.Byte	toPyriteByte(byte b)
 	{
 		return	__bca.pyriteValue(b);
 	}
@@ -123,6 +123,11 @@ public class PyriteRuntime
 
 	public static java.lang.Object	toSingleValue(pyrite.lang.MultipleValue mv)
 	{
-		return	__mvca.toSingleValue(mv);
+		return	__mvca.getValue(mv, 0);
+	}
+
+	public static java.lang.Object	getValue(pyrite.lang.MultipleValue mv, int n)
+	{
+		return	__mvca.getValue(mv, n);
 	}
 }

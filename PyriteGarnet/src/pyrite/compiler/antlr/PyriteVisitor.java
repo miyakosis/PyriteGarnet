@@ -332,29 +332,11 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitForControlICU(PyriteParser.ForControlICUContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forInit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForInit(PyriteParser.ForInitContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#forUpdate}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitForUpdate(PyriteParser.ForUpdateContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#parExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitParExpression(PyriteParser.ParExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link PyriteParser#expressionList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionList(PyriteParser.ExpressionListContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ExpressionNew}
 	 * labeled alternative in {@link PyriteParser#expression}.

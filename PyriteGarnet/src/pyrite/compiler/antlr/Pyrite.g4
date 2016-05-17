@@ -580,7 +580,7 @@ statement
     |   ';'									# StatementEmpty	// not used
     |   expression ';'						# StatementExpression
     |   'var' variableDeclarationStatement ';' 		# StatementVar
-    |   'return' expressionList? ';'				# StatementReturn
+    |   'return' expression? ';'					# StatementReturn
     |   'if' ifStatement							# StatementIf		// not used
     |   label 'while' parExpression block			# StatementWhile
     |   label 'for' '(' forControl ')' block		# StatementFor
@@ -687,8 +687,8 @@ switchLabel
 
 
 forControl
-    :   'var' Identifier ':' typeOrArray 'in' expression		# ForControlIterator
-    |   forInit? ';' expression? ';' forUpdate?					# ForControlICU	// ICU=Init, Control, Update
+    :   'var' Identifier ':' typeOrArray 'in' expression														# ForControlIterator
+    |   ('var' variableDeclarationStatement | init=expression)? ';' control=expression? ';' update=expression?	# ForControlICU	// ICU=Init, Control, Update
     ;
 
 //	forControl
@@ -696,10 +696,10 @@ forControl
 //	    |   forInit? ';' expression? ';' forUpdate?
 //	    ;
 
-forInit
-	:	'var' variableDeclarationStatement
-	|	expressionList
-	;
+//	forInit
+//		:	'var' variableDeclarationStatement
+//		|	expression
+//		;
 
 //	forInit
 //	    :   localVariableDeclaration
@@ -714,9 +714,9 @@ forInit
 //	    :   variableModifier* type variableDeclaratorId ':' expression
 //	    ;
 
-forUpdate
-    :   expressionList
-    ;
+//	forUpdate
+//	    :   expression
+//	    ;
 
 // EXPRESSIONS
 
@@ -724,9 +724,9 @@ parExpression
     :   '(' expression ')'
     ;
 
-expressionList
-    :   expression (',' expression)*
-    ;
+//	expressionList
+//	    :   expression (',' expression)*
+//	    ;
 
 //	statementExpression
 //	    :   expression
@@ -903,8 +903,12 @@ creator
 //	    |   Identifier arguments
 //	    ;
 
+//	arguments
+//	    :   '(' expressionList? ')'
+//	    ;
+
 arguments
-    :   '(' expressionList? ')'
+    :   '(' (expression (',' expression)*)? ')'
     ;
 
 
