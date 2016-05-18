@@ -713,14 +713,29 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// メソッド呼び出し
 		MethodType	methodType = methodParamSignature.getMethodType();
+		byte	opCode;
+		int	stackOffset;
 		if (methodType._isStatic)
 		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
 			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
 			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
 			_currentMethodCodeDeclation.removeCode(expressionCodePosFrom, expressionCodePosTo);
+
+			opCode = BC.INVOKESTATIC;
+			stackOffset = 0;
 		}
-		byte	opCode = methodType._isStatic ? BC.INVOKESTATIC : BC.INVOKEVIRTUAL;
-		_currentMethodCodeDeclation.addCodeOp(opCode, -1 * methodType._paramTypes.length);
+		else
+		{
+			opCode = BC.INVOKEVIRTUAL;
+			stackOffset = -1;
+		}
+		if (methodType._returnTypes.length > 0)
+		{
+			stackOffset += 1;
+		}
+		stackOffset -= methodType._paramTypes.length;
+
+		_currentMethodCodeDeclation.addCodeOp(opCode, stackOffset);
 		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, methodType._methodName, methodType._jvmMethodParamExpression));
 
 		// 返り値
@@ -736,17 +751,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				{
 				case JVM_INT:
 					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInt", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInteger", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
 					return	VarType.INT;
 
 				case JVM_LONG:
 					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInt", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInteger", "(J)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
 					return	VarType.INT;
 
 				case JVM_SHORT:
 					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInt", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInteger", "(S)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
 					return	VarType.INT;
 
 				case JVM_FLOAT:
@@ -761,7 +776,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 				case JVM_CHAR:
 					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
-					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteChar", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
+					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteCharacter", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
 					return	VarType.CHR;
 
 				case JVM_BYTE:
@@ -1000,6 +1015,25 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		}
 //
 //		return	expressionListType;
+	}
+
+
+	// expression
+	// : expression '.(' type ')'
+	@Override
+	public Object visitExpressionCast(PyriteParser.ExpressionCastContext ctx)
+	{
+		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression()));
+		VarType	typeType = (VarType)visit(ctx.type());
+
+		if (expressionType._type != TYPE.OBJ)
+		{
+			throw new PyriteSyntaxException("invarid cast parameter");
+		}
+		_currentMethodCodeDeclation.addCodeOp(BC.CHECKCAST);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(typeType._fqcn._fqcnStr));
+
+		return	typeType;
 	}
 
 
@@ -1708,8 +1742,19 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		case CHR:
 		case BOL:
 		case BYT:
-			// TODO:左辺要素と右辺要素それぞれに変換メソッドを差し込む必要がある
-			throw new RuntimeException("unsupported operation.");
+			// equals()メソッドを差し込む
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "equals", "(ljava.lang.Object;)Z"));
+			switch (ctx.op.getType())
+			{
+			case PyriteParser.EQUAL:	// -> NOTEQUAL
+				op = BC.IFNE;
+				break;
+			case PyriteParser.NOTEQUAL:	// -> EQUAL
+				op = BC.IFEQ;
+				break;
+			}
+			break;
 
 		default:
 			throw new RuntimeException("assertion");
@@ -3184,15 +3229,45 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 		else
 		{
-			if (id.equals("this"))
-			{	// this
+			// reserve word
+			switch (id)
+			{
+			case "this":
 				if (_currentMethodCodeDeclation._isStatic)
 				{	// static コンテキストで this キーワードは使用できない
 					throw new PyriteSyntaxException("'this' is not usable at static context. ");
 				}
 				_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
-
 				return	ObjectType.getType(_fqcn._fqcnStr);
+
+				// キャストではここのコードに到達しないはず
+//			// 以降はキャストのための識別子
+//			case "obj":
+//				return	ClassType.getType(VarType.OBJ._fqcn);
+//
+//			case "num":
+//				return	ClassType.getType(VarType.NUM._fqcn);
+//
+//			case "int":
+//				return	ClassType.getType(VarType.INT._fqcn);
+//
+//			case "dec":
+//				return	ClassType.getType(VarType.DEC._fqcn);
+//
+//			case "flt":
+//				return	ClassType.getType(VarType.FLT._fqcn);
+//
+//			case "str":
+//				return	ClassType.getType(VarType.STR._fqcn);
+//
+//			case "chr":
+//				return	ClassType.getType(VarType.CHR._fqcn);
+//
+//			case "bol":
+//				return	ClassType.getType(VarType.BOL._fqcn);
+//
+//			case "byt":
+//				return	ClassType.getType(VarType.BYT._fqcn);
 			}
 
 			// local variable
@@ -3337,19 +3412,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	protected Object	procInt(String value, int radix)
 	{
-		// オブジェクト生成
-		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(VarType.INT._fqcn._fqcnStr));
-		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
-
 		// methodParameter
 		addCodeLDC(value);
 		assert (radix == 2 || radix == 8 || radix == 10 || radix == 16);
 		_currentMethodCodeDeclation.addCodeOpBIPUSH(radix);
 
-		// invoke constructor
-		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(VarType.INT._fqcn._fqcnStr, "<init>", "Ljava.lang.String;I"));
+		// create object
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInteger", "(Ljava.lang.String;I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
 
 		return	VarType.INT;
 	}
@@ -3378,17 +3448,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		String	literal = ctx.getText();
 		literal = StringUtil.removeUnderscore(literal);
 
-		// オブジェクト生成
-		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(VarType.DEC._fqcn._fqcnStr));
-		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
-
 		// methodParameter
 		addCodeLDC(literal);
 
-		// invoke constructor
-		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(VarType.DEC._fqcn._fqcnStr, "<init>", "Ljava.lang.String;"));
+		// create object
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteDecimal", "(Ljava.lang.String;)L" + pyrite.lang.Decimal.CLASS_NAME + ";"));
 
 		return	VarType.DEC;
 	}
@@ -3412,20 +3477,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 		else
 		{
-			// 直値の場合
-//			addCodeIPush(c);
-
-			// オブジェクト生成
-			_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(VarType.CHR._fqcn._fqcnStr));
-			_currentMethodCodeDeclation.addCodeOp(BC.DUP);
-
 			// methodParameter
 			addCodeIPush(c);
 
-			// invoke constructor
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(VarType.CHR._fqcn._fqcnStr, "<init>", "(C)V"));
+			// create object
+			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteCharacter", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
 		}
 
 		return	VarType.CHR;
@@ -3438,20 +3495,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		String	literal = ctx.StringLiteral().getText();
 		literal = StringUtil.strLiteral(literal);
 
-		// 直値の場合
-//		addCodeLDC(literal);
-
-		// オブジェクト生成
-		_currentMethodCodeDeclation.addCodeOp(BC.NEW);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(VarType.STR._fqcn._fqcnStr));
-		_currentMethodCodeDeclation.addCodeOp(BC.DUP);
-
 		// methodParameter
 		addCodeLDC(literal);
 
-		// invoke constructor
-		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(VarType.STR._fqcn._fqcnStr, "<init>", "(Ljava.lang.String;)V"));
+		// create object
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteString", "(Ljava.lang.String;)L" + pyrite.lang.String.CLASS_NAME + ";"));
 
 		return	VarType.STR;
 	}

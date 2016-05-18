@@ -8,25 +8,32 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 
 	private final java.lang.String	_v;
 
-	public String(java.lang.String val)
+	public String(String val)
+	{
+		_v =val._v;
+	}
+
+	private String(java.lang.String val)
 	{
 		_v = val;
 	}
 
+	public String	toStr()
+	{
+		return	this;
+	}
+
+	@Override
 	public int	hashCode()
 	{
 		return	_v.hashCode();
 	}
 
+	@Override
 	public boolean	equals(java.lang.Object o)
 	{
-		if (o instanceof String)
-		{
-			return	_v.equals(((String)o)._v);
-		}
-		return	false;
+		return (o instanceof String) && _v.equals(((String)o)._v);
 	}
-
 
 	@Override
 	public char charAt(int i)

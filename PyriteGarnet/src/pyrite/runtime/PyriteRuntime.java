@@ -1,5 +1,8 @@
 package pyrite.runtime;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 public class PyriteRuntime
 {
 	public final static String	CLASS_NAME = "pyrite.runtime.PyriteRuntime";
@@ -70,20 +73,31 @@ public class PyriteRuntime
 		return	__zca.pyriteValue(b);
 	}
 
-	public static pyrite.lang.Integer	toPyriteInt(int i)
+	public static pyrite.lang.Integer	toPyriteInteger(int i)
 	{
 		return	__ica.pyriteValue(i);
 	}
 
-	public static pyrite.lang.Integer	toPyriteInt(long l)
+	public static pyrite.lang.Integer	toPyriteInteger(long l)
 	{
 		return	__ica.pyriteValue(l);
 	}
 
-	public static pyrite.lang.Integer	toPyriteInt(short s)
+	public static pyrite.lang.Integer	toPyriteInteger(short s)
 	{
 		return	__ica.pyriteValue(s);
 	}
+
+	public static pyrite.lang.Integer	toPyriteInteger(BigInteger bi)
+	{
+		return	__ica.pyriteValue(bi);
+	}
+
+	public static pyrite.lang.Integer	toPyriteInt(java.lang.String val, int radix)
+	{
+		return	__ica.pyriteValue(new BigInteger(val, radix));
+	}
+
 
 	public static pyrite.lang.Decimal	toPyriteDecimal(double d)
 	{
@@ -95,12 +109,22 @@ public class PyriteRuntime
 		return	__dca.pyriteValue(f);
 	}
 
+	public static pyrite.lang.Decimal	toPyriteDecimal(BigDecimal bd)
+	{
+		return	__dca.pyriteValue(bd);
+	}
+
+	public static pyrite.lang.Decimal	toPyriteDecimal(java.lang.String val)
+	{
+		return	__dca.pyriteValue(val);
+	}
+
 	public static pyrite.lang.String	toPyriteString(String s)
 	{
 		return	__sca.pyriteString(s);
 	}
 
-	public static pyrite.lang.Character	toPyriteChar(char c)
+	public static pyrite.lang.Character	toPyriteCharacter(char c)
 	{
 		return	__cca.pyriteValue(c);
 	}

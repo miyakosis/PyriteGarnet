@@ -6,10 +6,29 @@ public class Character extends pyrite.lang.Object
 
 	private final char	_v;
 
-	public Character(char val)
+	public Character(Character c)
+	{
+		_v = c._v;
+	}
+
+	private Character(char val)
 	{
 		_v = val;
 	}
+
+	@Override
+	public int	hashCode()
+	{
+		return	_v;
+	}
+
+	@Override
+	public boolean	equals(java.lang.Object o)
+	{
+		return (o instanceof Character) && _v == ((Character)o)._v;
+	}
+
+
 
 	public final static class CompilerAccessor
 	{

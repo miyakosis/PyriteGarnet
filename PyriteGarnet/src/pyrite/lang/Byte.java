@@ -6,10 +6,28 @@ public class Byte extends pyrite.lang.Object
 
 	private final byte	_v;
 
-	public Byte(byte val)
+	public Byte(Byte val)
+	{
+		_v = val._v;
+	}
+
+	private Byte(byte val)
 	{
 		_v = val;
 	}
+
+	@Override
+	public int	hashCode()
+	{
+		return	_v;
+	}
+
+	@Override
+	public boolean	equals(java.lang.Object o)
+	{
+		return (o instanceof Byte) && _v == ((Byte)o)._v;
+	}
+
 
 	public final static class CompilerAccessor
 	{

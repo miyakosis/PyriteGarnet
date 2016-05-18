@@ -3,6 +3,8 @@ package pyrite.lang;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import pyrite.runtime.PyriteRuntime;
+
 public class Decimal extends pyrite.lang.Number
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Decimal";
@@ -12,14 +14,49 @@ public class Decimal extends pyrite.lang.Number
 
 	private final BigDecimal	_v;
 
-	public Decimal(java.lang.String val)
+	public Decimal(Decimal val)
 	{
-		_v = new BigDecimal(val);
+		_v = val._v;
 	}
 
 	private Decimal(BigDecimal val)
 	{
 		_v = val;
+	}
+
+
+	public Integer	toInt()
+	{
+
+		return	PyriteRuntime.toPyriteInteger(_v.toBigInteger());
+	}
+
+	public Decimal	toDec()
+	{
+		return	this;
+	}
+
+	public Float	toFlt()
+	{
+		throw new RuntimeException("not implemented");
+	}
+
+	public String	toStr()
+	{
+		return	PyriteRuntime.toPyriteString(_v.toString());
+	}
+
+
+	@Override
+	public int	hashCode()
+	{
+		return	_v.hashCode();
+	}
+
+	@Override
+	public boolean	equals(java.lang.Object o)
+	{
+		return (o instanceof Decimal) && _v.equals(((Decimal)o)._v);
 	}
 
 
@@ -48,5 +85,14 @@ public class Decimal extends pyrite.lang.Number
 			return	new Decimal(BigDecimal.valueOf(d));
 		}
 
+		public Decimal	pyriteValue(BigDecimal bd)
+		{
+			return	new Decimal(bd);
+		}
+
+		public Decimal	pyriteValue(java.lang.String val)
+		{
+			return	new Decimal(new BigDecimal(val));
+		}
 	}
 }

@@ -739,6 +739,7 @@ parExpression
 expression
     :   primary                     		# ExpressionPrimary	// not used
     |   expression '.' Identifier			# ExpressionClassFieldRef
+    |   expression '.(' type ')'			# ExpressionCast
     |   expression arguments				# ExpressionInvokeMethod
     |   'new' creator						# ExpressionNew
     |   expression '[' expression ']'		# ExpressionArrayAccess
