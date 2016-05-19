@@ -25,9 +25,36 @@ public class Decimal extends pyrite.lang.Number
 	}
 
 
+	// methods
+	public Decimal	add(Decimal o)
+	{
+		return	new Decimal(_v.add(o._v));
+	}
+
+	public Decimal	sub(Decimal o)
+	{
+		return	new Decimal(_v.subtract(o._v));
+	}
+
+	public Decimal	mul(Decimal o)
+	{
+		return	new Decimal(_v.multiply(o._v));
+	}
+
+	public Decimal	div(Decimal o)
+	{
+		return	new Decimal(_v.divide(o._v));
+	}
+
+	public Integer	compareTo(Decimal o)
+	{
+		return	PyriteRuntime.toPyriteInteger(_v.compareTo(o._v));
+	}
+
+
+	// cast
 	public Integer	toInt()
 	{
-
 		return	PyriteRuntime.toPyriteInteger(_v.toBigInteger());
 	}
 

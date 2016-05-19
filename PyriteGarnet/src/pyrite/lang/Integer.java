@@ -21,7 +21,75 @@ public class Integer extends pyrite.lang.Number
 		_v = val;
 	}
 
+	// methods
+	public Integer	add(Integer o)
+	{
+		return	new Integer(_v.add(o._v));
+	}
 
+	public Integer	sub(Integer o)
+	{
+		return	new Integer(_v.subtract(o._v));
+	}
+
+	public Integer	mul(Integer o)
+	{
+		return	new Integer(_v.multiply(o._v));
+	}
+
+	public MultipleValue	div(Integer o)
+	{
+		BigInteger	divValue = _v.divide(o._v);
+		BigInteger	modValue = _v.mod(o._v);
+
+		MultipleValue	result = PyriteRuntime.createMultipleValue(2);
+		PyriteRuntime.setValue(result, 0, new Integer(divValue));
+		PyriteRuntime.setValue(result, 1, new Integer(modValue));
+
+		return	result;
+	}
+
+	public Integer	mod(Integer o)
+	{
+		return	new Integer(_v.mod(o._v));
+	}
+
+	public Integer	compareTo(Integer o)
+	{
+		return	PyriteRuntime.toPyriteInteger(_v.compareTo(o._v));
+	}
+
+	public Integer	shiftLeft(Integer o)
+	{
+		return	new Integer(_v.shiftLeft(PyriteRuntime.toJavaInt(o)));
+	}
+
+	public Integer	shiftRight(Integer o)
+	{
+		return	new Integer(_v.shiftRight(PyriteRuntime.toJavaInt(o)));
+	}
+
+	public Integer	shiftLogicalRight(Integer o)
+	{
+		throw new RuntimeException("not implemented.");
+	}
+
+	public Integer	and(Integer o)
+	{
+		return	new Integer(_v.and(o._v));
+	}
+
+	public Integer	or(Integer o)
+	{
+		return	new Integer(_v.or(o._v));
+	}
+
+	public Integer	xor(Integer o)
+	{
+		return	new Integer(_v.xor(o._v));
+	}
+
+	// cast
 	public Integer	toInt()
 	{
 		return	this;
@@ -42,6 +110,7 @@ public class Integer extends pyrite.lang.Number
 		return	PyriteRuntime.toPyriteString(_v.toString());
 	}
 
+	// override
 	@Override
 	public int	hashCode()
 	{

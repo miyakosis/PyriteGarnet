@@ -93,7 +93,7 @@ public class PyriteRuntime
 		return	__ica.pyriteValue(bi);
 	}
 
-	public static pyrite.lang.Integer	toPyriteInt(java.lang.String val, int radix)
+	public static pyrite.lang.Integer	toPyriteInteger(java.lang.String val, int radix)
 	{
 		return	__ica.pyriteValue(new BigInteger(val, radix));
 	}

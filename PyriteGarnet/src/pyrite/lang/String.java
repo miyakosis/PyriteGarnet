@@ -18,11 +18,19 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 		_v = val;
 	}
 
+	// methods
+	public String	add(String o)
+	{
+		return	new String(_v + o._v);
+	}
+
+	// cast
 	public String	toStr()
 	{
 		return	this;
 	}
 
+	// override
 	@Override
 	public int	hashCode()
 	{

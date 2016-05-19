@@ -769,7 +769,6 @@ expression
         |   '%='
         )
         expression					# ExpressionAssign
-//    |   <assoc=right> expression (',' expression)+ '=' expressionList	# ExpressionAssignList
     ;
 
 
@@ -1317,6 +1316,9 @@ MUL             : '*';
 DIV             : '/';
 BITAND          : '&';
 BITOR           : '|';
+LSHIFT          : '<<';
+RSHIFT          : '>>';
+URSHIFT         : '>>>';
 CARET           : '^';
 MOD             : '%';
 

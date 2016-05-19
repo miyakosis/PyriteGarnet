@@ -1,5 +1,7 @@
 package pyrite.lang;
 
+import pyrite.runtime.PyriteRuntime;
+
 public class Character extends pyrite.lang.Object
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Character";
@@ -11,9 +13,26 @@ public class Character extends pyrite.lang.Object
 		_v = c._v;
 	}
 
+	public Character(Integer code)
+	{
+		_v = (char)PyriteRuntime.toJavaInt(code);
+	}
+
 	private Character(char val)
 	{
 		_v = val;
+	}
+
+
+	// cast
+	public Integer	toInt()
+	{
+		return	PyriteRuntime.toPyriteInteger(_v);
+	}
+
+	public String	toStr()
+	{
+		return	PyriteRuntime.toPyriteString(java.lang.String.valueOf(_v));
 	}
 
 	@Override

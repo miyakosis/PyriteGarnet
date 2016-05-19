@@ -1,5 +1,7 @@
 package pyrite.lang;
 
+import pyrite.runtime.PyriteRuntime;
+
 public class Byte extends pyrite.lang.Object
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Byte";
@@ -11,10 +13,27 @@ public class Byte extends pyrite.lang.Object
 		_v = val._v;
 	}
 
+	public Byte(Integer val)
+	{
+		_v = (byte)PyriteRuntime.toJavaInt(val);
+	}
+
 	private Byte(byte val)
 	{
 		_v = val;
 	}
+
+	// cast
+	public Integer	toInt()
+	{
+		return	PyriteRuntime.toPyriteInteger(_v);
+	}
+
+	public String	toStr()
+	{
+		return	PyriteRuntime.toPyriteString(java.lang.String.valueOf(_v));
+	}
+
 
 	@Override
 	public int	hashCode()

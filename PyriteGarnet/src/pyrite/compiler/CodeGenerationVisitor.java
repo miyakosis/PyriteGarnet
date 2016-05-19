@@ -1570,7 +1570,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 
-	// expression op=('*'|'/') expression
+	// expression op=('*'|'/'|'%') expression
 	@Override
 	public Object visitExpressionMulDiv(PyriteParser.ExpressionMulDivContext ctx)
 	{
@@ -1592,19 +1592,36 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		switch (lType._type)
 		{
 		case INT:
-			if ( ctx.op.getType() == PyriteParser.MUL )
-			{
-				_currentMethodCodeDeclation.addCodeOp(BC.IMUL);
+			if (ctx.op.getType() == PyriteParser.DIV)
+			{	// div()の場合のみパラメータが異なるので別に実行する
+				_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+				_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "div", "(L" + lType._fqcn._fqcnStr + ";)L" + "pyrite.lang.MultipleValue" + ";"));
+				return	lType;
 			}
-			else
+			break;	// ok
+
+		case DEC:
+		case FLT:
+			if (ctx.op.getType() != PyriteParser.MOD)
 			{
-				_currentMethodCodeDeclation.addCodeOp(BC.IDIV);
+				throw new RuntimeException("unsupported operation.");
 			}
-			break;
+			break;	// ok
 
 		default:
 			throw new RuntimeException("unsupported operation.");
 		}
+
+		assert (ctx.op.getType() == PyriteParser.MUL || ctx.op.getType() == PyriteParser.DIV || ctx.op.getType() == PyriteParser.MOD);
+		String	methodName = null;
+		switch (ctx.op.getType())
+		{
+		case PyriteParser.MUL:	methodName = "mul";	break;
+		case PyriteParser.DIV:	methodName = "div";	break;
+		case PyriteParser.MOD:	methodName = "mod";	break;
+		}
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, methodName, "(L" + rType._fqcn._fqcnStr + ";)L" + lType._fqcn._fqcnStr + ";"));
 
 		return	lType;
 	}
@@ -1630,28 +1647,69 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		switch (lType._type)
 		{
 		case INT:
-			if ( ctx.op.getType() == PyriteParser.ADD )
+		case DEC:
+		case FLT:
+			break;	// ok
+
+		case STR:
+			if (ctx.op.getType() != PyriteParser.ADD)
 			{
-				_currentMethodCodeDeclation.addCodeOp(BC.IADD);
+				throw new RuntimeException("unsupported operation.");
 			}
-			else
-			{
-				_currentMethodCodeDeclation.addCodeOp(BC.ISUB);
-			}
-			break;
+			break;	// ok
 
 		default:
 			throw new RuntimeException("unsupported operation.");
 		}
 
+		assert (ctx.op.getType() == PyriteParser.ADD || ctx.op.getType() == PyriteParser.SUB);
+		String	methodName = (ctx.op.getType() == PyriteParser.ADD) ? "add" : "sub";
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, methodName, "(L" + rType._fqcn._fqcnStr + ";)L" + lType._fqcn._fqcnStr + ";"));
+
 		return	lType;
 	}
 
+	// expression op=('<<' | '>>>' | '>>') expression
+	@Override
+	public Object visitExpressionShift(PyriteParser.ExpressionShiftContext ctx)
+	{
+		if (isLValueExpressionElement(ctx))
+		{
+			throw new PyriteSyntaxException("LValue must be a variable or field.");
+		}
+
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+
+		if (lType._type != TYPE.INT || rType._type != TYPE.INT)
+		{
+			throw new RuntimeException("operation needs int.");
+		}
+
+		assert (ctx.op.getType() == PyriteParser.LSHIFT || ctx.op.getType() == PyriteParser.RSHIFT || ctx.op.getType() == PyriteParser.URSHIFT);
+		String	methodName = null;
+		switch (ctx.op.getType())
+		{
+		case PyriteParser.LSHIFT:	methodName = "shiftLeft";	break;
+		case PyriteParser.RSHIFT:	methodName = "shiftRight";	break;
+		case PyriteParser.URSHIFT:	methodName = "shiftLogicalRight";	break;
+		}
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, methodName, "(L" + rType._fqcn._fqcnStr + ";)L" + lType._fqcn._fqcnStr + ";"));
+
+		return	lType;
+	}
 
 	// expression op=('<=' | '>=' | '>' | '<') expression
 	@Override
 	public Object visitExpressionCompare(@NotNull PyriteParser.ExpressionCompareContext ctx)
 	{
+		if (isLValueExpressionElement(ctx))
+		{
+			throw new PyriteSyntaxException("LValue must be a variable or field.");
+		}
+
 		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
 		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
@@ -1662,37 +1720,52 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new RuntimeException("type different.");
 		}
 
-		byte op = 0x00;
 		switch (lType._type)
 		{
 		case INT:
-			switch (ctx.op.getType())
-			{
-			case PyriteParser.LT:	// -> GE
-				op = BC.IF_ICMPGE;
-				break;
-			case PyriteParser.LE:	// -> GT
-				op = BC.IF_ICMPGT;
-				break;
-			case PyriteParser.GT:	// -> LE
-				op = BC.IF_ICMPLE;
-				break;
-			case PyriteParser.GE:	// -> LT
-				op = BC.IF_ICMPLT;
-				break;
-			}
-			break;
+		case DEC:
+		case FLT:
+			break;	// ok
 
 		default:
 			throw new RuntimeException("unsupported operation.");
 		}
 
+		// 比較メソッドを呼び出す
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "compareTo", "(L" + rType._fqcn._fqcnStr + ";)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+
+		// java int に変換
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJavaInt", "(L" + pyrite.lang.Integer.CLASS_NAME + ";)I"));
+
+		byte op = 0x00;
+		switch (ctx.op.getType())
+		{
+		case PyriteParser.LT:	// -> GE
+			op = BC.IFGE;
+			break;
+		case PyriteParser.LE:	// -> GT
+			op = BC.IFGT;
+			break;
+		case PyriteParser.GT:	// -> LE
+			op = BC.IFLE;
+			break;
+		case PyriteParser.GE:	// -> LT
+			op = BC.IFLT;
+			break;
+		default:
+			throw new RuntimeException("assert");
+		}
+
 		_currentMethodCodeDeclation.addCodeOp(op);
-		_currentMethodCodeDeclation.addCodeU2(7);
-		_currentMethodCodeDeclation.addCodeOp(BC.ICONST_1);
+		_currentMethodCodeDeclation.addCodeU2(9);				// FALSEの位置
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "TRUE", VarType.BOL._jvmExpression));
 		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
-		_currentMethodCodeDeclation.addCodeU2(4);
-		_currentMethodCodeDeclation.addCodeOp(BC.ICONST_0);
+		_currentMethodCodeDeclation.addCodeU2(6);				// この文の末尾位置
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "FALSE", VarType.BOL._jvmExpression));
 
 		return	VarType.BOL;
 	}
@@ -1701,6 +1774,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionEqual(@NotNull PyriteParser.ExpressionEqualContext ctx)
 	{
+		if (isLValueExpressionElement(ctx))
+		{
+			throw new PyriteSyntaxException("LValue must be a variable or field.");
+		}
+
 		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 //		lType = lType.resolveType(this);
 		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
@@ -1744,7 +1822,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		case BYT:
 			// equals()メソッドを差し込む
 			_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "equals", "(ljava.lang.Object;)Z"));
+			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "equals", "(Ljava.lang.Object;)Z"));
 			switch (ctx.op.getType())
 			{
 			case PyriteParser.EQUAL:	// -> NOTEQUAL
@@ -1771,6 +1849,148 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		return	VarType.BOL;
 	}
+
+
+	//  expression '&' expression	# ExpressionBitAnd
+	@Override
+	public Object visitExpressionBitAnd(PyriteParser.ExpressionBitAndContext ctx)
+	{
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+
+		addBitCode(lType, rType, "and");
+		return	lType;
+	}
+
+	protected void	addBitCode(VarType lType, VarType rType, String methodName)
+	{
+		if (lType._type != TYPE.INT || rType._type != TYPE.INT)
+		{
+			throw new RuntimeException("operation needs int.");
+		}
+
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKEVIRTUAL, -1);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, methodName, "(L" + rType._fqcn._fqcnStr + ";)L" + lType._fqcn._fqcnStr + ";"));
+	}
+
+	//  expression '^' expression	# ExpressionBitExOr
+	@Override
+	public Object visitExpressionBitExOr(PyriteParser.ExpressionBitExOrContext ctx)
+	{
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+
+		addBitCode(lType, rType, "xor");
+		return	lType;
+	}
+
+
+	//  expression '|' expression	# ExpressionBitOr
+	@Override
+	public Object visitExpressionBitOr(PyriteParser.ExpressionBitOrContext ctx)
+	{
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+
+		addBitCode(lType, rType, "or");
+		return	lType;
+	}
+
+	//  expression '&&' expression	# ExpressionBolAnd
+	@Override
+	public Object visitExpressionBolAnd(PyriteParser.ExpressionBolAndContext ctx)
+	{
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		if (lType._type != TYPE.BOL)
+		{
+			throw new RuntimeException("operation needs boolean.");
+		}
+		// true -> 1, false -> 0 をスタックに積む
+		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+
+		// 最初のexpressionで評価できるときは終了
+		int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	// 分岐命令バイト位置
+		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
+		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
+
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+		if (lType._type != TYPE.BOL)
+		{
+			throw new RuntimeException("operation needs boolean.");
+		}
+		// true -> 1, false -> 0 をスタックに積む
+		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+
+		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
+		_currentMethodCodeDeclation.addCodeU2(9);				// FALSEの位置
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "TRUE", VarType.BOL._jvmExpression));
+		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+		_currentMethodCodeDeclation.addCodeU2(6);				// この文の末尾位置
+
+		int	firstExpressionJmpPos = _currentMethodCodeDeclation.getCodePos();	// 最初の式で飛んでくる場所
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "FALSE", VarType.BOL._jvmExpression));
+
+		// ジャンプ位置の設定
+		int	jmpDistance = firstExpressionJmpPos - condBranchPos;
+		_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
+
+		return	VarType.BOL;
+	}
+
+	//  expression '||' expression	# ExpressionBolOr
+	@Override
+	public Object visitExpressionBolOr(PyriteParser.ExpressionBolOrContext ctx)
+	{
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		if (lType._type != TYPE.BOL)
+		{
+			throw new RuntimeException("operation needs boolean.");
+		}
+		// true -> 1, false -> 0 をスタックに積む
+		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+
+		// 最初のexpressionで評価できるときは終了
+		int	condBranchPos = _currentMethodCodeDeclation.getCodePos();	// 分岐命令バイト位置
+		_currentMethodCodeDeclation.addCodeOp(BC.IFNE);
+		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
+
+		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
+		if (lType._type != TYPE.BOL)
+		{
+			throw new RuntimeException("operation needs boolean.");
+		}
+		// true -> 1, false -> 0 をスタックに積む
+		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+
+		_currentMethodCodeDeclation.addCodeOp(BC.IFEQ);
+		_currentMethodCodeDeclation.addCodeU2(9);				// FALSEの位置
+
+		int	firstExpressionJmpPos = _currentMethodCodeDeclation.getCodePos();	// 最初の式で飛んでくる場所
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "TRUE", VarType.BOL._jvmExpression));
+		_currentMethodCodeDeclation.addCodeOp(BC.GOTO);
+		_currentMethodCodeDeclation.addCodeU2(6);				// この文の末尾位置
+		_currentMethodCodeDeclation.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "FALSE", VarType.BOL._jvmExpression));
+
+		// ジャンプ位置の設定
+		int	jmpDistance = firstExpressionJmpPos - condBranchPos;
+		_currentMethodCodeDeclation.replaceCodeU2(jmpDistance, condBranchPos + 1);
+
+		return	VarType.BOL;
+	}
+
+
 
 
 /*
