@@ -540,53 +540,12 @@ public class ClassResolver
 			}
 
 			// Java型変換
-			switch (inputParamType._type)
-			{
-			case NULL:
-				break;
-
-			case OBJ:
-				break;
-
-			case ARRAY:
-			case ASSOC:
-				// TODO: ARRAY, ASSOC は 保持するオブジェクトの型一致判定もする必要がある。今後要検討
-				break;
-
-
-			case INT:
-				// TODO:プログラムからどのようにlong, short の引数のメソッドを指定させるか
-				// pyrite.lang.Integer > int(Java) > pyrite.lang.Object の順とする
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_INT, 5));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_LONG, 5));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_SHORT, 5));
-				break;
-
-			case DEC:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_DOUBLE, 5));
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_FLOAT, 5));
-				break;
-
-			case STR:
-				// pyrite.lang.String > java.lang.String > pyrite.lang.Object > java.lang.Object の順とする
-				paramClassHierarchyList.add(new ClassHierarchy(ObjectType.getType("java.lang.String"), 5));
-				break;
-
-			case CHR:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_CHAR, 5));
-				break;
-
-			case BOL:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BOOLEAN, 5));
-				break;
-
-			case BYT:
-				paramClassHierarchyList.add(new ClassHierarchy(VarType.JVM_BYTE, 5));
-				break;
-
-			default:
-				throw new RuntimeException("assertion");
+			VarType[]	jvmDataTypes = VarType.getAssociatedJVMType(inputParamType);	// inputParamTypeに対応するJVM型を取得する
+			for (VarType jvmDataType : jvmDataTypes)
+			{	// リストに追加する
+				paramClassHierarchyList.add(new ClassHierarchy(jvmDataType, 5));
 			}
+
 			// 保持
 			inputParamTypeClassHierarchyListList.add(paramClassHierarchyList);
 		}
@@ -1073,7 +1032,7 @@ public class ClassResolver
 			}
 
 			VarType[]	returnTypes;
-			if (returnTypeClass.getName().equals("pyrite.compiler.type.JVMReturnType"))
+			if (returnTypeClass.getName().equals("pyrite.lang.MultipleValue"))
 			{
 				// Pyriteの型であれば、解析して複数の帰り値型として解決する
 				throw new RuntimeException("not implemented yet");	// TODO

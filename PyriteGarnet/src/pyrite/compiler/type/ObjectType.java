@@ -100,7 +100,7 @@ public class ObjectType extends VarType
 //	}
 
 
-	// TODO:
+	// :
 	/*
 	public static VarType	getType(String fqcn)
 	{

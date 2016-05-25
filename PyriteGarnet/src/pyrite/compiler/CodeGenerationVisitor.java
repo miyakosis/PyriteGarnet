@@ -798,6 +798,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					}
 					break;
 
+				case JVM_ARRAY:
+					// TODO
+					throw new RuntimeException("not impemented");
+
 				default:
 					break;
 				}
@@ -849,7 +853,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		// メソッド呼び出しリストに追加
 //		_methodCallMap.put(ctx, expressionVarType);
 //
-//		// TODO:とりあえず暫定で。要複数パラメータ対応
 //		if (methodDeclation._outParamList.size() == 0)
 //		{
 //			return	VarType.VOID;
@@ -946,6 +949,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				{
 					cnvCode.addCodeOp(BC.INVOKESTATIC);
 					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJavaByte", "(L" + pyrite.lang.Byte.CLASS_NAME + ";)B"));
+				}
+				break;
+
+
+			case ARRAY:
+				if (resolvedVarType._type == VarType.TYPE.JVM_ARRAY)
+				{
+					// TODO:
+					throw new RuntimeException("not impemented");
+					// メソッド呼び出し→cast
 				}
 				break;
 
@@ -1302,7 +1315,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				if (varType._type == VarType.TYPE.INT)
 				{
 					_currentMethodCodeDeclation.addCodeOp(BC.NEWARRAY);
-					_currentMethodCodeDeclation.addCodeU2(10);		// TODO: 10はint型の意味。to constantに変更しないと。
+					_currentMethodCodeDeclation.addCodeU2(10);		//
 				}
 				else
 				{
@@ -1413,7 +1426,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		int	dimension = 0;
 		if (ctx.arrayInitializer() != null)
-		{	// TODO
+		{	//
 			throw new RuntimeException("not supported yet");
 		}
 		else
@@ -1916,7 +1929,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
 
 		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
-		if (lType._type != TYPE.BOL)
+		if (rType._type != TYPE.BOL)
 		{
 			throw new RuntimeException("operation needs boolean.");
 		}
@@ -1963,7 +1976,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.addCodeU2(0);	// プレースホルダで置いておく
 
 		VarType	rType = toSingleValueType((VarType)visit(ctx.expression(1)));	// get value of right subexpression
-		if (lType._type != TYPE.BOL)
+		if (rType._type != TYPE.BOL)
 		{
 			throw new RuntimeException("operation needs boolean.");
 		}
@@ -2954,7 +2967,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //			_currentMethodCodeDeclation.addCodeOp(BC.CHECKCAST);
 //			if (type._type != VarType.TYPE.OBJ)
 //			{
-//				// TODO:インターフェースや配列も許容？
 //				throw new RuntimeException("checkcast");
 //			}
 //			_currentMethodCodeDeclation.addCodeU2(_cpm.getClassRef(((ObjectType)type)._fqcn._fqcnStr));

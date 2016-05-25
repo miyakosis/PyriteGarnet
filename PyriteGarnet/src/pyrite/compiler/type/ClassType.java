@@ -70,11 +70,9 @@ public class ClassType extends VarType
 //			return	MethodNameType.getType(_fqcn, id, true);
 //		}
 //
-//		// TODO:クラス.クラスはとりあえず未サポート
 //		throw new RuntimeException("id is not declared. " + id);
 //	}
 
-//	// TODO:メソッドの存在を確認する
 //	// 配列次元数の差分の型を返す
 //	@Override
 //	public VarType	getArrayType(int addNArrayLevel)

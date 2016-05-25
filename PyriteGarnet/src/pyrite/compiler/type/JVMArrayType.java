@@ -26,7 +26,7 @@ public class JVMArrayType extends VarType
 	}
 
 	protected JVMArrayType(String typeId, VarType arrayVarType, int nArrayLevel)
-	{	// TODO:使われ方を要確認
+	{
 		super(TYPE.JVM_ARRAY, typeId, null, typeId);
 
 		_arrayVarType = arrayVarType;

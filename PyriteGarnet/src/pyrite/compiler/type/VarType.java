@@ -112,7 +112,6 @@ public class VarType
 		return	sb.toString().hashCode();
 	}
 
-	// TODO:要見直し
 	protected static String	createJVMExpression(TYPE type)
 	{
 		StringBuilder	sb = new StringBuilder();
@@ -409,6 +408,79 @@ public class VarType
 		}
 	}
 
+	// Pyrite型に対応するJVM型を返す。
+	public static VarType[]	getAssociatedJVMType(VarType pyriteType)
+	{
+		final	VarType[]	emptyType = new VarType[0];
+		switch (pyriteType._type)
+		{
+		case NULL:
+			return	emptyType;
+
+		case OBJ:
+			return	emptyType;
+
+		case ARRAY:
+			// TODO: ARRAY, ASSOC は 保持するオブジェクトの型一致判定もする必要がある。今後要検討
+			// javaの配列型に変換する
+			ArrayType	arrayType = (ArrayType)pyriteType;
+			VarType	arrayDataType;
+			int	level;
+			for (level = 1;; ++level)
+			{
+				if (arrayType._arrayVarType._type == TYPE.ARRAY)
+				{
+					// 二次元以上の配列であるため、次のレベルを探索する
+					arrayType = (ArrayType)arrayType._arrayVarType;
+				}
+				else
+				{	// 保持される型の配列である
+					arrayDataType = arrayType._arrayVarType;
+					break;
+				}
+			}
+
+			// 保持する型のJVM型が存在する場合は取得する
+			VarType[]	jvmDataTypes = getAssociatedJVMType(arrayDataType);
+
+			VarType[]	result = new VarType[jvmDataTypes.length + 1];
+			result[0] = JVMArrayType.getType(arrayDataType, level);
+			for (int i = 0; i < jvmDataTypes.length; ++i)
+			{
+				result[i + 1] = JVMArrayType.getType(jvmDataTypes[i], level);
+			}
+			return	result;
+
+		case ASSOC:
+			// TODO: ARRAY, ASSOC は 保持するオブジェクトの型一致判定もする必要がある。今後要検討
+			// 処理なし
+			return	emptyType;
+
+		case INT:
+			// TODO:プログラムからどのようにlong, short の引数のメソッドを指定させるか
+			// pyrite.lang.Integer > int(Java) > pyrite.lang.Object の順とする
+			return	new VarType[]{VarType.JVM_INT, VarType.JVM_LONG, VarType.JVM_SHORT};
+
+		case DEC:
+			return	new VarType[]{VarType.JVM_DOUBLE, VarType.JVM_FLOAT, VarType.JVM_SHORT};
+
+		case STR:
+			// pyrite.lang.String > java.lang.String > pyrite.lang.Object > java.lang.Object の順とする
+			return	new VarType[]{ObjectType.getType("java.lang.String")};
+
+		case CHR:
+			return	new VarType[]{VarType.JVM_CHAR};
+
+		case BOL:
+			return	new VarType[]{VarType.JVM_BOOLEAN};
+
+		case BYT:
+			return	new VarType[]{VarType.JVM_BYTE};
+
+		default:
+			throw new RuntimeException("assertion");
+		}
+	}
 
 
 	// TODO このメソッドの存在を確認する
