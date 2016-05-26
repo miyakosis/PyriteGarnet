@@ -296,7 +296,7 @@ public class MethodCodeDeclation
 
 	public int	getAccessFlag()
 	{
-		int	acc = BC.ACC_PUBLIC;	// TODO
+		int	acc = BC.ACC_PUBLIC;	// TODO メソッド公開子対応
 
 		if (_isStatic)
 		{

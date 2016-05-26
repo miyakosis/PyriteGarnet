@@ -4,7 +4,7 @@ package pyrite.compiler.type;
 public class JVMArrayType extends VarType
 {
 	public final VarType	_arrayVarType;
-	public final int	_nArrayLevel;
+	public final int	_nArrayDimension;
 
 	public static VarType getType(VarType arrayVarType, int nArrayLevel)
 	{
@@ -25,11 +25,11 @@ public class JVMArrayType extends VarType
 		return	varType;
 	}
 
-	protected JVMArrayType(String typeId, VarType arrayVarType, int nArrayLevel)
+	protected JVMArrayType(String typeId, VarType arrayVarType, int nArrayDimension)
 	{
 		super(TYPE.JVM_ARRAY, typeId, null, typeId);
 
 		_arrayVarType = arrayVarType;
-		_nArrayLevel = nArrayLevel;
+		_nArrayDimension = nArrayDimension;
 	}
 }

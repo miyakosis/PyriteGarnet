@@ -357,7 +357,7 @@ public class SourceFile extends ClassRelatedFile
 		for (String name : fieldMap.keySet())
 		{
 			VarType	type = fieldMap.get(name);
-			int	acc = BC.ACC_PUBLIC;	// TODO
+			int	acc = BC.ACC_PUBLIC;	// TODO メソッド公開子対応
 			if (isStatic)
 			{
 				acc |= BC.ACC_STATIC;

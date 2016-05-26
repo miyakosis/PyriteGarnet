@@ -11,6 +11,8 @@ import pyrite.compiler.FQCNParser.FQCN;
  */
 public class VarType
 {
+	public final static String	CLASS_NAME = "pyrite.compiler.type.VarType";
+
 	public static enum	TYPE {NULL, VOID, OBJ, NUM, INT, DEC, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC, MULTIPLE,
 		PACKAGE, CLASS, METHOD, METHOD_NAME,
 		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
@@ -40,6 +42,7 @@ public class VarType
 	public final static VarType	JVM_CHAR = new VarType(TYPE.JVM_CHAR);
 	public final static VarType	JVM_BYTE = new VarType(TYPE.JVM_BYTE);
 	public final static VarType	JVM_BOOLEAN = new VarType(TYPE.JVM_BOOLEAN);
+	public final static VarType	JVM_STRING = ObjectType.getType("java.lang.String");
 
 	// _typeId は VarTypeを一意に識別できる文字列。
 	// NULL:
@@ -422,32 +425,21 @@ public class VarType
 
 		case ARRAY:
 			// TODO: ARRAY, ASSOC は 保持するオブジェクトの型一致判定もする必要がある。今後要検討
-			// javaの配列型に変換する
+			// javaの配列型に変換する。多次元配列にも対応する。ex. [[bol]] -> boolean[][]
 			ArrayType	arrayType = (ArrayType)pyriteType;
-			VarType	arrayDataType;
-			int	level;
-			for (level = 1;; ++level)
-			{
-				if (arrayType._arrayVarType._type == TYPE.ARRAY)
-				{
-					// 二次元以上の配列であるため、次のレベルを探索する
-					arrayType = (ArrayType)arrayType._arrayVarType;
-				}
-				else
-				{	// 保持される型の配列である
-					arrayDataType = arrayType._arrayVarType;
-					break;
-				}
-			}
 
-			// 保持する型のJVM型が存在する場合は取得する
-			VarType[]	jvmDataTypes = getAssociatedJVMType(arrayDataType);
+			VarType	arrayContentType = ArrayType.getContentVarType(arrayType);
+			int	dimension = ArrayType.getContentDimension(arrayType);
 
+			// ArrayContentType に対応するJVM型が存在する場合は取得する
+			VarType[]	jvmDataTypes = getAssociatedJVMType(arrayContentType);
+
+			// 対応するJVM配列型を返す
 			VarType[]	result = new VarType[jvmDataTypes.length + 1];
-			result[0] = JVMArrayType.getType(arrayDataType, level);
+			result[0] = JVMArrayType.getType(arrayContentType, dimension);
 			for (int i = 0; i < jvmDataTypes.length; ++i)
 			{
-				result[i + 1] = JVMArrayType.getType(jvmDataTypes[i], level);
+				result[i + 1] = JVMArrayType.getType(jvmDataTypes[i], dimension);
 			}
 			return	result;
 
@@ -466,7 +458,7 @@ public class VarType
 
 		case STR:
 			// pyrite.lang.String > java.lang.String > pyrite.lang.Object > java.lang.Object の順とする
-			return	new VarType[]{ObjectType.getType("java.lang.String")};
+			return	new VarType[]{VarType.JVM_STRING};
 
 		case CHR:
 			return	new VarType[]{VarType.JVM_CHAR};
@@ -479,6 +471,41 @@ public class VarType
 
 		default:
 			throw new RuntimeException("assertion");
+		}
+	}
+
+	// JVM型に対応するPyrite型を返す。
+	public static VarType	getAssociatedPyriteType(VarType jvmType)
+	{
+		switch (jvmType._type)
+		{
+		case JVM_INT:
+			return	VarType.INT;
+		case JVM_LONG:
+			return	VarType.INT;
+		case JVM_SHORT:
+			return	VarType.INT;
+		case JVM_FLOAT:
+			return	VarType.DEC;
+		case JVM_DOUBLE:
+			return	VarType.DEC;
+		case JVM_CHAR:
+			return	VarType.CHR;
+		case JVM_BYTE:
+			return	VarType.BYT;
+		case JVM_BOOLEAN:
+			return	VarType.BOL;
+		case OBJ:
+			if (jvmType._fqcn._fqcnStr.equals(VarType.JVM_STRING._fqcn._fqcnStr))
+			{
+				return	VarType.STR;
+			}
+			else
+			{
+				return	jvmType;
+			}
+		default:
+			return	jvmType;
 		}
 	}
 

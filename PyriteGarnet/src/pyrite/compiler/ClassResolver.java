@@ -1035,7 +1035,7 @@ public class ClassResolver
 			if (returnTypeClass.getName().equals("pyrite.lang.MultipleValue"))
 			{
 				// Pyriteの型であれば、解析して複数の帰り値型として解決する
-				throw new RuntimeException("not implemented yet");	// TODO
+				throw new RuntimeException("not implemented yet");	// TODO Pyriteの型であれば、解析して複数の帰り値型として解決する
 			}
 			else if (returnTypeClass.getName().equals("void"))
 			{

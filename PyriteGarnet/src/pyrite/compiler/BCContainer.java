@@ -46,4 +46,24 @@ public class BCContainer
 		_code.add((byte)(n >> 8));
 		_code.add((byte)n);
 	}
+
+	public void	addCodeOpBIPUSH(int n)
+	{
+		switch (n)
+		{
+		case -1:	addCodeOp(BC.ICONST_M1);	break;
+		case 0:	addCodeOp(BC.ICONST_0);	break;
+		case 1:	addCodeOp(BC.ICONST_1);	break;
+		case 2:	addCodeOp(BC.ICONST_2);	break;
+		case 3:	addCodeOp(BC.ICONST_3);	break;
+		case 4:	addCodeOp(BC.ICONST_4);	break;
+		case 5:	addCodeOp(BC.ICONST_5);	break;
+		default:
+			addCodeOp(BC.BIPUSH);
+			addCodeU1(n);
+			break;
+		}
+	}
 }
+
+
