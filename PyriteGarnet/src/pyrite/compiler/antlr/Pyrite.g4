@@ -745,7 +745,7 @@ expression
     |   expression '[' expression ']'		# ExpressionArrayAccess
     |   expression op=('*'|'/'|'%') expression	# ExpressionMulDiv
     |   expression op=('+'|'-') expression	# ExpressionAddSub
-    |   expression op=('<<' | '>>>' | '>>') expression	# ExpressionShift
+    |   expression op=('<<' | '>>' | '>>>') expression	# ExpressionShift
     |   expression op=('<=' | '>=' | '>' | '<') expression	# ExpressionCompare
     |   expression op=('==' | '!=') expression	# ExpressionEqual
     |   expression '&' expression	# ExpressionBitAnd
@@ -760,13 +760,13 @@ expression
         |   '-='
         |   '*='
         |   '/='
+        |   '%='
         |   '&='
         |   '|='
         |   '^='
         |   '>>='
         |   '>>>='
         |   '<<='
-        |   '%='
         )
         expression					# ExpressionAssign
     ;

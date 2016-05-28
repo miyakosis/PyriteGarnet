@@ -510,7 +510,7 @@ public class VarType
 	}
 
 
-	// TODO このメソッドの存在を確認する
+	//
 	// 配列次元数の差分の型を返す
 //	public VarType	getArrayType(int addNArrayLevel)
 //	{

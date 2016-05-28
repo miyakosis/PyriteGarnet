@@ -150,6 +150,9 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 		if (varTypeNameList.size() > 1)
 		{
+			// TODO:複数のフィールド定義を許容するか。
+			// 仕様的には複数許容してもいいが、可読性を考えると一つに制限した方がよいかもしれない。
+			// 一つに制限する場合、expression で複数値が返る場合、二番目以降の値を取得できないが、よいのか？
 			throw new PyriteSyntaxException("field must be single value");
 		}
 

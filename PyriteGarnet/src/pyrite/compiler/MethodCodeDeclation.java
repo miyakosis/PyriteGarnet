@@ -322,6 +322,11 @@ public class MethodCodeDeclation
 		return	MethodType.createJvmMethodParamExpression(inParamTypes, outParamTypes);
 	}
 
+	public List<Byte>	getCodeByteList()
+	{
+		return	_code;
+	}
+
 	public byte[]	getCodeByteArray()
 	{
 		byte[]	ba = new byte[_code.size()];

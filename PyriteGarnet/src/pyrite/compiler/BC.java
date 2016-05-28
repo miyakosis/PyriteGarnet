@@ -218,8 +218,6 @@ public class BC
 	// オペレーション実行後に増減するスタックの量
 	public final static Map<Byte, Integer>	STACK_INCDEC = new HashMap<Byte, Integer>();
 
-	// TODO:条件分岐におけるスタック量の判定
-
 	static
 	{
 		STACK_INCDEC.put(AALOAD, -1);

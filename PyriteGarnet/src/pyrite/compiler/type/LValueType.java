@@ -3,7 +3,7 @@ package pyrite.compiler.type;
 // VarTypeと同義に扱うため継承している
 public class LValueType extends VarType
 {
-	// local value, instance field, class field, array
+	// local value, instance field, class field, array 要素への代入, assoc 要素への代入
 	public static enum	TYPE {LOCAL, INSTANCE, CLASS, ARRAY, ASSOC};
 
 	public final TYPE	_lValueType;

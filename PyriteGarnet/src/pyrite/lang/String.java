@@ -10,7 +10,7 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 
 	public String(String val)
 	{
-		_v =val._v;
+		_v = val._v;
 	}
 
 	private String(java.lang.String val)

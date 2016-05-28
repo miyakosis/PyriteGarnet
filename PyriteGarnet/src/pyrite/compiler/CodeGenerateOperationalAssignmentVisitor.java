@@ -13,9 +13,11 @@ public class CodeGenerateOperationalAssignmentVisitor extends CodeGenerationVisi
 			ImportDeclarationManager idm, FQCN fqcn, ClassFieldMember thisClassFieldMember)
 	{
 		super(cr, cpm, idm, fqcn, thisClassFieldMember);
+
+		_currentMethodCodeDeclation = new MethodCodeDeclation();	// コード領域を確保する。
 	}
 
-	public boolean	isLValueExpressionElement(ParseTree ctx)
+	public static boolean	isLValueExpressionElement(ParseTree ctx)
 	{	// 左辺値要素であっても、参照用のコードを生成する
 		return	false;
 	}
