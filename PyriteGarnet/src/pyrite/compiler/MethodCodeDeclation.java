@@ -4,14 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pyrite.compiler.type.MethodType;
-import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapStack;
 
 public class MethodCodeDeclation
 {
-	public String	_className;
+//	public String	_className;	// TODO:未使用?
 	public String	_methodName;
 	public boolean	_isStatic;
 	public List<VarTypeName>	_inParamList;
@@ -30,10 +29,10 @@ public class MethodCodeDeclation
 	// Exception table
 	public List<ExceptionTableEntry>	_exceptionTableEntryList = new ArrayList<ExceptionTableEntry>();
 
-	public void	setClassName(String className)
-	{
-		_className = className;
-	}
+//	public void	setClassName(String className)
+//	{
+//		_className = className;
+//	}
 
 	public void	setMethodName(String methodName)
 	{
@@ -43,10 +42,10 @@ public class MethodCodeDeclation
 	public void setStatic(boolean isStatic)
 	{
 		_isStatic = isStatic;
-		if (isStatic == false)
-		{
-			putLocalVar("this", ObjectType.getType(_className));
-		}
+//		if (isStatic == false)
+//		{
+//			putLocalVar("this", ObjectType.getType(_className));
+//		}
 	}
 
 	public void setInParamList(List<VarTypeName> methodParamList)

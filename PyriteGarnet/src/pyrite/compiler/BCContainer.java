@@ -18,6 +18,11 @@ public class BCContainer
 		return	_code.size();
 	}
 
+	public int	getCodePos()
+	{
+		return	_code.size();
+	}
+
 	public List<Byte>	getCodeList()
 	{
 		return	_code;

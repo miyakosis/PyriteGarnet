@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
-import pyrite.compiler.type.VarTypeName;
 
 /**
  * ソースファイルを保持するクラス
@@ -105,7 +103,8 @@ public class SourceFile extends ClassRelatedFile
 	private ClassResolver.ClassFieldMember	_declaredMember;
 
 	private MethodDeclationVisitor	_methodDeclationVisitor;
-	private MethodCodeDeclation	_defaultConstractor = null;
+	private boolean	_isDefaultConstructorCreation = false;
+
 	/**
 	 * ソースファイルに含まれるメソッド定義を解析する
 	 */
@@ -119,15 +118,14 @@ public class SourceFile extends ClassRelatedFile
 		_declaredMember = methodDeclationVisitor.getDeclaredMember();
 
 		if (_declaredMember._constructorMap.size() == 0)
-		{	// コンストラクタが定義されていないため、コンストラクタを作成して登録しておく
+		{	// コンストラクタが定義されていない場合は、デフォルトコンストラクタの定義を作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
 			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
 
 			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, _fqcn._className, inParamType, outParamType, false);
-			_declaredMember._constructorMap.put(constructorType._jvmMethodParamExpression, constructorType);
+			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);
 
-			// コンストラクタの実装も作成しておく
-			_defaultConstractor = createDefaultConstractor(_cpm, _fqcn);
+			_isDefaultConstructorCreation = true;
 		}
 
 		// TODO:インターフェースのメソッド実装チェック、はここではできないかも。全てのソースのメソッド定義が解決してから？
@@ -152,12 +150,13 @@ public class SourceFile extends ClassRelatedFile
 		// コード生成
 		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cr, _cpm, _idm, _fqcn, _declaredMember);
 		visitor.visit(_tree);	// parse
-		List<MethodCodeDeclation>	methodCodeDeclationList = visitor.getMethodCodeDeclationList();
-		if (_defaultConstractor != null)
-		{
-			methodCodeDeclationList.add(_defaultConstractor);
+
+		// 解析後の処理
+		if (_isDefaultConstructorCreation)
+		{	// デフォルトコンストラクタの実装を作成する
+			visitor.createDefaultConstractor();
 		}
-		_methodCodeDeclationList = methodCodeDeclationList;
+		_methodCodeDeclationList = visitor.getMethodCodeDeclationList();
 	}
 
 	// ファイル出力
@@ -177,23 +176,6 @@ public class SourceFile extends ClassRelatedFile
 
 
 
-	private static MethodCodeDeclation createDefaultConstractor(ConstantPoolManager cpm, FQCN fqcn)
-	{
-		MethodCodeDeclation	defaultConstractor = new MethodCodeDeclation();
-
-		defaultConstractor.setClassName(fqcn._fqcnStr);
-		defaultConstractor.setMethodName("<init>");
-		defaultConstractor.setStatic(false);
-		defaultConstractor.setInParamList(new ArrayList<VarTypeName>());
-		defaultConstractor.setOutParamList(new ArrayList<VarTypeName>());
-
-		defaultConstractor.addCodeOp(BC.ALOAD_0);
-		defaultConstractor.addCodeOp(BC.INVOKESPECIAL);
-		defaultConstractor.addCodeU2(cpm.getMethodRef("java/lang/Object", "<init>", "()V"));
-		defaultConstractor.addCodeOp(BC.RETURN);
-
-		return	defaultConstractor;
-	}
 
 
 	// 定義されているコンストラクタのコンスタントプールを作成

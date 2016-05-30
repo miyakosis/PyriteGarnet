@@ -63,6 +63,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	// メソッドの定義＋コード
 	private List<MethodCodeDeclation>	_methodCodeDeclationList = new ArrayList<MethodCodeDeclation>();
+	private List<ConstructorCodeDeclation>	_constructorCodeDeclationList = new ArrayList<ConstructorCodeDeclation>();
 
 	// 現在解析中のメソッド
 	public MethodCodeDeclation	_currentMethodCodeDeclation;
@@ -135,7 +136,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// フィールドの初期化コードを保持するため、_currentMethodCodeDeclation にオブジェクトを生成する
 		_currentMethodCodeDeclation = new MethodCodeDeclation();
 		_currentMethodCodeDeclation.setStatic(isStatic);
-		_currentMethodCodeDeclation.setClassName(_fqcn._className);
+//		_currentMethodCodeDeclation.setClassName(_fqcn._className);
 		_currentMethodCodeDeclation.setMethodName("<field>");			// dummy 値
 
 		visit(ctx.variableDeclarationStatement());
@@ -165,17 +166,22 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		String id = ctx.Identifier().getText();
 
-		_currentMethodCodeDeclation = new MethodCodeDeclation();
-		_currentMethodCodeDeclation.setStatic(false);
-		_currentMethodCodeDeclation.setClassName(_fqcn._className);
-		_currentMethodCodeDeclation.setMethodName("<init>");									// コード上では "<init>";
+		if (id.equals(_thisClassFieldMember._fqcn._className) == false)
+		{
+			throw new PyriteSyntaxException("constructor name is unmatch");
+		}
+
+		ConstructorCodeDeclation	constructorCodeDeclation = new ConstructorCodeDeclation();
+//		_currentMethodCodeDeclation.setClassName(_fqcn._className);
+		constructorCodeDeclation.setStatic(false);
+		constructorCodeDeclation.setMethodName("<init>");									// コード上では "<init>";
 
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
 		List<VarTypeName>	outParamList = new ArrayList<VarTypeName>();						// コード上では返り値なし
-		_currentMethodCodeDeclation.setInParamList(inParamList);
-		_currentMethodCodeDeclation.setOutParamList(outParamList);
+		constructorCodeDeclation.setInParamList(inParamList);
+		constructorCodeDeclation.setOutParamList(outParamList);
 
-
+		_currentMethodCodeDeclation = constructorCodeDeclation;
 
 		_controlBlockManager = new ControlBlockManager();	// 制御構文ジャンプ位置管理オブジェクト
 
@@ -185,18 +191,67 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// TODO:スーパークラスのコンストラクタ呼び出し判定。
 		if (true)
 		{	// スーパークラスのコンストラクタ呼び出しを自動設定
-			ClassFieldMember	cfm = _cr.getClassFieldMember(_fqcn);
+			FQCN	superFQCN = _thisClassFieldMember._superCFM._fqcn;
 
-			_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
-			_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL);
-			_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(cfm._superCFM._fqcn._fqcnStr, "<init>", "()V"));
+			// スーパークラスに引数なしのコンストラクタが存在するかチェックする
+			checkExistenceSuperClassDefaultConstructor();
+
+			// スーパークラスのコンストラクタ呼び出しコード
+			BCContainer	superConstructorCallCode = new BCContainer();
+			superConstructorCallCode.addCodeOp(BC.ALOAD_0);
+			superConstructorCallCode.addCodeOp(BC.INVOKESPECIAL);
+			superConstructorCallCode.addCodeU2(_cpm.getMethodRef(superFQCN._fqcnStr, "<init>", "()V"));
+
+			// 先頭にスーパークラスのコンストラクタ呼び出しコードを追加する
+			constructorCodeDeclation.addCodeBlock(superConstructorCallCode.getCodeList(), 0);
+
+			constructorCodeDeclation.setFieldInitializeCodePos(superConstructorCallCode.getCodePos());
 		}
 
 		// メソッド終わりにはRETURNが必要
 		_currentMethodCodeDeclation.addCodeOp(BC.RETURN);
 
-		_methodCodeDeclationList.add(_currentMethodCodeDeclation);
+		_constructorCodeDeclationList.add(constructorCodeDeclation);
 		return	null;
+	}
+
+	// デフォルトコンストラクタを作成する
+	public void	createDefaultConstractor()
+	{
+		FQCN	superFQCN = _thisClassFieldMember._superCFM._fqcn;
+
+		// スーパークラスに引数なしのコンストラクタが存在するかチェックする
+		checkExistenceSuperClassDefaultConstructor();
+
+		ConstructorCodeDeclation	defaultConstractor = new ConstructorCodeDeclation();
+
+//		defaultConstractor.setClassName(_fqcn._fqcnStr);
+		defaultConstractor.setStatic(false);
+		defaultConstractor.setMethodName("<init>");
+		defaultConstractor.setInParamList(new ArrayList<VarTypeName>());
+		defaultConstractor.setOutParamList(new ArrayList<VarTypeName>());
+
+		defaultConstractor.addCodeOp(BC.ALOAD_0);
+		defaultConstractor.addCodeOp(BC.INVOKESPECIAL);
+		defaultConstractor.addCodeU2(_cpm.getMethodRef(superFQCN._fqcnStr, "<init>", "()V"));
+
+		defaultConstractor.setFieldInitializeCodePos(defaultConstractor.getCodePos());
+
+		defaultConstractor.addCodeOp(BC.RETURN);
+
+		_constructorCodeDeclationList.add(defaultConstractor);
+	}
+
+	// スーパークラスに引数なしのコンストラクタが存在するかチェックする
+	public void	checkExistenceSuperClassDefaultConstructor()
+	{
+		ClassFieldMember	superCFM = _thisClassFieldMember._superCFM;
+
+		MethodType	superConstructor = (MethodType)MethodType.getType(superCFM._fqcn, "<init>", new VarType[0], new VarType[0], false);
+		if (superCFM._constructorMap.get(superConstructor._methodSignature) == null)
+		{
+			throw new PyriteSyntaxException("no default constructor at super class");
+		}
 	}
 
 	// method
@@ -211,7 +266,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		_currentMethodCodeDeclation = new MethodCodeDeclation();
 		_currentMethodCodeDeclation.setStatic(isStatic);
-		_currentMethodCodeDeclation.setClassName(_fqcn._className);
+//		_currentMethodCodeDeclation.setClassName(_fqcn._className);
 		_currentMethodCodeDeclation.setMethodName(id);
 
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
