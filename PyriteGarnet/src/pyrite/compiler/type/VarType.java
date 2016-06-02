@@ -398,7 +398,47 @@ public class VarType
 			{
 				typeStr = typeStr.substring(1, typeStr.length() - 1);
 			}
-			type = ObjectType.getType(typeStr);
+
+			if (typeStr.equals(pyrite.lang.Object.CLASS_NAME))
+			{
+				type = OBJ;
+			}
+			else if (typeStr.equals(pyrite.lang.Number.CLASS_NAME))
+			{
+				type = NUM;
+			}
+			else if (typeStr.equals(pyrite.lang.Integer.CLASS_NAME))
+			{
+				type = INT;
+			}
+			else if (typeStr.equals(pyrite.lang.Decimal.CLASS_NAME))
+			{
+				type = DEC;
+			}
+			else if (typeStr.equals(pyrite.lang.Float.CLASS_NAME))
+			{
+				type = FLT;
+			}
+			else if (typeStr.equals(pyrite.lang.String.CLASS_NAME))
+			{
+				type = STR;
+			}
+			else if (typeStr.equals(pyrite.lang.Character.CLASS_NAME))
+			{
+				type = CHR;
+			}
+			else if (typeStr.equals(pyrite.lang.Boolean.CLASS_NAME))
+			{
+				type = BOL;
+			}
+			else if (typeStr.equals(pyrite.lang.Byte.CLASS_NAME))
+			{
+				type = BYT;
+			}
+			else
+			{
+				type = ObjectType.getType(typeStr);
+			}
 		}
 
 		if (nArrayLevel == 0)

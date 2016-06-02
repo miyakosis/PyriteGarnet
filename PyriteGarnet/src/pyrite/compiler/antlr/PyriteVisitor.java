@@ -139,6 +139,12 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitConstructorBody(PyriteParser.ConstructorBodyContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link PyriteParser#constructorCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstructorCall(PyriteParser.ConstructorCallContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link PyriteParser#qualifiedName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

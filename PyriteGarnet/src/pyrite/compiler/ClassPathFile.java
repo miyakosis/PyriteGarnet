@@ -14,6 +14,7 @@ public class ClassPathFile extends ClassRelatedFile
 	// .class, .pry, .pryc の最終更新日時。ファイルが存在しない場合は負の値。
 	private long	_classFileLastModified = -1;
 	private long	_pyriteClassFileLastModified = -1;
+	private String	_pyriteClassFile;
 	private long	_pyriteSourceFileLastModified = -1;
 	private String	_pyriteSoutceFile;
 
@@ -28,6 +29,7 @@ public class ClassPathFile extends ClassRelatedFile
 		if (filePathName.endsWith(".pyrc"))
 		{
 			_pyriteClassFileLastModified = fileLastModified;
+			_pyriteClassFile = filePathName;
 		}
 		else if (filePathName.endsWith(".pyr"))
 		{
@@ -65,6 +67,16 @@ public class ClassPathFile extends ClassRelatedFile
 		return	_classPathEntry + "/" + _pyriteSoutceFile;
 	}
 
+	public boolean hasPyriteClassFile()
+	{
+		return _pyriteClassFileLastModified >= 0;
+	}
+
+	public String	getPyriteClassFilePath()
+	{
+		return	_classPathEntry + "/" + _pyriteClassFile;
+	}
+
 	public boolean isClassFileExists()
 	{
 		return _pyriteClassFileLastModified >= 0;
@@ -74,4 +86,5 @@ public class ClassPathFile extends ClassRelatedFile
 	{
 		return _pyriteSourceFileLastModified >= 0;
 	}
+
 }

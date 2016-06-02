@@ -10,6 +10,8 @@ import pyrite.compiler.util.HashMapStack;
 
 public class MethodCodeDeclation
 {
+	public final static	List<VarTypeName>	EMPTY_PARAMETER = new ArrayList<>();
+
 //	public String	_className;	// TODO:未使用?
 	public String	_methodName;
 	public boolean	_isStatic;

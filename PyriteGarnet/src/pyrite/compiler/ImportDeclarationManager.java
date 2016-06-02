@@ -40,7 +40,7 @@ public class ImportDeclarationManager
 			if (importDeclaretionStr.endsWith(".*"))
 			{	// パッケージ指定
 				String	packageName = importDeclaretionStr.substring(0, importDeclaretionStr.length() - 2);	// remove ".*"
-				if (_cr.isPackage(FQCNParser.getFQCN(packageName)) == false)
+				if (_cr.existsPackage(FQCNParser.getFQCN(packageName)) == false)
 				{
 					throw new PyriteSyntaxException("package not found.:" + packageName);
 				}
@@ -61,7 +61,7 @@ public class ImportDeclarationManager
 			else
 			{	// FQCN指定を解決
 				FQCN	fqcn = FQCNParser.getFQCN(importDeclaretionStr);
-				if (_cr.isClass(fqcn) == false)
+				if (_cr.existsFQCN(fqcn) == false)
 				{
 					throw new PyriteSyntaxException("class not found.");
 				}
@@ -112,7 +112,7 @@ public class ImportDeclarationManager
 	public FQCN	resolveClassName(String fqcnStr)
 	{
 		FQCN	fqcn = FQCNParser.getFQCN(fqcnStr);
-		if (_cr.isClass(fqcn))
+		if (_cr.existsFQCN(fqcn))
 		{
 			return	fqcn;	// そのまま返す
 		}
@@ -128,7 +128,7 @@ public class ImportDeclarationManager
 				}
 				String	importFqcnStr = importDeclaration.getFQCNStr();
 				FQCN	importFqcn = FQCNParser.getFQCN(importFqcnStr);
-				if (_cr.isClass(importFqcn))
+				if (_cr.existsFQCN(importFqcn))
 				{
 					return	importFqcn;	// そのまま返す
 				}

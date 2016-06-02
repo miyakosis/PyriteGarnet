@@ -459,8 +459,16 @@ methodBody
     ;
 
 constructorBody
-    :   block
+    :   '{' constructorCall? statement* '}'
     ;
+
+constructorCall
+    :   method=('this' | 'super') arguments ';'
+    ;
+
+//	constructorBody
+//	    :   block
+//	    ;
 
 qualifiedName
     :   Identifier ('.' Identifier)*
@@ -817,7 +825,7 @@ expression
 
 primary
     :	'(' expression ')'		# primaryParens
-    |	literal                 # primaryLiteral		// not used
+    |   literal                 # primaryLiteral		// not used
     |   Identifier              # primaryIdentifier
     ;
 

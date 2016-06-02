@@ -1,5 +1,6 @@
 package pyrite.compiler;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,6 +98,11 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		if (ctx.type() != null)
 		{
 			_superClass = (VarType)visit(ctx.type());
+
+			if (_cr.existsFQCN(_superClass._fqcn) == false)
+			{
+				throw new PyriteSyntaxException("super class not exist.");
+			}
 		}
 		else
 		{
@@ -106,11 +112,22 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		if (ctx.typeList() != null)
 		{
 			_interfaceTypeList = (List<VarType>)visit(ctx.typeList());
+			for (VarType interfaceVarType : _interfaceTypeList)
+			{
+				if (_cr.existsFQCN(interfaceVarType._fqcn) == false)
+				{
+					throw new PyriteSyntaxException("interface not exist.");
+				}
+			}
 		}
 		else
 		{
 			_interfaceTypeList = new ArrayList<VarType>();
 		}
+
+		// メソッド定義解析中は FQCN の存在チェックはできるが、中の定義情報のチェックはできないため、
+		// _superClass や _interfaceTypeList の存在チェックのみを行う。
+		// それらが適正なクラス/インターフェースになっているかは、次のフェーズでチェックする。
 
 		visit(ctx.classBody());
 
@@ -150,7 +167,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 		if (varTypeNameList.size() > 1)
 		{
-			// TODO:複数のフィールド定義を許容するか。
+			// TODO:複数フィールドの同時定義を許容するか。
 			// 仕様的には複数許容してもいいが、可読性を考えると一つに制限した方がよいかもしれない。
 			// 一つに制限する場合、expression で複数値が返る場合、二番目以降の値を取得できないが、よいのか？
 			throw new PyriteSyntaxException("field must be single value");
@@ -210,7 +227,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, false);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, 0x01);	// TODO:暫定で public で作成する
 
 		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
@@ -231,7 +248,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx)
 	{
-		boolean	isStatic = (ctx.classInstanceModifier() != null);
+		int	modifier = (ctx.classInstanceModifier() != null) ? Modifier.STATIC : 0x00;
 
 		String id = ctx.Identifier().getText();
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
@@ -250,7 +267,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義を作成
-		MethodType	type = (MethodType)MethodType.getType(_fqcn, id, paramTypes, returnTypes, isStatic);
+		MethodType	type = (MethodType)MethodType.getType(_fqcn, id, paramTypes, returnTypes, modifier);
 
 		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている

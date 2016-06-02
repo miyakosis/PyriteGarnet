@@ -1,6 +1,8 @@
 package pyrite.compiler;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,6 +29,7 @@ import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapMap;
 import pyrite.compiler.util.StringUtil;
+import pyrite.lang.MultipleValue;
 
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 /*
@@ -209,7 +212,7 @@ public class ClassResolver
 			ClassPathFile	cpf = (ClassPathFile)crf;
 
 			// クラスパスエントリが同じであれば、追加情報を登録する
-			// そうではない場合、クラスパスの後の方に定義されている、同じクラス名の情報であるため無視する
+			// そうではない場合、クラスパスの後の方に定義されている別のクラスパスエントリの同じクラス名の情報であるため無視する
 			if (classPathEntry.equals(cpf._classPathEntry))
 			{
 				cpf.addClassFileInfo(filePathName, fileLastModified);
@@ -242,7 +245,7 @@ public class ClassResolver
 	}
 
 
-	public boolean isPackage(FQCN fqcn)
+	public boolean existsPackage(FQCN fqcn)
 	{
 		if (fqcn._fqcnStr.equals("java"))
 		{
@@ -253,7 +256,7 @@ public class ClassResolver
 	}
 
 	// assertion: pahese1ではこのメソッドは呼ばれない
-	public boolean isClass(FQCN fqcn)
+	public boolean existsFQCN(FQCN fqcn)
 	{
 		assert(_phase > 1);
 		ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
@@ -297,15 +300,15 @@ public class ClassResolver
 		assert(_phase > 2);
 		ClassFieldMember	cls = _classCache.get(fqcn._fqcnStr);
 		if (cls == null)
-		{
+		{	// キャッシュにないため、まずはそのクラスの存在をチェックする
 			ClassRelatedFile	crf = _packageMapMap.get(fqcn._packageName, fqcn._className);
 			if (crf == null)
 			{	// そのようなクラスは無い
 				return	null;
 			}
 
-			// phase3の段階で、SourceFileは_classCacheに登録されているはずなので、ここではClassPathFileのみが取得される
-			assert (crf instanceof ClassPathFile == false);
+			// phase3の段階で、SourceFileは _classCache に登録されているはずなので、ここではClassPathFileのみが取得されるはず
+			assert (crf instanceof ClassPathFile);
 
 			ClassPathFile	cpf = (ClassPathFile)crf;
 			if (cpf.isNeedCompile())
@@ -319,9 +322,14 @@ public class ClassResolver
 			else if (cpf.hasClassFile())
 			{	// クラスファイルのみがある
 				try
-				{
+				{	// クラス情報をClassLoaderを用いて取得する
 					Class<?>	c = Class.forName(fqcn._fqcnStr);
 					cls = new ClassFieldMember(fqcn, c, this);
+
+					if (cpf.hasPyriteClassFile())
+					{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
+						cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
+					}
 					_classCache.put(fqcn._fqcnStr, cls);
 					return	cls;
 				}
@@ -417,7 +425,7 @@ public class ClassResolver
 	// d. 該当するメソッドが存在しない場合、親クラスに遡ってチェックする。
 	//
 	// とりあえず、クラス階層のみを対象とする。インターフェース定義はフラットとして扱う。
-	public MethodParamSignature	resolveMethodVarType(
+	public MethodParamSignature	resolveMethod(
 			MethodNameType methodNameType,
 			List<VarType> inputParamTypeList)
 	{
@@ -933,6 +941,7 @@ public class ClassResolver
 
 		public ClassFieldMember	_superCFM;
 
+		public int	_modifier;
 		public Map<String, VarType>	_classFieldMap = new HashMap<String, VarType>();		// key:field name value:型
 		public Map<String, VarType>	_instanceFieldMap = new HashMap<String, VarType>();		// key:field name value:型
 		public Map<String, MethodType>	_classMethodMap = new HashMap<String, MethodType>();		// key:signature
@@ -954,18 +963,30 @@ public class ClassResolver
 			_fqcn = fqcn;
 
 			Class<?>	superClass = c.getSuperclass();
-			if (_fqcn._fqcnStr.equals("java.lang.Object"))
-			{	// 自クラスが java.lang.Object なら基底クラス無し
+			if (superClass == null)
+			{	// 基底クラス定義が取得できなければ、自クラスは "java.lang.Object" か interfaceなど。
 				_superCFM = null;
-			}
-			else if (superClass == null)
-			{	// 基底クラス定義が取得できなければ、基底クラスは "java.lang.Object"
-				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN("java.lang.Object"));
 			}
 			else
 			{	// 基底クラス定義がある場合は、再帰的に取得
 				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN(superClass.getName()));
 			}
+
+			_modifier = c.getModifiers();
+
+			// java.lang.Objectを継承している場合、superClass == null になる、と思っての以下の実装だが、今試すと普通に java.lang.Object が取れる。要確認。
+//			if (_fqcn._fqcnStr.equals("java.lang.Object"))
+//			{	// 自クラスが java.lang.Object なら基底クラス無し
+//				_superCFM = null;
+//			}
+//			else if (superClass == null)
+//			{	// 基底クラス定義が取得できなければ、基底クラスは "java.lang.Object" か interfaceなど。
+//				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN("java.lang.Object"));
+//			}
+//			else
+//			{	// 基底クラス定義がある場合は、再帰的に取得
+//				_superCFM = cr.getClassFieldMember(FQCNParser.getFQCN(superClass.getName()));
+//			}
 
 			Field[]	fields = c.getDeclaredFields();
 			for (Field f : fields)
@@ -993,9 +1014,8 @@ public class ClassResolver
 				Class<?>[]	paramTypeClasses = m.getParameterTypes();
 				Class<?>	returnTypeClass = m.getReturnType();
 				int	modifier = m.getModifiers();
-				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, isStatic));
+				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, modifier));
 
 //				MethodType	type = createMethodType(packageClassName, methodName, paramTypeClasses, returnTypeClass, isStatic);
 //				System.out.println("\t" + packageClassName + " . " + methodName + ":" + type._methodSignature);
@@ -1008,9 +1028,8 @@ public class ClassResolver
 				methodName = StringUtil.getClassName(methodName);
 				Class<?>[]	paramTypeClasses = cn.getParameterTypes();
 				int	modifier = cn.getModifiers();
-				boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-				addConstructorType(createMethodType(fqcn, methodName, paramTypeClasses, c, isStatic));
+				addConstructorType(createMethodType(fqcn, methodName, paramTypeClasses, c, modifier));
 			}
 
 			for (Class<?> interfaceClass : c.getInterfaces())
@@ -1023,7 +1042,7 @@ public class ClassResolver
 				String	methodName,
 				Class<?>[]	paramTypeClasses,
 				Class<?>	returnTypeClass,
-				boolean	isStatic)
+				int	modifier)
 		{
 			VarType[]	paramTypes = new VarType[paramTypeClasses.length];
 			for (int i = 0; i < paramTypeClasses.length; ++i)
@@ -1032,12 +1051,7 @@ public class ClassResolver
 			}
 
 			VarType[]	returnTypes;
-			if (returnTypeClass.getName().equals("pyrite.lang.MultipleValue"))
-			{
-				// Pyriteの型であれば、解析して複数の帰り値型として解決する
-				throw new RuntimeException("not implemented yet");	// TODO Pyriteの型であれば、解析して複数の帰り値型として解決する
-			}
-			else if (returnTypeClass.getName().equals("void"))
+			if (returnTypeClass.getName().equals("void"))
 			{
 				returnTypes = new VarType[0];
 			}
@@ -1047,7 +1061,7 @@ public class ClassResolver
 				returnTypes[0] = VarType.parseJavaTypeName(returnTypeClass.getName());
 			}
 
-			return	(MethodType)MethodType.getType(fqcn, methodName, paramTypes, returnTypes, isStatic);
+			return	(MethodType)MethodType.getType(fqcn, methodName, paramTypes, returnTypes, modifier);
 		}
 
 		public void	addConstructorType(MethodType type)
@@ -1080,6 +1094,76 @@ public class ClassResolver
 				_instanceFieldMap.put(type._name, type._type);
 			}
 		}
+
+		public boolean	isClass()
+		{
+			return	!(Modifier.isInterface(_modifier)  || (_modifier & (0x2000 | 0x4000)) != 0);
+		}
+
+		public boolean	isInterface()
+		{
+			return	Modifier.isInterface(_modifier);
+		}
+
+		public boolean	isInstancable()
+		{
+			// ACC_ANNOTATION : 0x2000
+			// ACC_ENUM : 0x4000
+			return	!(Modifier.isInterface(_modifier) || Modifier.isAbstract(_modifier) || (_modifier & (0x2000 | 0x4000)) != 0);
+		}
+
+		// Pyrite class file を読み込み、そこに記載された型情報(複数の戻り値の情報)でメソッド戻り値を上書きする
+		public void readPyriteClassFile(String pyriteClassFilePath)
+		{
+			try (BufferedReader reader = new BufferedReader(new FileReader(pyriteClassFilePath)))
+			{
+				String	line;	// Signature {\t} return type
+				while ((line = reader.readLine()) != null)
+				{
+					String[]	elm = line.split("\t");
+					String	signature = elm[0];
+					VarType[]	returnTypes = new VarType[elm.length - 1];
+					for (int i = 0; i < returnTypes.length; ++i)
+					{
+						returnTypes[i] = VarType.parseJavaTypeName(elm[i + 1]);
+					}
+
+					MethodType	methodType;
+					if ((methodType = _classMethodMap.get(signature)) != null)
+					{
+						assert (_instanceMethodMap.get(signature) == null);
+						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
+						{
+							throw new PyriteSyntaxException(".pyrc info unmatched.");
+						}
+						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
+						_classMethodMap.put(signature, newMethodType);
+					}
+					else if ((methodType = _instanceMethodMap.get(signature)) != null)
+					{
+						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
+						{
+							throw new PyriteSyntaxException(".pyrc info unmatched.");
+						}
+						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
+						_instanceMethodMap.put(signature, newMethodType);
+					}
+					else
+					{
+						throw new PyriteSyntaxException(".pyrc info unmatched.");
+					}
+
+				}
+			}
+			catch (IOException e)
+			{
+				PyriteSyntaxException	pyrEx = new PyriteSyntaxException("invalid .pyrc");
+				pyrEx.initCause(e);
+				throw	pyrEx;
+			}
+		}
+
+
 	}
 
 

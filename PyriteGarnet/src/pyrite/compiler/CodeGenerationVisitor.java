@@ -1,10 +1,13 @@
 package pyrite.compiler;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -16,6 +19,7 @@ import pyrite.compiler.ClassResolver.ClassFieldMember;
 import pyrite.compiler.ClassResolver.MethodParamSignature;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
+import pyrite.compiler.antlr.PyriteParser.StatementContext;
 import pyrite.compiler.type.Arguments;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
@@ -62,6 +66,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //	private Map<PyriteParser.ExpressionInvokeMethodContext, MethodType>	_methodCallMap = new HashMap<PyriteParser.ExpressionInvokeMethodContext, MethodType>();
 
 	// メソッドの定義＋コード
+	private MethodCodeDeclation	_staticBlock = null;	// static{} 節のコードを保持する
 	private List<MethodCodeDeclation>	_methodCodeDeclationList = new ArrayList<MethodCodeDeclation>();
 	private List<ConstructorCodeDeclation>	_constructorCodeDeclationList = new ArrayList<ConstructorCodeDeclation>();
 
@@ -91,9 +96,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_thisClassFieldMember = thisClassFieldMember;
 	}
 
-	public List<MethodCodeDeclation>	getMethodCodeDeclationList()
+	public List<MethodCodeDeclation>	getAllMethodCodeDeclationList()
 	{
-		return	_methodCodeDeclationList;
+		List<MethodCodeDeclation>	allMethodCodeDeclation = new ArrayList<>();
+		if (_staticBlock != null)
+		{
+			allMethodCodeDeclation.add(_staticBlock);
+		}
+		allMethodCodeDeclation.addAll(_constructorCodeDeclationList);
+		allMethodCodeDeclation.addAll(_methodCodeDeclationList);
+
+		return	allMethodCodeDeclation;
 	}
 
 //	public GrammarCheckVisitor(
@@ -124,6 +137,77 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		return	undeclaredMethodSet;
 //	}
 
+	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
+	@Override
+	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
+	{
+		// superClass や interface の FQCNの存在チェックは終わっているため、
+		// それらが適正なクラス/インターフェースになっているかをチェックする。
+		// このクラスで実装しているメソッド
+		Set<String>	thisMethodParamSignatureSet = new HashSet<>();
+		for (MethodType m : _thisClassFieldMember._instanceMethodMap.values())
+		{
+			thisMethodParamSignatureSet.add(createMetodParamSignature(m));
+		}
+
+		// super class
+		if (_thisClassFieldMember._superCFM.isClass() == false)
+		{
+			throw new PyriteSyntaxException("super class is not class.");
+		}
+
+		for (MethodType m : _thisClassFieldMember._superCFM._instanceMethodMap.values())
+		{
+			if ((m._modifier & Modifier.ABSTRACT) != 0)
+			{	// abstract method の場合、実装チェック
+				String	interfaceMethodParamSignatureSet = createMetodParamSignature(m);
+				if (thisMethodParamSignatureSet.contains(interfaceMethodParamSignatureSet) == false)
+				{
+					throw new PyriteSyntaxException("method is not implemented.");
+				}
+			}
+		}
+
+		// interface
+		for (FQCN intarfaceFQCN : _thisClassFieldMember._interfaceSet)
+		{
+			ClassFieldMember	interfaceCFM = _cr.getClassFieldMember(intarfaceFQCN);
+			if (interfaceCFM.isInterface() == false)
+			{
+				throw new PyriteSyntaxException("implements is not interface.");
+			}
+
+			for (MethodType m : interfaceCFM._instanceMethodMap.values())
+			{
+				String	interfaceMethodParamSignatureSet = createMetodParamSignature(m);
+				if (thisMethodParamSignatureSet.contains(interfaceMethodParamSignatureSet) == false)
+				{
+					throw new PyriteSyntaxException("method is not implemented.");
+				}
+			}
+		}
+
+		visit(ctx.classBody());
+
+		return	null;
+	}
+
+
+	private String createMetodParamSignature(MethodType m)
+	{
+		StringBuilder	sb = new StringBuilder();
+		sb.append("(");
+		for (VarType v : m._paramTypes)
+		{
+			sb.append(v._jvmExpression);
+		}
+		sb.append(")");
+		for (VarType v : m._returnTypes)
+		{
+			sb.append(v._jvmExpression);
+		}
+		return	sb.toString();
+	}
 
 	//fieldDeclaration
     //	:   classInstanceModifier? 'var' variableDeclarationStatement ';'
@@ -141,7 +225,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		visit(ctx.variableDeclarationStatement());
 
-		// フィールド初期化コードが存在する場合、コンストラクタ/static初期化ブロックに追加する
+		// フィールド初期化コードが存在する場合、コンストラクタ/static初期化ブロックに追加するため保持しておく
 		List<Byte>	code = _currentMethodCodeDeclation.getCodeByteList();
 
 		if (isStatic)
@@ -177,7 +261,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		constructorCodeDeclation.setMethodName("<init>");									// コード上では "<init>";
 
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
-		List<VarTypeName>	outParamList = new ArrayList<VarTypeName>();						// コード上では返り値なし
+		List<VarTypeName>	outParamList = MethodCodeDeclation.EMPTY_PARAMETER;						// コード上では返り値なし
 		constructorCodeDeclation.setInParamList(inParamList);
 		constructorCodeDeclation.setOutParamList(outParamList);
 
@@ -188,8 +272,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// メソッド本体
 		visit(ctx.constructorBody());
 
-		// TODO:スーパークラスのコンストラクタ呼び出し判定。
-		if (true)
+		if (constructorCodeDeclation._hasConstractorCall == false)
 		{	// スーパークラスのコンストラクタ呼び出しを自動設定
 			FQCN	superFQCN = _thisClassFieldMember._superCFM._fqcn;
 
@@ -228,8 +311,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		defaultConstractor.setClassName(_fqcn._fqcnStr);
 		defaultConstractor.setStatic(false);
 		defaultConstractor.setMethodName("<init>");
-		defaultConstractor.setInParamList(new ArrayList<VarTypeName>());
-		defaultConstractor.setOutParamList(new ArrayList<VarTypeName>());
+		defaultConstractor.setInParamList(MethodCodeDeclation.EMPTY_PARAMETER);
+		defaultConstractor.setOutParamList(MethodCodeDeclation.EMPTY_PARAMETER);
 
 		defaultConstractor.addCodeOp(BC.ALOAD_0);
 		defaultConstractor.addCodeOp(BC.INVOKESPECIAL);
@@ -247,12 +330,102 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		ClassFieldMember	superCFM = _thisClassFieldMember._superCFM;
 
-		MethodType	superConstructor = (MethodType)MethodType.getType(superCFM._fqcn, "<init>", new VarType[0], new VarType[0], false);
+		MethodType	superConstructor = (MethodType)MethodType.getType(superCFM._fqcn, "<init>", new VarType[0], new VarType[0], 0);
 		if (superCFM._constructorMap.get(superConstructor._methodSignature) == null)
 		{
 			throw new PyriteSyntaxException("no default constructor at super class");
 		}
 	}
+
+	// constructorBody
+    // :   '{' constructorCall? statement* '}'
+	@Override
+	public Object visitConstructorBody(PyriteParser.ConstructorBodyContext ctx)
+	{
+		_currentMethodCodeDeclation.pushLocalVarStack();
+
+		if (ctx.constructorCall() != null)
+		{
+			visit(ctx.constructorCall());
+		}
+		if (ctx.statement() != null)
+		{
+			for (StatementContext ctxStatment : ctx.statement())
+			{
+				visit(ctxStatment);
+			}
+		}
+		_currentMethodCodeDeclation.popLocalVarStack();
+		return	null;
+	}
+
+	// constructorCall
+    // :   ('this' | 'super') arguments ';'
+	@Override
+	public Object visitConstructorCall(PyriteParser.ConstructorCallContext ctx)
+	{
+		ClassFieldMember	cfm = _thisClassFieldMember;
+		if (ctx.method.getType() == PyriteParser.SUPER)
+		{
+			cfm = cfm._superCFM;
+		}
+
+		_currentMethodCodeDeclation.addCodeOp(BC.ALOAD_0);
+
+		// 入力パラメータ解析
+		Arguments	inputParams = (Arguments)visit(ctx.arguments());
+
+		// コンストラクタ定義を解決
+		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(cfm._fqcn, inputParams._paramTypeList);
+		if (methodParamSignature == null)
+		{
+			throw new PyriteSyntaxException("no such constructor");
+		}
+
+		// コード生成
+		// Java メソッド呼び出し時の、引数型自動変換
+		convertJavaPrimitiveTypeParameter(inputParams, methodParamSignature);
+
+		// メソッド呼び出し
+		MethodType	methodType = methodParamSignature.getMethodType();
+		_currentMethodCodeDeclation.addCodeOp(BC.INVOKESPECIAL, (-1 - methodType._paramTypes.length));
+		_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(methodType._fqcn._fqcnStr, "<init>", methodType._jvmMethodParamExpression));
+
+		ConstructorCodeDeclation	constructorCodeDeclation = (ConstructorCodeDeclation)_currentMethodCodeDeclation;
+		// フィールド初期化コード挿入位置を記憶
+		constructorCodeDeclation.setFieldInitializeCodePos(_currentMethodCodeDeclation.getCodePos());
+		// コンストラクタ呼び出し有りを設定
+		constructorCodeDeclation.setHasConstractorCall();
+
+		return	null;
+	}
+
+	// フィールド初期化コードをstatic節/コンストラクタに設定する
+	public void	setFieldInitializationCode()
+	{
+		if (_classFieldInitializeCodeList.size() > 0)
+		{	// class
+			if (_staticBlock == null)
+			{	// static{} が無い場合、作成する
+				_staticBlock = new MethodCodeDeclation();
+				_staticBlock.setStatic(true);
+				_staticBlock.setMethodName("<clinit>");
+				_staticBlock.setInParamList(MethodCodeDeclation.EMPTY_PARAMETER);
+				_staticBlock.setOutParamList(MethodCodeDeclation.EMPTY_PARAMETER);
+			}
+			_staticBlock.addCodeBlock(_classFieldInitializeCodeList, 0);
+			_staticBlock.addCodeOp(BC.RETURN);
+		}
+
+		if (_instanceFieldInitializeCodeList.size() > 0)
+		{	// instance
+			for (ConstructorCodeDeclation constractor :  _constructorCodeDeclationList)
+			{
+				constractor.addCodeBlock(_instanceFieldInitializeCodeList, constractor._fieldInitializeCodePos);
+			}
+		}
+	}
+
 
 	// method
 	//methodDeclaration
@@ -749,12 +922,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				PackageType	packageType = (PackageType)expressionVarType;
 				FQCN	fqcn = FQCNParser.getFQCN(packageType._fqcn._fqcnStr, id);
 
-				if (_cr.isClass(fqcn))
+				if (_cr.existsFQCN(fqcn))
 				{	// class name
 					return	ClassType.getType(fqcn);
 				}
 
-				if (_cr.isPackage(fqcn))
+				if (_cr.existsPackage(fqcn))
 				{
 					return	PackageType.getType(fqcn);
 				}
@@ -868,7 +1041,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		Arguments	inputParams = (Arguments)visit(ctx.arguments());
 
 		// メソッド定義・出力パラメータを解決
-		MethodParamSignature	methodParamSignature = _cr.resolveMethodVarType(methodNameType, inputParams._paramTypeList);
+		MethodParamSignature	methodParamSignature = _cr.resolveMethod(methodNameType, inputParams._paramTypeList);
 		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("no such method");
@@ -3857,7 +4030,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				}
 			}
 			else
-			{
+			{	// instance → class の順で判定
 				// instance field
 				varType = _thisClassFieldMember._instanceFieldMap.get(id);
 				if (varType != null)
@@ -3899,7 +4072,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 			// package name
 			fqcn = FQCNParser.getFQCN("", id);
-			if (_cr.isPackage(fqcn))
+			if (_cr.existsPackage(fqcn))
 			{
 				return	PackageType.getType(fqcn);
 			}
@@ -4116,6 +4289,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new RuntimeException("only small number supported.");
 		}
 	}
+
+
 
 
 ////	// Identifier '(' expressionList? ')'
