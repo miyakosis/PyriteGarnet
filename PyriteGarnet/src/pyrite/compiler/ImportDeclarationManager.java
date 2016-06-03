@@ -9,8 +9,24 @@ import java.util.Set;
 
 import pyrite.compiler.FQCNParser.FQCN;
 
+/**
+ * import は、FQCN でクラス名まで指定されたものと、*で終わるパッケージが指定されたものがある。
+ * importでクラス名の重複があっても、エラーとしてはいけない。
+ * ソースコード内でクラス名が指定され、そのクラス名に対応するFQCNが複数取り合える場合にエラーにする必要がある。
+ * この際に、FQCN指定とパッケージ指定で重複がある場合は、
+ */
 public class ImportDeclarationManager
 {
+	// java.lang.* 配下のクラスに優先して pyrite.lang.* のクラスを選択するクラス名。
+	// Integer 等と指定された際に、java.lang.Integer と pyrite.lang.Integer の複数定義でエラーになることを防ぐ。(pyrite.lang.Integer と識別する)
+	// ただし、import で FQCN で指定された場合はそれを優先する。
+	public final static String[]	IMPORT_PYRITE_LANG_CLASSES =
+		{
+			"Array", "Assoc", "Boolean", "Character", "Decimal", "Float", "Integer", "MultipleValue", "Number", "Object", "String",
+		};
+
+
+
 	private ClassResolver _cr;
 
 	// import文を保持する
@@ -33,6 +49,7 @@ public class ImportDeclarationManager
 	}
 
 	// import指定を解析し、クラス名をキーとする_importMapを作成する
+	// パッケージやクラスが存在しない場合、エラーにする
 	public void	checkImportDeclaretion()
 	{
 		for (String importDeclaretionStr : _importDeclartionStrList)
@@ -55,7 +72,7 @@ public class ImportDeclarationManager
 						importDeclaration = new ImportDeclaration(fqcn._className);
 						_importMap.put(className, importDeclaration);
 					}
-					importDeclaration.addFqcnAst(fqcn._fqcnStr);
+					importDeclaration.addFqcnAst(fqcn);
 				}
 			}
 			else
@@ -72,10 +89,42 @@ public class ImportDeclarationManager
 					importDeclaration = new ImportDeclaration(fqcn._className);
 					_importMap.put(fqcn._className, importDeclaration);
 				}
-				importDeclaration.addFqcn(fqcn._fqcnStr);
+				importDeclaration.addFqcn(fqcn);
 			}
 		}
 	}
+
+
+
+	/**
+	 * 指定されたパッケージに含まれるクラスそれぞれについて、
+	 *  * そのクラスが FQCN 指定されていれば何もしない
+	 *  * そのクラスが FQCN 指定されていなければ、指定されたパッケージを優先する。(FQCN指定されているとみなす)
+	 *
+	 *  これは、同じパッケージのクラスをパッケージ指定のクラスより優先したり、
+	 *  java.lang.* 配下のクラスに優先して pyrite.lang.* のクラスを優先したりするため。
+	 *
+	 */
+	public void	overridePackage(String packageName)
+	{
+		List<String>	classNameList = _cr.getPackageMemberClassName(packageName);
+		for (String className : classNameList)
+		{
+			FQCN	fqcn = FQCNParser.getFQCN(packageName, className);
+
+			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
+			if (importDeclaration == null)
+			{	// 無ければ作る
+				importDeclaration = new ImportDeclaration(fqcn._className);
+				_importMap.put(className, importDeclaration);
+			}
+			if (importDeclaration._fqcnSet.size() == 0)
+			{	// FQCN指定が無い場合、この package を FQCN指定されたとみなすことで、優先する。
+				importDeclaration.addFqcn(fqcn);
+			}
+		}
+	}
+
 
 	/*
 	public String[]	resolveClassName(String packageName, String className)
@@ -122,12 +171,7 @@ public class ImportDeclarationManager
 			ImportDeclaration	importDeclaration = _importMap.get(fqcn._className);
 			if (importDeclaration != null)
 			{
-				if (importDeclaration.isDuplicatedDeclaration())
-				{	// import宣言されているクラスが複数存在した
-					throw new PyriteSyntaxException("class name is ambiguity");
-				}
-				String	importFqcnStr = importDeclaration.getFQCNStr();
-				FQCN	importFqcn = FQCNParser.getFQCN(importFqcnStr);
+				FQCN	importFqcn = importDeclaration.getFQCN();
 				if (_cr.existsFQCN(importFqcn))
 				{
 					return	importFqcn;	// そのまま返す
@@ -145,9 +189,9 @@ public class ImportDeclarationManager
 
 		// クラス名が複数のFQCNを持つ場合があるため、Setで保持する
 		// FQCNで指定されたimport文
-		private Set<String>	_fqcnSet = new HashSet<String>();
+		private Set<FQCN>	_fqcnSet = new HashSet<FQCN>();
 		// packageの末尾が.*で指定されたため、パッケージ名から展開されたfqcn
-		private Set<String>	_fqcnAstSet = new HashSet<String>();
+		private Set<FQCN>	_fqcnAstSet = new HashSet<FQCN>();
 
 
 		public ImportDeclaration(String	className)
@@ -155,29 +199,26 @@ public class ImportDeclarationManager
 			_className = className;
 		}
 
-		public void addFqcn(String fqcnStr)
+		public void addFqcn(FQCN fqcn)
 		{
-			_fqcnSet.add(fqcnStr);
+			_fqcnSet.add(fqcn);
 		}
 
-		public void addFqcnAst(String fqcnStr)
+		public void addFqcnAst(FQCN fqcn)
 		{
-			_fqcnAstSet.add(fqcnStr);
+			_fqcnAstSet.add(fqcn);
 		}
 
 
-		public boolean isDuplicatedDeclaration()
-		{	// クラス名が参照されるタイミングで、重複チェックを行う
-			Set<String>	fqcnSet = (_fqcnSet.size() > 0) ? _fqcnSet : _fqcnAstSet;
-			return	(fqcnSet.size() > 1);
-		}
-
-		public String	getFQCNStr()
+		public FQCN	getFQCN()
 		{
-			Set<String>	fqcnSet = (_fqcnSet.size() > 0) ? _fqcnSet : _fqcnAstSet;
+			Set<FQCN>	fqcnSet = (_fqcnSet.size() > 0) ? _fqcnSet : _fqcnAstSet;
+			if (fqcnSet.size() > 1)
+			{	// import宣言されているクラスが複数存在した
+				throw new PyriteSyntaxException("class name is ambiguity");
+			}
 			assert	(fqcnSet.size() == 1);
 			return	fqcnSet.iterator().next();
-
 		}
 	}
 }

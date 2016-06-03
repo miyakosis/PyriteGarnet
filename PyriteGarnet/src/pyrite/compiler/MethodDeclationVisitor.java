@@ -64,7 +64,6 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	{
 		// import
 		_idm.addImportDeclaretionStr("java.lang.*");		// ソースに記述が無くてもインポートされる型
-// TODO		_idm.addImportDeclaretionStr("pyrite.lang.*");		// ソースに記述が無くてもインポートされる型
 
 		// importDeclaration から取得した文字列を追加保持
 		for (PyriteParser.ImportDeclarationContext idctx : ctx.importDeclaration())
@@ -72,8 +71,12 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 			_idm.addImportDeclaretionStr((String)visit(idctx));
 		}
 
-		// import文で指定されたクラスの存在チェック
+		// import文を展開し、指定されたクラスの存在チェック
 		_idm.checkImportDeclaretion();
+
+		// 自パッケージと、pyrite.lang のクラスは優先してインポートする
+		_idm.overridePackage(_fqcn._packageName);
+		_idm.overridePackage("pyrite.lang");
 
 		// class
 		visit(ctx.classDeclaration());
