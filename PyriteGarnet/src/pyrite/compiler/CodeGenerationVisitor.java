@@ -426,6 +426,61 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 	}
 
+	// static main(var args : [str])() がある場合に、JVMから起動できる public static void main(String[] args) を作成する
+	public void	createMainMethod()
+	{
+		// main()の存在チェック
+		boolean	hasMain = false;
+		for (MethodCodeDeclation methodDeclation : _methodCodeDeclationList)
+		{
+			if (methodDeclation._methodName.equals("main")
+					&& methodDeclation._isStatic
+					&& methodDeclation._inParamList.size() == 1
+					&& methodDeclation._inParamList.get(0)._type._type == TYPE.ARRAY
+					&& methodDeclation._outParamList.size() == 0)
+			{
+				ArrayType	inParamArrayType = (ArrayType)methodDeclation._inParamList.get(0)._type;
+				if (inParamArrayType._arrayVarType == VarType.STR)
+				{	// main()がある場合はJVMから起動できるようブリッジメソッドを登録する
+					MethodCodeDeclation	mainMethod = new MethodCodeDeclation();
+					mainMethod.setStatic(true);
+					mainMethod.setMethodName("main");
+
+					List<VarTypeName>	inParamList = new ArrayList<VarTypeName>();
+					VarType	inParamType = JVMArrayType.getType(ObjectType.getType("java.lang.String"), 1);
+					VarTypeName	inParam = new VarTypeName(inParamType, "args", 0, 0);
+					inParamList.add(inParam);
+
+					mainMethod.setInParamList(inParamList);
+					mainMethod.setOutParamList(MethodCodeDeclation.EMPTY_PARAMETER);
+
+					// String[] -> [str] 変換
+					// toPyriteArray(Object arr, VarType jvmType, int dimension) を呼び出す
+					// jvmType
+					mainMethod.addCodeOp(BC.GETSTATIC);
+					mainMethod.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_STRING", "L" + VarType.CLASS_NAME + ";"));
+
+					// dimension
+					mainMethod.addCodeOpBIPUSH(1);
+
+					// 変換メソッド呼び出し
+					mainMethod.addCodeOp(BC.INVOKESTATIC, -2);
+					mainMethod.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteArray", "(" +
+							"Ljava.lang.Object;" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
+
+					// main(var args : [str])() の呼び出し
+					mainMethod.addCodeOp(BC.INVOKESTATIC, -1);
+					mainMethod.addCodeU2(_cpm.getMethodRef(_fqcn._fqcnStr, "main", "(L" + Array.CLASS_NAME + ";)V"));
+
+					// メソッド終わりにはRETURNが必要
+					mainMethod.addCodeOp(BC.RETURN);
+
+					_methodCodeDeclationList.add(mainMethod);
+					break;
+				}
+			}
+		}
+	}
 
 	// method
 	//methodDeclaration
@@ -470,6 +525,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation.setOutParamList(outParamList);
 
 		_controlBlockManager = new ControlBlockManager();	// 制御構文ジャンプ位置管理オブジェクト
+
 
 		// メソッド本体
 		visit(ctx.methodBody());
@@ -1183,9 +1239,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					_currentMethodCodeDeclation.addCodeOpBIPUSH(jvmArrayType._nArrayDimension);
 
 					// メソッド呼び出し
-					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation.addCodeOp(BC.INVOKESTATIC, -2);
 					_currentMethodCodeDeclation.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteArray", "(" +
-							"L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
+							"Ljava.lang.Object;" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
 
 					return	ArrayType.getType(jvmArrayType);
 
@@ -1413,7 +1469,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					cnvCode.addCodeOpBIPUSH(dimension);
 
 					// メソッド呼び出し
-					cnvCode.addCodeOp(BC.INVOKESTATIC);
+					cnvCode.addCodeOp(BC.INVOKESTATIC, -2);
 					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMArray", "(" +
 							"L" + VarType.CLASS_NAME + ";" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Ljava.lang.Object;"));
 

@@ -106,8 +106,8 @@ public class SourceFile extends ClassRelatedFile
 
 	private ImportDeclarationManager	_idm;
 	private ClassResolver.ClassFieldMember	_declaredMember;
+	private FQCN	_superClassFQCN;
 
-	private MethodDeclationVisitor	_methodDeclationVisitor;
 	private boolean	_isDefaultConstructorCreation = false;
 
 	/**
@@ -120,10 +120,11 @@ public class SourceFile extends ClassRelatedFile
 		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cr, _cpm, _idm, _fqcn);
 		methodDeclationVisitor.visit(_tree);
 
-		_declaredMember = methodDeclationVisitor.getDeclaredMember();
+		_declaredMember = methodDeclationVisitor.getDeclaredMember();	// この時点でソースファイルのメソッドしか解析完了していないため、_declaredMember._superCFM は null
+		_superClassFQCN = methodDeclationVisitor.getSuperClassFQCN();	// 代わりに super class の FQCN を保存しておく
 
 		if (_declaredMember._constructorMap.size() == 0)
-		{	// コンストラクタが定義されていない場合は、デフォルトコンストラクタの定義を作成して登録しておく
+		{	// コンストラクタが定義されていない場合は、デフォルトコンストラクタの宣言を作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
 			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
 
@@ -139,8 +140,6 @@ public class SourceFile extends ClassRelatedFile
 		createConstructorConstantPool(_declaredMember._constructorMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._classMethodMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._instanceMethodMap.values(), _cpm);
-
-		_methodDeclationVisitor = methodDeclationVisitor;
 	}
 
 	private List<MethodCodeDeclation>	_methodCodeDeclationList;
@@ -149,6 +148,9 @@ public class SourceFile extends ClassRelatedFile
 	 */
 	public void	parseCodeGeneration()
 	{
+		// _superClassFQCN より、_declaredMember._superCFM を設定する
+		_declaredMember.setSuperCFM(_superClassFQCN, _cr);
+
 		// コード生成
 		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cr, _cpm, _idm, _fqcn, _declaredMember);
 		visitor.visit(_tree);	// parse
@@ -173,9 +175,6 @@ public class SourceFile extends ClassRelatedFile
 		try (ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName))))
 		{
 			createClassFile(os,
-					_fqcn._fqcnStr,
-					_methodDeclationVisitor.getSuperClass(),
-					_methodDeclationVisitor.getInterfaceTypeList(),
 					_cpm,
 					_declaredMember,
 					_methodCodeDeclationList);
@@ -221,9 +220,6 @@ public class SourceFile extends ClassRelatedFile
 
 	private static void createClassFile(
 			ClassFileOutputStream os,
-			String className,
-			VarType superClassType,
-			List<VarType> interfaceTypeList,
 			ConstantPoolManager cpm,
 			ClassResolver.ClassFieldMember declaredMember,
 			List<MethodCodeDeclation> methodCodeDeclationList) throws IOException
@@ -245,19 +241,17 @@ public class SourceFile extends ClassRelatedFile
 		os.write2(0x0020);
 
 //		u2 this_class;
-		os.write2(cpm.getClassRef(className));
+		os.write2(cpm.getClassRef(declaredMember._fqcn._fqcnStr));
 
 //		u2 super_class;
-		String	superClassName = ((ObjectType)superClassType)._fqcn._fqcnStr;
-		os.write2(cpm.getClassRef(superClassName));
+		os.write2(cpm.getClassRef(declaredMember._superCFM._fqcn._fqcnStr));
 
 //		u2 interfaces_count;
-		os.write2(interfaceTypeList.size());
+		os.write2(declaredMember._interfaceSet.size());
 //		u2 interfaces[interfaces_count];
-		for (VarType interfaceType : interfaceTypeList)
+		for (FQCN interfaceFQCN : declaredMember._interfaceSet)
 		{
-			String	interfaceClassName = ((ObjectType)interfaceType)._fqcn._fqcnStr;
-			os.write2(cpm.getClassRef(interfaceClassName));
+			os.write2(cpm.getClassRef(interfaceFQCN._fqcnStr));
 		}
 
 //		u2 fields_count;

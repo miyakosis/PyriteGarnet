@@ -54,12 +54,22 @@ public class ClassPathFile extends ClassRelatedFile
 	public boolean isNeedCompile()
 	{
 		// ソースファイルが存在し(_pyriteSourceFileLastModified >= 0)、classファイルの更新日付より新しい場合、コンパイル要
-		return	(isSourceFileExists() && (_classFileLastModified < _pyriteSourceFileLastModified));
+		return	(existsSourceFile() && (_pyriteSourceFileLastModified > _classFileLastModified));
 	}
 
-	public boolean hasClassFile()
+	public boolean existsSourceFile()
+	{
+		return _pyriteSourceFileLastModified >= 0;
+	}
+
+	public boolean existsClassFile()
 	{
 		return _classFileLastModified >= 0;
+	}
+
+	public boolean existsPyriteClassFile()
+	{
+		return _pyriteClassFileLastModified >= 0;
 	}
 
 	public String	getSourceFilePath()
@@ -67,24 +77,10 @@ public class ClassPathFile extends ClassRelatedFile
 		return	_classPathEntry + "/" + _pyriteSoutceFile;
 	}
 
-	public boolean hasPyriteClassFile()
-	{
-		return _pyriteClassFileLastModified >= 0;
-	}
-
 	public String	getPyriteClassFilePath()
 	{
 		return	_classPathEntry + "/" + _pyriteClassFile;
 	}
 
-	public boolean isClassFileExists()
-	{
-		return _pyriteClassFileLastModified >= 0;
-	}
-
-	public boolean isSourceFileExists()
-	{
-		return _pyriteSourceFileLastModified >= 0;
-	}
 
 }

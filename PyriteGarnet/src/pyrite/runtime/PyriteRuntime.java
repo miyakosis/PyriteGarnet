@@ -374,7 +374,7 @@ public class PyriteRuntime
 					target = toPyriteBoolean(Array.getBoolean(arr, i));	break;
 				case OBJ:
 					target = Array.get(arr, i);
-					if (jvmType == ObjectType.getType("java.lang.String"))
+					if (jvmType.equals(VarType.JVM_STRING))
 					{
 						target = toPyriteString((java.lang.String)target);	break;
 					}

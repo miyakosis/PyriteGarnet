@@ -22,9 +22,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 	// このファイルで定義しているメンバー
 	private ClassFieldMember	_declaredMember;
-	private VarType	_superClass;
-	private List<VarType>	_interfaceTypeList;
-
+	private FQCN	_superClassFQCN;
 
 	public MethodDeclationVisitor(
 			ClassResolver cr,
@@ -38,25 +36,16 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		_declaredMember = new ClassFieldMember(fqcn);
 	}
 
-	public ImportDeclarationManager	getImportDeclarationManager()
-	{
-		return	_idm;
-	}
-
 	public ClassFieldMember getDeclaredMember()
 	{
 		return	_declaredMember;
 	}
 
-	public VarType	getSuperClass()
+	public FQCN getSuperClassFQCN()
 	{
-		return	_superClass;
+		return	_superClassFQCN;
 	}
 
-	public  List<VarType>	getInterfaceTypeList()
-	{
-		return	_interfaceTypeList;
-	}
 
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
@@ -100,32 +89,29 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	{
 		if (ctx.type() != null)
 		{
-			_superClass = (VarType)visit(ctx.type());
-
-			if (_cr.existsFQCN(_superClass._fqcn) == false)
+			VarType	superClassVarType = (VarType)visit(ctx.type());
+			if (_cr.existsFQCN(superClassVarType._fqcn) == false)
 			{
 				throw new PyriteSyntaxException("super class not exist.");
 			}
+			_superClassFQCN = superClassVarType._fqcn;
 		}
 		else
 		{
-			_superClass = ObjectType.getType("pyrite.lang.Object");
+			_superClassFQCN = FQCNParser.getFQCN("pyrite.lang.Object");
 		}
 
 		if (ctx.typeList() != null)
 		{
-			_interfaceTypeList = (List<VarType>)visit(ctx.typeList());
-			for (VarType interfaceVarType : _interfaceTypeList)
+			List<VarType>	interfaceTypeList = (List<VarType>)visit(ctx.typeList());
+			for (VarType interfaceVarType : interfaceTypeList)
 			{
 				if (_cr.existsFQCN(interfaceVarType._fqcn) == false)
 				{
 					throw new PyriteSyntaxException("interface not exist.");
 				}
+				_declaredMember._interfaceSet.add(interfaceVarType._fqcn);
 			}
-		}
-		else
-		{
-			_interfaceTypeList = new ArrayList<VarType>();
 		}
 
 		// メソッド定義解析中は FQCN の存在チェックはできるが、中の定義情報のチェックはできないため、
@@ -230,7 +216,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, 0x01);	// TODO:暫定で public で作成する
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, Modifier.PUBLIC);	// TODO:暫定で public で作成する
 
 		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
@@ -252,6 +238,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	public Object visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx)
 	{
 		int	modifier = (ctx.classInstanceModifier() != null) ? Modifier.STATIC : 0x00;
+		modifier |= Modifier.PUBLIC;		// TODO:暫定で public で作成する
 
 		String id = ctx.Identifier().getText();
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());

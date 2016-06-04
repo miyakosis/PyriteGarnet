@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -98,6 +100,7 @@ public class ClassResolver
 	// クラスパスに含まれるクラスを解決する
 	public void	resolveClasspath() throws IOException
 	{
+		Logger.getGlobal().info("resolveClasspath");
 		String	separator = System.getProperty(PROPERTY_KEY_CLASS_PATH_SEPARATOR);
 		String	classPath = System.getProperty(PROPERTY_KEY_CLASS_PATH);
 
@@ -118,7 +121,7 @@ public class ClassResolver
 			if (crf instanceof ClassPathFile)
 			{
 				ClassPathFile	cpf = (ClassPathFile)crf;
-				if (cpf.isClassFileExists() == false && cpf.isSourceFileExists() == false)
+				if (cpf.existsPyriteClassFile() && cpf.existsSourceFile() == false)
 				{
 					_packageMapMap.remove(cpf._fqcn._packageName, cpf._fqcn._className);
 				}
@@ -137,6 +140,7 @@ public class ClassResolver
 		String	ext = classPathEntry.toLowerCase();
 		if (ext.endsWith("jar") || ext.endsWith("zip"))
 		{	// jar file
+			Logger.getGlobal().info("ZIP:" + classPathEntry);
 			readJarFile(classPathEntry);
 		}
 		else
@@ -144,6 +148,7 @@ public class ClassResolver
 			File	dir = new File(classPathEntry);
 			if (dir.isDirectory())
 			{
+				Logger.getGlobal().info("DIR:" + classPathEntry);
 				readDirectory(classPathEntry, dir, dir.getAbsolutePath());
 			}
 		}
@@ -193,6 +198,7 @@ public class ClassResolver
 	// パッケージ・クラス情報を内部に保持する
 	private void	setPackageClass(String classPathEntry, String filePathName, long fileLastModified)
 	{
+		Logger.getGlobal().finest("\t" + filePathName);
 		String[]	element = StringUtil.splitLastElement(filePathName, '/');
 		String	packageName = element[0];
 		String	className = element[1];
@@ -319,14 +325,14 @@ public class ClassResolver
 				// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
 				return	_classCache.get(fqcn._fqcnStr);
 			}
-			else if (cpf.hasClassFile())
+			else if (cpf.existsClassFile())
 			{	// クラスファイルのみがある
 				try
 				{	// クラス情報をClassLoaderを用いて取得する
 					Class<?>	c = Class.forName(fqcn._fqcnStr);
 					cls = new ClassFieldMember(fqcn, c, this);
 
-					if (cpf.hasPyriteClassFile())
+					if (cpf.existsPyriteClassFile())
 					{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
 						cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
 					}
@@ -442,17 +448,26 @@ public class ClassResolver
 			List<MethodType>	resultTypeList = new ArrayList<MethodType>();
 			List<MethodParamSignature>	resultMethodParamSignatureList = new ArrayList<MethodParamSignature>();
 
+			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
 			for (MethodParamSignature methodParamSignature : methodParamSignatureList)
-			{
-				// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
-				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);
+			{	// methodParamSignature : 入力パラメータから作成された識別子
+//				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);	// エスケープが不完全
+				StringBuilder	sb = new StringBuilder();
+				sb.append(Pattern.quote(cls._fqcn._fqcnStr));
+				sb.append("\\.");
+				sb.append(methodNameType._methodName);
+				sb.append("\\(");
+				sb.append(methodParamSignature);
+				sb.append("\\)");
+				String	methodSignature = sb.toString();
+
 
 				for (MethodType m : cls._classMethodMap.values())
-				{
+				{	// m : クラスに定義されているメソッド
 					if (m._methodSignature.matches(methodSignature))
 					{
 						if (methodParamSignature.getMethodType() != null)
-						{	// このメソッド引数パラメータに複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+						{	// このメソッド引数パラメータが、複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
 							throw new PyriteSyntaxException("method ambiguity.");
 						}
 						methodParamSignature.setMethodType(m);
@@ -618,11 +633,11 @@ public class ClassResolver
 			String	paramSignature = paramSignaturePrev;
 			if (inputParamTypeClassHierarchy._type == VarType.NULL)
 			{
-				paramSignature += "L[.+];";	// どのクラスにも合うように正規表現設定する
+				paramSignature += "L[.+?];";	// どのクラスにも合うように正規表現設定する
 			}
 			else
 			{
-				paramSignature += inputParamTypeClassHierarchy._type._jvmExpression;
+				paramSignature += Pattern.quote(inputParamTypeClassHierarchy._type._jvmExpression);
 			}
 
 			pramClassHierarchys[inListIdx] = inputParamTypeClassHierarchy;		// 今回選択された型情報を保持する
@@ -952,11 +967,14 @@ public class ClassResolver
 
 		public Set<FQCN>	_interfaceSet = new HashSet<FQCN>();	// key:name
 
+		// 自ソースの情報を保持するためのコンストラクタ。
+		// メソッドを用いて情報を追加していく。
 		public ClassFieldMember(FQCN fqcn)
 		{
 			_fqcn = fqcn;
 		}
 
+		// Class loader を用いて情報を取得するコンストラクタ。
 		// クラスのメタ情報を解析して定義を取得する
 		public ClassFieldMember(FQCN fqcn, Class<?> c, ClassResolver cr)
 		{
@@ -1095,6 +1113,12 @@ public class ClassResolver
 			}
 		}
 
+
+		public void	setSuperCFM(FQCN superClassFQCN, ClassResolver cr)
+		{
+			_superCFM = cr.getClassFieldMember(superClassFQCN);
+		}
+
 		public boolean	isClass()
 		{
 			return	!(Modifier.isInterface(_modifier)  || (_modifier & (0x2000 | 0x4000)) != 0);
@@ -1162,8 +1186,6 @@ public class ClassResolver
 				throw	pyrEx;
 			}
 		}
-
-
 	}
 
 

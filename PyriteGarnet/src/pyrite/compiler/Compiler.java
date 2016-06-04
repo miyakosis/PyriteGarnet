@@ -3,6 +3,11 @@ package pyrite.compiler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import pyrite.compiler.FQCNParser.FQCN;
 
@@ -22,12 +27,38 @@ public class Compiler
 		return	_instance;
 	}
 
+
 	// コンパイル対象ソースファイル
 	private List<SourceFile>	_sourceFileList = new ArrayList<SourceFile>();
 
 	// main
 	public static void main(String[] args) throws IOException
 	{
+		Logger	logger = Logger.getGlobal();
+		ConsoleHandler	ch = new ConsoleHandler();
+		ch.setFormatter(new Formatter()
+		{
+			@Override
+			public String format(LogRecord rec)
+			{
+				return rec.getMessage() + "\n";
+			}
+		});
+
+//		(logger.getHandlers())[0].setFormatter(new Formatter()
+//		{
+//			@Override
+//			public String format(LogRecord rec)
+//			{
+//				return rec.getMessage();
+//			}
+//		});
+
+//		__logger.setLevel(Level.ALL);
+		ch.setLevel(Level.ALL);
+		logger.addHandler(ch);
+		logger.setUseParentHandlers(false);
+
 		Compiler.getInstance().compile(args);
 		Compiler.getInstance().createClassFiles();
 	}
@@ -129,5 +160,4 @@ public class Compiler
 			sf.createClassFile();
 		}
 	}
-
 }

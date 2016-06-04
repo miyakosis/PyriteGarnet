@@ -312,7 +312,7 @@ public class VarType
 
 	public boolean	equals(Object o)
 	{
-		return	_typeId.equals(((VarType)o)._typeId);
+		return	(o instanceof VarType) && _typeId.equals(((VarType)o)._typeId);
 	}
 
 	public String	toString()

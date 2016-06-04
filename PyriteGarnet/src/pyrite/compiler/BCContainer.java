@@ -28,9 +28,15 @@ public class BCContainer
 		return	_code;
 	}
 
+	public void	addCodeOp(byte op, int stackIncDec)
+	{
+		// TODO:stack管理
+		_code.add(op);
+	}
+
 	public void	addCodeOp(byte op)
 	{
-		_code.add(op);
+		addCodeOp(op, 0);
 	}
 
 	public void	addCodeU1(int n)
