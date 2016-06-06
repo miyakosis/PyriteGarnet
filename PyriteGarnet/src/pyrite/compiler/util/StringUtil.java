@@ -83,4 +83,15 @@ public class StringUtil
 
 		return	byteList;
 	}
+
+	public static byte[]	toByteArray(List<Byte> byteList)
+	{
+		byte[]	ba = new byte[byteList.size()];
+		int	pos = 0;
+		for (Byte b : byteList)
+		{
+			ba[pos++] = b;
+		}
+		return	ba;
+	}
 }

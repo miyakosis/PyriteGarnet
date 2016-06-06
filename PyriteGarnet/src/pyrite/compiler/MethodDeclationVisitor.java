@@ -115,8 +115,8 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義解析中は FQCN の存在チェックはできるが、中の定義情報のチェックはできないため、
-		// _superClass や _interfaceTypeList の存在チェックのみを行う。
-		// それらが適正なクラス/インターフェースになっているかは、次のフェーズでチェックする。
+		// _superClass や _interfaceTypeList で指定されたクラスの存在チェックのみを行う。
+		// それらが適切にクラス/インターフェースであるかは、次のフェーズでチェックする。
 
 		visit(ctx.classBody());
 

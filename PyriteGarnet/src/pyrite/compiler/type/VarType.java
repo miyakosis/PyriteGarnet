@@ -491,10 +491,10 @@ public class VarType
 		case INT:
 			// TODO:プログラムからどのようにlong, short の引数のメソッドを指定させるか
 			// pyrite.lang.Integer > int(Java) > pyrite.lang.Object の順とする
-			return	new VarType[]{VarType.JVM_INT, VarType.JVM_LONG, VarType.JVM_SHORT};
+			return	new VarType[]{VarType.JVM_INT, VarType.JVM_LONG, VarType.JVM_SHORT,};
 
 		case DEC:
-			return	new VarType[]{VarType.JVM_DOUBLE, VarType.JVM_FLOAT, VarType.JVM_SHORT};
+			return	new VarType[]{VarType.JVM_DOUBLE, VarType.JVM_FLOAT,};
 
 		case STR:
 			// pyrite.lang.String > java.lang.String > pyrite.lang.Object > java.lang.Object の順とする

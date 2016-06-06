@@ -24,6 +24,7 @@ import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
+import pyrite.compiler.util.StringUtil;
 
 /**
  * ソースファイルを保持するクラス
@@ -77,7 +78,7 @@ public class SourceFile extends ClassRelatedFile
 			_fqcn = classNameVisitor.getFQCN();
 
 			File	srcPathFile = f.getParentFile();
-			String	srcPath = srcPathFile.getName();
+			String	srcPath = srcPathFile.getAbsolutePath();
 			_classFilePathName = srcPath + "/" + _fqcn._className + ".class";
 			_pyriteClassFilePathName = srcPath + "/" + _fqcn._className + ".pyrc";
 
@@ -162,6 +163,8 @@ public class SourceFile extends ClassRelatedFile
 		}
 		// フィールド初期化コードを設定する
 		visitor.setFieldInitializationCode();
+		// static main(var args : [str])() がある場合に、JVMから起動できる public static void main(String[] args) を作成する
+		visitor.createMainMethod();
 
 		_methodCodeDeclationList = visitor.getAllMethodCodeDeclationList();
 	}
@@ -304,7 +307,7 @@ public class SourceFile extends ClassRelatedFile
 			//	u2 attributes_count;	   //<= 00 01
 			//	attribute_info attributes[attributes_count];
 			//}
-				byte[]	code = method.getCodeByteArray();
+				byte[]	code = StringUtil.toByteArray(method._code.getCodeList());
 				os.write2(cpm.getUtf8("Code"));
 				os.write4(2 + 2 + 4 + code.length + 2 + 0 + 2 + 0);	// max_stack 以降の長さ
 				os.write2(method.getMaxStack());
@@ -331,6 +334,7 @@ public class SourceFile extends ClassRelatedFile
 //		attribute_info attributes[attributes_count];
 		// none
 	}
+
 
 
 //	field_info {

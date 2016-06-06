@@ -45,7 +45,7 @@ public class ConstantPoolManager
 		className = className.replace('.', '/');
 
 		String	tag = "A";
-		String	key = tag + ":" + className + ":" + type;
+		String	key = tag + ":" + className + ":" + methodName + ":" + type;
 		Integer	num = _constantNumberMap.get(key);
 		if (num == null)
 		{	// create constant
@@ -69,7 +69,7 @@ public class ConstantPoolManager
 		className = className.replace('.', '/');
 
 		String	tag = "9";
-		String	key = tag + ":" + className + ":" + type;
+		String	key = tag + ":" + className + ":" + fieldName + ":" + type;
 		Integer	num = _constantNumberMap.get(key);
 		if (num == null)
 		{	// create constant

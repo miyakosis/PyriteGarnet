@@ -124,9 +124,9 @@ public class Integer extends pyrite.lang.Number
 	}
 
 
-	public final static class CompilerAccessor
+	public static class CompilerAccessor
 	{
-		public CompilerAccessor()
+		protected CompilerAccessor()
 		{
 			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
 			{

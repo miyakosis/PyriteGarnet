@@ -11,14 +11,15 @@ public class PyriteRuntime
 {
 	public final static String	CLASS_NAME = "pyrite.runtime.PyriteRuntime";
 
-	private final static pyrite.lang.Boolean.CompilerAccessor	__zca = new pyrite.lang.Boolean.CompilerAccessor();
-	private final static pyrite.lang.Integer.CompilerAccessor	__ica = new pyrite.lang.Integer.CompilerAccessor();
-	private final static pyrite.lang.Decimal.CompilerAccessor	__dca = new pyrite.lang.Decimal.CompilerAccessor();
-	private final static pyrite.lang.String.CompilerAccessor	__sca = new pyrite.lang.String.CompilerAccessor();
-	private final static pyrite.lang.Character.CompilerAccessor	__cca = new pyrite.lang.Character.CompilerAccessor();
-	private final static pyrite.lang.Byte.CompilerAccessor	__bca = new pyrite.lang.Byte.CompilerAccessor();
 
-	private final static pyrite.lang.MultipleValue.CompilerAccessor	__mvca = new pyrite.lang.MultipleValue.CompilerAccessor();
+//	private final static pyrite.lang.Boolean.CompilerAccessor	__zca = new pyrite.lang.Boolean.CompilerAccessor();
+//	private final static pyrite.lang.Integer.CompilerAccessor	__ica = new pyrite.lang.Integer.CompilerAccessor();
+//	private final static pyrite.lang.Decimal.CompilerAccessor	__dca = new pyrite.lang.Decimal.CompilerAccessor();
+//	private final static pyrite.lang.String.CompilerAccessor	__sca = new pyrite.lang.String.CompilerAccessor();
+//	private final static pyrite.lang.Character.CompilerAccessor	__cca = new pyrite.lang.Character.CompilerAccessor();
+//	private final static pyrite.lang.Byte.CompilerAccessor	__bca = new pyrite.lang.Byte.CompilerAccessor();
+//
+//	private final static pyrite.lang.MultipleValue.CompilerAccessor	__mvca = new pyrite.lang.MultipleValue.CompilerAccessor();
 
 
 	// to java
@@ -397,5 +398,20 @@ public class PyriteRuntime
 		return	result;
 	}
 
+	private final static BooleanCompilerAccessor	__zca = new BooleanCompilerAccessor();
+	private final static IntegerCompilerAccessor	__ica = new IntegerCompilerAccessor();
+	private final static DecimalCompilerAccessor	__dca = new DecimalCompilerAccessor();
+	private final static StringCompilerAccessor	__sca = new StringCompilerAccessor();
+	private final static CharacterCompilerAccessor	__cca = new CharacterCompilerAccessor();
+	private final static ByteCompilerAccessor	__bca = new ByteCompilerAccessor();
 
+	private final static MultipleValueCompilerAccessor	__mvca = new MultipleValueCompilerAccessor();
+
+	private static class BooleanCompilerAccessor extends pyrite.lang.Boolean.CompilerAccessor{}
+	private static class IntegerCompilerAccessor extends pyrite.lang.Integer.CompilerAccessor{}
+	private static class DecimalCompilerAccessor extends pyrite.lang.Decimal.CompilerAccessor{}
+	private static class StringCompilerAccessor extends pyrite.lang.String.CompilerAccessor{}
+	private static class CharacterCompilerAccessor extends pyrite.lang.Character.CompilerAccessor{}
+	private static class ByteCompilerAccessor extends pyrite.lang.Byte.CompilerAccessor{}
+	private static class MultipleValueCompilerAccessor extends pyrite.lang.MultipleValue.CompilerAccessor{}
 }

@@ -18,9 +18,9 @@ public class Boolean extends pyrite.lang.Object
 		return	b ? TRUE : FALSE;
 	}
 
-	public final static class CompilerAccessor
+	public static class CompilerAccessor
 	{
-		public CompilerAccessor()
+		protected CompilerAccessor()
 		{
 			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
 			{

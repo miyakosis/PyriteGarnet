@@ -49,9 +49,9 @@ public class Character extends pyrite.lang.Object
 
 
 
-	public final static class CompilerAccessor
+	public static class CompilerAccessor
 	{
-		public CompilerAccessor()
+		protected CompilerAccessor()
 		{
 			if (this.getClass().getName().startsWith("pyrite.runtime.") == false)
 			{

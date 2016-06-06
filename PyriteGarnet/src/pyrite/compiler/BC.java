@@ -303,7 +303,7 @@ public class BC
 		STACK_INCDEC.put(FSTORE_2, -1);
 		STACK_INCDEC.put(FSTORE_3, -1);
 		STACK_INCDEC.put(FSUB, -1);
-		STACK_INCDEC.put(GETFIELD, 0);	// 取得するフィールドがlong, doubleの場合はさらに+1?
+		STACK_INCDEC.put(GETFIELD, 0);	// TODO: 取得するフィールドがlong, doubleの場合はさらに+1?
 		STACK_INCDEC.put(GETSTATIC, 1);	// 取得するフィールドがlong, doubleの場合はさらに+1?
 		STACK_INCDEC.put(GOTO, 0);
 		STACK_INCDEC.put(GOTO_W, 0);

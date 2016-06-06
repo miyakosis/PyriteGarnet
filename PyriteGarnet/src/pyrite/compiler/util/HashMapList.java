@@ -27,4 +27,9 @@ public class HashMapList<TK, TV>
 	{
 		return	_map.get(key);
 	}
+
+	public boolean	containsKey(TK key)
+	{
+		return	_map.containsKey(key);
+	}
 }

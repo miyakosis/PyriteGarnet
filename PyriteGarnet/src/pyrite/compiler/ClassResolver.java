@@ -29,6 +29,7 @@ import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
+import pyrite.compiler.util.HashMapList;
 import pyrite.compiler.util.HashMapMap;
 import pyrite.compiler.util.StringUtil;
 import pyrite.lang.MultipleValue;
@@ -397,15 +398,15 @@ public class ClassResolver
 	// 該当クラスの該当クラスメソッドが存在するかを返す
 	public boolean existsMethodC(FQCN fqcn, String methodName)
 	{
-		ClassFieldMember	cls = getClassFieldMember(fqcn);
-		return (cls != null && cls._classMethodNameSet.contains(methodName));
+		ClassFieldMember	cfm = getClassFieldMember(fqcn);
+		return (cfm != null && cfm._classMethodNameMapList.containsKey(methodName));
 	}
 
 	// 該当クラスの該当クラスメソッドまたはインスタンスメソッドが存在するかを返す
 	public boolean existsMethodIC(FQCN fqcn, String methodName)
 	{
-		ClassFieldMember	cls = getClassFieldMember(fqcn);
-		return (cls != null && (cls._classMethodNameSet.contains(methodName) || cls._instanceMethodNameSet.contains(methodName)));
+		ClassFieldMember	cfm = getClassFieldMember(fqcn);
+		return (cfm != null && (cfm._classMethodNameMapList.containsKey(methodName) || cfm._instanceMethodNameMapList.containsKey(methodName)));
 	}
 
 
@@ -445,7 +446,6 @@ public class ClassResolver
 				cls != null;
 				cls = cls._superCFM)
 		{
-			List<MethodType>	resultTypeList = new ArrayList<MethodType>();
 			List<MethodParamSignature>	resultMethodParamSignatureList = new ArrayList<MethodParamSignature>();
 
 			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
@@ -457,28 +457,35 @@ public class ClassResolver
 				sb.append("\\.");
 				sb.append(methodNameType._methodName);
 				sb.append("\\(");
-				sb.append(methodParamSignature);
+				sb.append(methodParamSignature._methodParamSignarure);
 				sb.append("\\)");
 				String	methodSignature = sb.toString();
 
 
-				for (MethodType m : cls._classMethodMap.values())
-				{	// m : クラスに定義されているメソッド
-					if (m._methodSignature.matches(methodSignature))
-					{
-						if (methodParamSignature.getMethodType() != null)
-						{	// このメソッド引数パラメータが、複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
-							throw new PyriteSyntaxException("method ambiguity.");
-						}
-						methodParamSignature.setMethodType(m);
+				List<MethodType>	methodTypeList;
+				methodTypeList = cls._classMethodNameMapList.get(methodNameType._methodName);
+				if (methodTypeList != null)
+				{
+					for (MethodType m : methodTypeList)
+					{	// m : クラスに定義されている同名のメソッド
+						if (m._methodSignature.matches(methodSignature))
+						{
+							if (methodParamSignature.getMethodType() != null)
+							{	// このメソッド引数パラメータが、複数のメソッド定義に合致する場合(メソッド引数にnullリテラルが含まれる場合のみ、この状態が発生する)はエラーとする
+								// (Javaでは継承関係を考慮して、対立しない場合は継承先のオブジェクトが選択されるが、この判定が大変なのでとりあえずエラーにしてコードで指定してもらうよう仕様とする)
+								throw new PyriteSyntaxException("method ambiguity.");
+							}
+							methodParamSignature.setMethodType(m);
 
-						resultMethodParamSignatureList.add(methodParamSignature);
+							resultMethodParamSignatureList.add(methodParamSignature);
+						}
 					}
 				}
-				if (isStaticOnly == false)
+				methodTypeList = cls._instanceMethodNameMapList.get(methodNameType._methodName);
+				if (isStaticOnly == false && methodTypeList != null)
 				{
-					for (MethodType m : cls._instanceMethodMap.values())
-					{
+					for (MethodType m : methodTypeList)
+					{	// m : クラスに定義されている同名のメソッド
 						if (m._methodSignature.matches(methodSignature))
 						{
 							if (methodParamSignature.getMethodType() != null)
@@ -510,7 +517,7 @@ public class ClassResolver
 //				}
 			}
 
-			if (resultTypeList.size() > 0)
+			if (resultMethodParamSignatureList.size() > 0)
 			{	// 最適なメソッド定義がどれかを判別して返す
 //				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
 //				return	resultTypeList.get(resultIdx);
@@ -564,9 +571,11 @@ public class ClassResolver
 
 			// Java型変換
 			VarType[]	jvmDataTypes = VarType.getAssociatedJVMType(inputParamType);	// inputParamTypeに対応するJVM型を取得する
+			int	offset = 0;
 			for (VarType jvmDataType : jvmDataTypes)
 			{	// リストに追加する
-				paramClassHierarchyList.add(new ClassHierarchy(jvmDataType, 5));
+				paramClassHierarchyList.add(new ClassHierarchy(jvmDataType, 5 + offset++));
+				// とりあえず int > long > short, double > float の順で解決する。明示的にlongやfloatを指定する方法は、今後検討
 			}
 
 			// 保持
@@ -678,7 +687,7 @@ public class ClassResolver
 			// levelがより小さいものが発見されたら、それを最適と想定して入れ替える
 			for (int j = 0; j < otherLevel.length; ++j)
 			{
-				if (otherLevel[i]._hierarchyLevel < minLevel[j]._hierarchyLevel)
+				if (otherLevel[j]._hierarchyLevel < minLevel[j]._hierarchyLevel)
 				{	// 最小レベル入れ替え
 					min = other;
 					minIdx = i;
@@ -701,11 +710,11 @@ public class ClassResolver
 			boolean	existsHigherLevel = false;	// true: otherLevel は一つでも minLevel より高レベルの引数パラメータがあった false:すべて同じレベルの引数パラメータだった
 			for (int j = 0; j < otherLevel.length; ++j)
 			{
-				if (otherLevel[i]._hierarchyLevel < minLevel[j]._hierarchyLevel)
+				if (otherLevel[j]._hierarchyLevel < minLevel[j]._hierarchyLevel)
 				{	// 最適と思われるものよりレベルが小さいパラメータが発見されたので、どちらを選択すべきか曖昧
 					throw new PyriteSyntaxException("method call is ambiguity");
 				}
-				else if (otherLevel[i]._hierarchyLevel > minLevel[j]._hierarchyLevel)
+				else if (otherLevel[j]._hierarchyLevel > minLevel[j]._hierarchyLevel)
 				{
 					existsHigherLevel = true;
 				}
@@ -961,8 +970,8 @@ public class ClassResolver
 		public Map<String, VarType>	_instanceFieldMap = new HashMap<String, VarType>();		// key:field name value:型
 		public Map<String, MethodType>	_classMethodMap = new HashMap<String, MethodType>();		// key:signature
 		public Map<String, MethodType>	_instanceMethodMap = new HashMap<String, MethodType>();		// key:signature
-		public Set<String>	_classMethodNameSet = new HashSet<String>();	// key:method name
-		public Set<String>	_instanceMethodNameSet = new HashSet<String>();	// key:method name
+		public HashMapList<String, MethodType>	_classMethodNameMapList = new HashMapList<String, MethodType>();	// key:method name
+		public HashMapList<String, MethodType>	_instanceMethodNameMapList = new HashMapList<String, MethodType>();	// key:method name
 		public Map<String, MethodType>	_constructorMap = new HashMap<String, MethodType>();		// key:signature
 
 		public Set<FQCN>	_interfaceSet = new HashSet<FQCN>();	// key:name
@@ -1041,9 +1050,7 @@ public class ClassResolver
 
 			for (Constructor<?> cn : c.getDeclaredConstructors())
 			{
-				String	methodName = cn.getName();
-				// メソッド名にパッケージ名が含まれる場合、パッケージ部分を除去する
-				methodName = StringUtil.getClassName(methodName);
+				String	methodName = "<init>";
 				Class<?>[]	paramTypeClasses = cn.getParameterTypes();
 				int	modifier = cn.getModifiers();
 
@@ -1092,12 +1099,12 @@ public class ClassResolver
 			if (type._isStatic)
 			{
 				_classMethodMap.put(type._methodSignature, type);
-				_classMethodNameSet.add(type._methodName);
+				_classMethodNameMapList.put(type._methodName, type);
 			}
 			else
 			{
 				_instanceMethodMap.put(type._methodSignature, type);
-				_instanceMethodNameSet.add(type._methodName);
+				_instanceMethodNameMapList.put(type._methodName, type);
 			}
 		}
 
