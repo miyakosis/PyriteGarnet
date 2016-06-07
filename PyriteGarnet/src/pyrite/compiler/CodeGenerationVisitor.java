@@ -136,6 +136,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		return	undeclaredMethodSet;
 //	}
 
+	// 'import' qualifiedName ('.' '*')? ';'
+	@Override
+	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
+	{	// import節の qualifiedName の解決は、メソッド本体の qualifiedName の解決と競合するため、ここでは何も処理を行わない
+		// (解析済みであるため行う必要もない)
+		return	null;
+	}
+
 	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
 	@Override
 	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
@@ -1501,121 +1509,181 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	}
 
 	//	arguments
-	//    :   '(' (expression (',' expression)*)? ')'
+	//    :   '(' expression? ')'
 	// メソッド引数の複数のexpressionをカンマ区切りで記述ができる場所の構文
 	// expressionの値はスタック上にそれぞれ残される
 	@Override
 	public Object visitArguments(@NotNull PyriteParser.ArgumentsContext ctx)
 	{
-		Arguments	arguments = new Arguments();
 		if (ctx.expression() != null)
 		{
-			for (PyriteParser.ExpressionContext expr : ctx.expression())
+			Object	paramType = (VarType)visit(ctx.expression());
+			if (paramType instanceof Arguments)
 			{
-				VarType	varType = toSingleValueType((VarType)visit(expr));	// メソッド呼び出しの場合、最初の要素のみを有効にする
+				return	paramType;
+			}
+			else
+			{	// expression が単一値(VrType)の場合、Arguments オブジェクトを作成して返す
+				Arguments arguments = new Arguments();
+
 				int	codePos = _currentMethodCodeDeclation._code.getCodePos();
 
-				arguments._paramTypeList.add(varType);
-				arguments._paramCodePosList.add(codePos);
+				arguments._paramTypeList.add((VarType)paramType);
+				arguments._paramCodePosList.add(codePos);	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
+
+				return	arguments;
 			}
 		}
-		return	arguments;
-
-//		// 入力パラメータを解決
-//		// メソッド解決のために参照する入力パラメータの型情報
-//
-//		for (int i = 0; i < expressionListType._paramTypeList.size(); ++i)
-//		{
-////			VarType	inputParamType = type.resolveType(this);
-//
-//			switch (expressionListType._paramTypeList.get(i)._type)
-//			{
-//			case NULL:
-//				// どのオブジェクト型にも合うようにオブジェクト参照に差し替える
-//				expressionListType._paramTypeList.set(i, ObjectType.getType("java.lang.Object"));
-//				break;
-//			case OBJ:
-//			case NUM:
-//			case INT:
-//			case DEC:
-//			case FLT:
-//			case STR:
-//			case CHR:
-//			case BOL:
-//			case BYT:
-//			case ARRAY:
-//			case ASSOC:
-//				// OK
-//				break;
-//			default:
-//				throw new RuntimeException("method parameter unsuitable.");
-//			}
-//		}
-//
-//		return	expressionListType;
-	}
-
-
-	// expression
-	// : expression '.(' type ')'
-	@Override
-	public Object visitExpressionCast(PyriteParser.ExpressionCastContext ctx)
-	{
-		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression()));
-		VarType	typeType = (VarType)visit(ctx.type());
-
-		if (expressionType._type != TYPE.OBJ)
+		else
 		{
-			throw new PyriteSyntaxException("invarid cast parameter");
+			return	new Arguments();
 		}
-		_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
-		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(typeType._fqcn._fqcnStr));
-
-		return	typeType;
 	}
 
+	// 親要素を参照し、MultipleValueType か Arguments のどちらで返すかを判断する
+	// Arguments の場合は、メソッド呼び出しのため、stack上にそれぞれの expression のオブジェクトを残す必要がある
+	// MultipleValueType の場合は、stack上に MultipleValueType のオブジェクトを一つだけ残す必要がある
+	public static boolean	isArgument(RuleContext ctx)
+	{
+		ParseTree	current;
+		ParseTree	parent;
+		for (current = ctx, parent = current.getParent();; current = parent, parent = current.getParent())
+		{
+			assert (parent != null);
+			if (parent instanceof PyriteParser.ArgumentsContext)
+			{
+				return	true;
+			}
+			else if (parent instanceof PyriteParser.PrimaryParensContext)
+			{	// expression (',' expression)+
+				// '(' expression ')'
+				;	// 一つ上に上がる
+			}
+			else
+			{
+				return	false;
+			}
+		}
+	}
 
 	// expression
-	// : expression (',' expression)+
+	// : expression ',' expression
 	// expressionの展開として、代入演算子における複数の値を表現するためのカンマ区切りのexpression
 	// expressionの値はスタック上に一つの MultipleValue オブジェクトが作成され、そこに保持される
 	@Override
-	public Object visitExpressionMultipleValue(PyriteParser.ExpressionMultipleValueContext ctx)
+	public Object visitExpressionPair(PyriteParser.ExpressionPairContext ctx)
 	{
+		// パターン：
+		//   ex. a, b, c.d = x, y, z()
+		// 左辺値
+		//   最上位    a, (b, c.d)
+		//     + ExpressioListType を作成する。
+		//     + a を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + (b, c.d) を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + ExpressioListType を返す。
+		//   それ以外  b, c.d
+		//     + ExpressioListType を作成する。
+		//     + b を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + c.d を解決する(スタック上に c が設定される)。ExpressioListType に LValueTypeを設定する。
+		//     + ExpressioListType を返す。
+		// 右辺値
+		//   最上位    x, (y, z())
+		//     + スタック上.dに MultipleValue を作成する。
+		//     + x を解決する(スタック上に x が設定される)。ExpressioListType に その型を設定する。
+		//     +(y, z()) を解決する。
+		//     + MultipleValue に x, y, z() の値を設定する。
+		//     + MultipleValue を返す。
+		//       ※単純な代入であれば、スタック上に複数の値を置いてExpressioListType を返せばよいが、複雑なパターンに対応するために MultipleValue にする。
+		//   それ以外  y, z()
+		//     + ExpressioListType を作成する。
+		//     + y を解決する(スタック上に y が設定される)。ExpressioListType に その型を設定する。
+		//     + z() を解決する(スタック上に z() の戻り値が設定される)。スタック上に戻り値の最初の要素のみを保持する。ExpressioListType に その型を設定する。
+		//     + ExpressioListType を返す。
+		//
+		// パターン：
+		//   ex. a(p1).f, b(p1, p2).f = x(p1), y(p1, p2)
+		//
+		//   最上位    a, (b, c.d)
+		//     + ExpressioListType を作成する。
+		//     + a を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + (b, c.d) を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + ExpressioListType を返す。
+		//   それ以外  b, c.d
+		//     + ExpressioListType を作成する。
+		//     + b を解決する。ExpressioListType に LValueTypeを設定する。
+		//     + c.d を解決する(スタック上に c が設定される)。ExpressioListType に LValueTypeを設定する。
+		//     + ExpressioListType を返す。
+		// 右辺値
+		//   最上位    x, (y, z())
+		//     + スタック上.dに MultipleValue を作成する。
+		//     + x を解決する(スタック上に x が設定される)。ExpressioListType に その型を設定する。
+		//     +(y, z()) を解決する。
+		//     + MultipleValue に x, y, z() の値を設定する。
+		//     + MultipleValue を返す。
+		//       ※単純な代入であれば、スタック上に複数の値を置いてExpressioListType を返せばよいが、複雑なパターンに対応するために MultipleValue にする。
+		//   それ以外  y, z()
+		//     + ExpressioListType を作成する。
+		//     + y を解決する(スタック上に y が設定される)。ExpressioListType に その型を設定する。
+		//     + z() を解決する(スタック上に z() の戻り値が設定される)。スタック上に戻り値の最初の要素のみを保持する。ExpressioListType に その型を設定する。
+		//     + ExpressioListType を返す。
+
+
 		List<PyriteParser.ExpressionContext>	expressionList = ctx.expression();
 
-		// 型としての返り値
-		MultipleValueType	multipleValueType = new MultipleValueType();
-
-		// スタック上にMultipleValue オブジェクトを作成する
-		_currentMethodCodeDeclation._code.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
-		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
-		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
-
-		for (int i = 0; i < expressionList.size(); ++i)
-		{
-			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValue()の第二引数
-
-			// expressionの解析 (戻り値がsetValue()の第三引数)
-			VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// メソッド呼び出しの場合、最初の要素のみを有効にする
-
-			if (varType._type == TYPE.VOID)
+		if (isArgument(ctx))
+		{	// Argument
+			Arguments	arguments = new Arguments();
+			for (int i = 0; i < expressionList.size(); ++i)
 			{
-				return	new PyriteSyntaxException("void method is not suitable");
+				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// メソッド呼び出し引数における (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+				if (varType._type == TYPE.VOID)
+				{
+					return	new PyriteSyntaxException("void method is not suitable");
+				}
+
+				int	codePos = _currentMethodCodeDeclation._code.getCodePos();
+
+				arguments._paramTypeList.add(varType);
+				arguments._paramCodePosList.add(codePos);	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
+			}
+			return	arguments;
+		}
+		else
+		{	// MultipleValueType
+			MultipleValueType	multipleValueType = new MultipleValueType();
+
+			// スタック上に戻り値となる MultipleValue オブジェクトを作成する
+			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
+			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
+
+			for (int i = 0; i < expressionList.size(); ++i)
+			{
+				_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValue()の第二引数
+
+				// expressionの解析 (戻り値がsetValue()の第三引数)
+				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+
+				if (varType._type == TYPE.VOID)
+				{
+					return	new PyriteSyntaxException("void method is not suitable");
+				}
+
+				// setValue() 呼び出し
+				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
+						+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
+						+ "I"
+						+ "Ljava.lang.Object;"
+						+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
+
+				multipleValueType.addType(varType);
 			}
 
-			// setValue() 呼び出し
-			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
-			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
-					+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
-					+ "I"
-					+ "Ljava.lang.Object;"
-					+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
+			return	multipleValueType;
 
-			multipleValueType.addType(varType);
 		}
 
-		return	multipleValueType;
 
 		/*
 		List<PyriteParser.ExpressionContext>	exprs = ctx.expression();
@@ -1703,6 +1771,25 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 	}
 
+	// expression
+	// : expression '.(' type ')'
+	@Override
+	public Object visitExpressionCast(PyriteParser.ExpressionCastContext ctx)
+	{
+		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression()));
+		VarType	typeType = (VarType)visit(ctx.type());
+
+		if (expressionType._type != TYPE.OBJ)
+		{
+			throw new PyriteSyntaxException("invarid cast parameter");
+		}
+		_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(typeType._fqcn._fqcnStr));
+
+		return	typeType;
+	}
+
+
 	// parExpression
 	// : '(' expression ')'
 	@Override
@@ -1720,6 +1807,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		VarType	varType = (VarType)visit(ctx.expression());
 		return	varType;
 	}
+
 
 
 	// 'new' creator
@@ -2622,7 +2710,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					return	false;	// expressionの方であれば、右辺値として扱う(参照をスタックに積む)
 				}
 			}
-			else if (parent instanceof PyriteParser.ExpressionMultipleValueContext
+			else if (parent instanceof PyriteParser.ExpressionListContext
 					|| parent instanceof PyriteParser.PrimaryParensContext)
 			{	// expression (',' expression)+
 				// '(' expression ')'

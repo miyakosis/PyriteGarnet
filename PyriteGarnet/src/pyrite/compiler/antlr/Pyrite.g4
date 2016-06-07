@@ -1,6 +1,6 @@
 /*
  [The "BSD licence"]
- Copyright (c) 2013 Terence Parr, Sam Harwell
+ Copyright (c) 2016 MIYAKOSI, Sigeaki
  All rights reserved.variableDeclarationStatement
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -25,7 +25,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// version 0.0-1
+// version 0.0-n
 
 // refer Java1.7.g4
 grammar Pyrite;
@@ -761,7 +761,8 @@ expression
     |   expression '|' expression	# ExpressionBitOr
     |   expression '&&' expression	# ExpressionBolAnd
     |   expression '||' expression	# ExpressionBolOr
-    |   expression (',' expression)+	# ExpressionMultipleValue
+    |   expression ',' expression	# ExpressionPair
+//    |   expression (',' expression)+	# ExpressionList // これはうまく解析できない
     |   <assoc=right> expression
         op=('='
         |   '+='
@@ -916,7 +917,7 @@ creator
 //	    ;
 
 arguments
-    :   '(' (expression (',' expression)*)? ')'
+    :   '(' expression? ')'
     ;
 
 

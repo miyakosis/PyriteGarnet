@@ -449,13 +449,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpressionBitAnd(PyriteParser.ExpressionBitAndContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code ExpressionMultipleValue}
-	 * labeled alternative in {@link PyriteParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionMultipleValue(PyriteParser.ExpressionMultipleValueContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code ExpressionBolAnd}
 	 * labeled alternative in {@link PyriteParser#expression}.
 	 * @param ctx the parse tree
@@ -469,6 +462,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpressionCompare(PyriteParser.ExpressionCompareContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ExpressionPair}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionPair(PyriteParser.ExpressionPairContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code primaryParens}
 	 * labeled alternative in {@link PyriteParser#primary}.

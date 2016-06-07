@@ -31,7 +31,6 @@ import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapList;
 import pyrite.compiler.util.HashMapMap;
-import pyrite.compiler.util.StringUtil;
 import pyrite.lang.MultipleValue;
 
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
@@ -200,11 +199,18 @@ public class ClassResolver
 	private void	setPackageClass(String classPathEntry, String filePathName, long fileLastModified)
 	{
 		Logger.getGlobal().finest("\t" + filePathName);
-		String[]	element = StringUtil.splitLastElement(filePathName, '/');
+		String[]	element = filePathName.split("/");
 		String	packageName = element[0];
-		String	className = element[1];
-		packageName = packageName.replace('/', '.');
+		String	className = element[element.length - 1];
 		className = className.substring(0, className.indexOf('.'));
+
+		// パッケージ情報を保持する
+		_packageMapMap.put(packageName);
+		for (int i = 1; i < element.length - 1; ++i)
+		{
+			packageName = packageName + "." + element[i];
+			_packageMapMap.put(packageName);
+		}
 
 		ClassRelatedFile	crf = _packageMapMap.get(packageName, className);
 		if (crf == null)
@@ -233,7 +239,7 @@ public class ClassResolver
 	// パッケージに含まれるクラス名のリストを返す
 	public List<String>	getPackageMemberClassName(String packageName)
 	{
-		Map<String, ClassRelatedFile>	classNameMap = _packageMapMap.get(packageName);
+		Map<String, ClassRelatedFile>	classNameMap = _packageMapMap.get(packageName);	// key:class name value:ClassRelatedFile
 		assert(classNameMap != null);
 
 		List<String>	classNameList = new ArrayList<String>();
@@ -254,12 +260,9 @@ public class ClassResolver
 
 	public boolean existsPackage(FQCN fqcn)
 	{
-		if (fqcn._fqcnStr.equals("java"))
-		{
-			return	true;
-		}
-
-		return Package.getPackage(fqcn._fqcnStr) != null;
+		// Package.getPackage(String) は、含まれるクラスが一つ以上ロードされないと Package オブジェクトが生成されない模様なので、存在判定には使えない
+//		return Package.getPackage(fqcn._fqcnStr) != null;
+		return	_packageMapMap.get(fqcn._fqcnStr) != null;
 	}
 
 	// assertion: pahese1ではこのメソッドは呼ばれない
@@ -1244,6 +1247,12 @@ public class ClassResolver
 		public MethodType	getMethodType()
 		{
 			return	_matchedMethodType;
+		}
+
+		@Override
+		public String	toString()
+		{
+			return	_methodParamSignarure;
 		}
 	}
 

@@ -305,19 +305,22 @@ public class VarType
 //		_hashCode = createHashCode(type, nArrayLevel, id);
 //	}
 
+	@Override
 	public int	hashCode()
 	{
 		return	_typeId.hashCode();
 	}
 
+	@Override
 	public boolean	equals(Object o)
 	{
 		return	(o instanceof VarType) && _typeId.equals(((VarType)o)._typeId);
 	}
 
+	@Override
 	public String	toString()
 	{
-		return	_jvmExpression;
+		return	_typeId;
 	}
 
 //	public boolean	isPartialId()

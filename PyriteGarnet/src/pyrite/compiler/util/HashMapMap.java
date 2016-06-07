@@ -12,15 +12,21 @@ public class HashMapMap<TK, TVK, TVV>
 
 	public TVV	put(TK key, TVK valueKey, TVV valueValue)
 	{
+		Map<TVK, TVV>	map = put(key);
+		map.put(valueKey, valueValue);
+
+		return	valueValue;
+	}
+
+	public Map<TVK, TVV>	put(TK key)
+	{
 		Map<TVK, TVV>	map = _map.get(key);
 		if (map == null)
 		{
 			map = new HashMap<TVK, TVV>();
 			_map.put(key, map);
 		}
-		map.put(valueKey, valueValue);
-
-		return	valueValue;
+		return	map;
 	}
 
 	public Map<TVK, TVV>	get(TK key)

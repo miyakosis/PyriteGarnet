@@ -12,8 +12,7 @@ public class MethodNameType extends VarType
 	public static VarType	getType(FQCN fqcn, String methodName, boolean isStatic)
 	{
 		StringBuilder	sb = new StringBuilder();
-		sb.append("METHOD_NAME:").append(fqcn._fqcnStr).append(".").append(methodName);
-		sb.append(isStatic);
+		sb.append("METHOD_NAME:").append(fqcn._fqcnStr).append(".").append(methodName).append(":").append(isStatic);
 
 		String	typeId = sb.toString();
 		VarType	varType = __varTypeMap.get(typeId);
