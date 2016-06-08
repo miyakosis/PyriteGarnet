@@ -13,7 +13,8 @@ public class VarType
 {
 	public final static String	CLASS_NAME = "pyrite.compiler.type.VarType";
 
-	public static enum	TYPE {NULL, VOID, OBJ, NUM, INT, DEC, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC, MULTIPLE,
+	public static enum	TYPE {NULL, VOID, OBJ, NUM, INT, DEC, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC,
+		MULTIPLE, MULTIPLE_LIST,
 		PACKAGE, CLASS, METHOD, METHOD_NAME,
 		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
 		};

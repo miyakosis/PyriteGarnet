@@ -20,7 +20,6 @@ import pyrite.compiler.ClassResolver.MethodParamSignature;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.antlr.PyriteParser.StatementContext;
-import pyrite.compiler.type.Arguments;
 import pyrite.compiler.type.ArrayType;
 import pyrite.compiler.type.AssocType;
 import pyrite.compiler.type.ClassType;
@@ -28,6 +27,7 @@ import pyrite.compiler.type.JVMArrayType;
 import pyrite.compiler.type.LValueType;
 import pyrite.compiler.type.MethodNameType;
 import pyrite.compiler.type.MethodType;
+import pyrite.compiler.type.MultipleValueListType;
 import pyrite.compiler.type.MultipleValueType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.PackageType;
@@ -383,10 +383,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
 
 		// 入力パラメータ解析
-		Arguments	inputParams = (Arguments)visit(ctx.arguments());
+		MultipleValueListType	inputParams = (MultipleValueListType)visit(ctx.arguments());
 
 		// コンストラクタ定義を解決
-		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(cfm._fqcn, inputParams._paramTypeList);
+		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(cfm._fqcn, inputParams._varTypeList);
 		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("no such constructor");
@@ -654,7 +654,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		}
 
 		VarType	rType = (VarType)visit(ctx.expression());	// 初期値代入コードを解析
-		if (rType._type != TYPE.MULTIPLE)
+		if (rType._type != TYPE.MULTIPLE && rType._type != TYPE.MULTIPLE_LIST)
 		{	//  expression が 1 (VarType)
 			if (varTypeNameList.size() > 1)
 			{
@@ -705,11 +705,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// 初期値代入コードを作成
 			createAssignCode(lValueType, rType, false);	// 代入のコード作成。代入後はスタック上に値は残さない。
 		}
-		else
-		{
-			// expression が n (MultipleValueType)
+		else if (rType._type == TYPE.MULTIPLE)
+		{	// expression が n (MultipleValueType)
 			MultipleValueType	multipleValueType = (MultipleValueType)rType;
-			if (varTypeNameList.size() > multipleValueType._varTypeList.size())
+			List<VarType>	rVarTypeList = multipleValueType._varTypeList;
+			if (varTypeNameList.size() > rVarTypeList.size())
 			{
 				throw new PyriteSyntaxException("unassigned local variable");
 			}
@@ -727,7 +727,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				VarType	type = varTypeName._type;
 				if (type == null)
 				{	// expressionの型を移送
-					type = multipleValueType._varTypeList.get(i);
+					type = rVarTypeList.get(i);
 				}
 
 				LValueType	lValueType = null;
@@ -782,9 +782,88 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 						"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";I)Ljava.lang.Object;"));
 
 				// 初期値代入コードを作成
-				createAssignCode(lValueTypeList.get(i), multipleValueType._varTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。
+				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。
 			}
 			_currentMethodCodeDeclation.popLocalVarStack();
+		}
+		else
+		{	// expression が n (MultipleValueListType)
+			MultipleValueListType	multipleValueListType = (MultipleValueListType)rType;
+			List<VarType>	rVarTypeList = multipleValueListType._varTypeList;
+			if (varTypeNameList.size() > rVarTypeList.size())
+			{
+				throw new PyriteSyntaxException("unassigned local variable");
+			}
+
+			// ローカル変数定義
+			// 後でスタック上のMultipleValueを一時的にローカル変数に保持する必要があるが、
+			// MultipleValueを保持するローカル変数番号は変数定義のローカル変数より後に設定したいため、
+			// 先にローカル変数を全て定義する
+			List<LValueType>	lValueTypeList = new ArrayList<>();	// 代入のための左辺値型
+
+			for (int i = 0; i < varTypeNameList.size(); ++i)
+			{
+				VarTypeName	varTypeName = varTypeNameList.get(i);
+				String	name = varTypeName._name;
+				VarType	type = varTypeName._type;
+				if (type == null)
+				{	// expressionの型を移送
+					type = rVarTypeList.get(i);
+				}
+
+				LValueType	lValueType = null;
+				VarType	varType;
+				switch (declarationType)
+				{
+				case LOCAL:
+					if (_currentMethodCodeDeclation.isDuplicatedLocalVar(name))
+					{
+						throw new PyriteSyntaxException("duplicated local variable");
+					}
+
+					VarTypeName	lVarTypeName = _currentMethodCodeDeclation.putLocalVar(name, type);	// ローカル変数番号を割り当てる
+					lValueType = new LValueType(LValueType.TYPE.LOCAL, lVarTypeName._type, lVarTypeName._localVarNum);
+					break;
+
+				case INSTANCE:
+					BCContainer	bcAload = new BCContainer();
+					bcAload.addCodeOp(BC.ALOAD_0);
+					_currentMethodCodeDeclation._code.addCodeBlock(bcAload, 0);	// インスタンスフィールドの場合、_currentMethodCodeDeclationは初期状態でこのステートに来るため、先頭に値設定用の参照を挿入する
+
+					varType = _thisClassFieldMember._instanceFieldMap.get(name);
+					assert(varType != null);
+					lValueType = new LValueType(LValueType.TYPE.INSTANCE, type, _cpm.getFieldRef(_fqcn._fqcnStr, name, varType._jvmExpression));
+					break;
+
+				case CLASS:
+					varType = _thisClassFieldMember._classFieldMap.get(name);
+					assert(varType != null);
+					lValueType = new LValueType(LValueType.TYPE.CLASS, type, _cpm.getFieldRef(_fqcn._fqcnStr, name, varType._jvmExpression));
+					break;
+
+				default:
+					throw new RuntimeException("assert");
+				}
+				lValueTypeList.add(lValueType);
+			}
+
+			// 代入実行
+			// 代入の順番にスタック上の値を入れ替えたり、式の値をスタック上に残したりするため、ローカル変数を用いてコードを生成する
+			_currentMethodCodeDeclation.pushLocalVarStack();
+			// ローカル変数に代入値を保持
+			VarTypeName[]	assignVar = new VarTypeName[rVarTypeList.size()];
+			for (int i = rVarTypeList.size() - 1; i >= 0; --i)
+			{
+				assignVar[i] = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode() + ":" + i, rVarTypeList.get(i));	// ローカル変数番号を割り当てる。名前と型は使用しないので適当な値
+				_currentMethodCodeDeclation._code.addCodeOpASTORE(assignVar[i]._localVarNum);	// スタック上の値をローカル変数に保持
+			}
+			// ローカル変数から値を復元しつつ、代入コードを実施
+			// スタックに代入先オブジェクトが右の要素から順に並んでいるため、配列の逆順に代入を実行する
+			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+			{
+				_currentMethodCodeDeclation._code.addCodeOpALOAD(assignVar[i]._localVarNum);	// ローカル変数からスタックに値を復帰
+				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。スタック上に値は残さない。
+			}
 		}
 
 		return	null;
@@ -1117,10 +1196,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodNameType	methodNameType = (MethodNameType)expressionVarType;
 
 		// methodParameter
-		Arguments	inputParams = (Arguments)visit(ctx.arguments());
+		MultipleValueListType	inputParams = (MultipleValueListType)visit(ctx.arguments());
 
 		// メソッド定義・出力パラメータを解決
-		MethodParamSignature	methodParamSignature = _cr.resolveMethod(methodNameType, inputParams._paramTypeList);
+		MethodParamSignature	methodParamSignature = _cr.resolveMethod(methodNameType, inputParams._varTypeList);
 		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("no such method");
@@ -1326,15 +1405,15 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
  */
 	}
 
-	public void	convertJavaPrimitiveTypeParameter(Arguments inputParams, MethodParamSignature methodParamSignature)
+	public void	convertJavaPrimitiveTypeParameter(MultipleValueListType inputParams, MethodParamSignature methodParamSignature)
 	{
 		// 引数である expressionListType に保持しているコード位置に影響を与えないために、末尾要素から判定・コード挿入していく
 		BCContainer	cnvCode = new BCContainer();
-		for (int i = inputParams._paramTypeList.size() - 1; i >= 0; i -= 1)
+		for (int i = inputParams._varTypeList.size() - 1; i >= 0; i -= 1)
 		{
 			cnvCode.clear();
-			VarType	inputParamType = inputParams._paramTypeList.get(i);
-			int	insertPos = inputParams._paramCodePosList.get(i);
+			VarType	inputParamType = inputParams._varTypeList.get(i);
+			int	insertPos = inputParams._codePosList.get(i);
 			VarType	resolvedVarType = methodParamSignature._classHierarchys[i]._type;
 
 			// 入力パラメータの型と、解決されたメソッド引数の型を比べて、必要があれば(Javaのメソッド呼び出しならば)型変換する。
@@ -1517,26 +1596,26 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		if (ctx.expression() != null)
 		{
-			Object	paramType = (VarType)visit(ctx.expression());
-			if (paramType instanceof Arguments)
-			{
+			VarType	paramType = (VarType)visit(ctx.expression());
+			if (paramType._type == TYPE.MULTIPLE_LIST)
+			{	// 多値式の場合はそのまま返す
 				return	paramType;
 			}
 			else
-			{	// expression が単一値(VrType)の場合、Arguments オブジェクトを作成して返す
-				Arguments arguments = new Arguments();
+			{	// expression が単一値(VarType)の場合、MultipleValueListType オブジェクトを作成して返す
+				paramType = toSingleValueType(paramType);	// メソッド戻り値の MultipleValue の場合、最初の要素のみとする
 
-				int	codePos = _currentMethodCodeDeclation._code.getCodePos();
+				MultipleValueListType	resultType = new MultipleValueListType();
 
-				arguments._paramTypeList.add((VarType)paramType);
-				arguments._paramCodePosList.add(codePos);	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
+				resultType.addType(paramType);
+				resultType.addPos(_currentMethodCodeDeclation._code.getCodePos());	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
 
-				return	arguments;
+				return	resultType;
 			}
 		}
 		else
 		{
-			return	new Arguments();
+			return	new MultipleValueListType();
 		}
 	}
 
@@ -1568,121 +1647,96 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	// expression
 	// : expression ',' expression
-	// expressionの展開として、代入演算子における複数の値を表現するためのカンマ区切りのexpression
-	// expressionの値はスタック上に一つの MultipleValue オブジェクトが作成され、そこに保持される
+	// 代入演算子における複数の値を表現するためのカンマ区切りのexpression や、メソッド引数などを解析する。
+	// MultipleValueListType を返す。(MultipleValueTypeではない)
 	@Override
 	public Object visitExpressionPair(PyriteParser.ExpressionPairContext ctx)
 	{
-		// パターン：
-		//   ex. a, b, c.d = x, y, z()
-		// 左辺値
-		//   最上位    a, (b, c.d)
-		//     + ExpressioListType を作成する。
-		//     + a を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + (b, c.d) を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + ExpressioListType を返す。
-		//   それ以外  b, c.d
-		//     + ExpressioListType を作成する。
-		//     + b を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + c.d を解決する(スタック上に c が設定される)。ExpressioListType に LValueTypeを設定する。
-		//     + ExpressioListType を返す。
-		// 右辺値
-		//   最上位    x, (y, z())
-		//     + スタック上.dに MultipleValue を作成する。
-		//     + x を解決する(スタック上に x が設定される)。ExpressioListType に その型を設定する。
-		//     +(y, z()) を解決する。
-		//     + MultipleValue に x, y, z() の値を設定する。
-		//     + MultipleValue を返す。
-		//       ※単純な代入であれば、スタック上に複数の値を置いてExpressioListType を返せばよいが、複雑なパターンに対応するために MultipleValue にする。
-		//   それ以外  y, z()
-		//     + ExpressioListType を作成する。
-		//     + y を解決する(スタック上に y が設定される)。ExpressioListType に その型を設定する。
-		//     + z() を解決する(スタック上に z() の戻り値が設定される)。スタック上に戻り値の最初の要素のみを保持する。ExpressioListType に その型を設定する。
-		//     + ExpressioListType を返す。
-		//
-		// パターン：
-		//   ex. a(p1).f, b(p1, p2).f = x(p1), y(p1, p2)
-		//
-		//   最上位    a, (b, c.d)
-		//     + ExpressioListType を作成する。
-		//     + a を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + (b, c.d) を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + ExpressioListType を返す。
-		//   それ以外  b, c.d
-		//     + ExpressioListType を作成する。
-		//     + b を解決する。ExpressioListType に LValueTypeを設定する。
-		//     + c.d を解決する(スタック上に c が設定される)。ExpressioListType に LValueTypeを設定する。
-		//     + ExpressioListType を返す。
-		// 右辺値
-		//   最上位    x, (y, z())
-		//     + スタック上.dに MultipleValue を作成する。
-		//     + x を解決する(スタック上に x が設定される)。ExpressioListType に その型を設定する。
-		//     +(y, z()) を解決する。
-		//     + MultipleValue に x, y, z() の値を設定する。
-		//     + MultipleValue を返す。
-		//       ※単純な代入であれば、スタック上に複数の値を置いてExpressioListType を返せばよいが、複雑なパターンに対応するために MultipleValue にする。
-		//   それ以外  y, z()
-		//     + ExpressioListType を作成する。
-		//     + y を解決する(スタック上に y が設定される)。ExpressioListType に その型を設定する。
-		//     + z() を解決する(スタック上に z() の戻り値が設定される)。スタック上に戻り値の最初の要素のみを保持する。ExpressioListType に その型を設定する。
-		//     + ExpressioListType を返す。
-
-
-		List<PyriteParser.ExpressionContext>	expressionList = ctx.expression();
-
-		if (isArgument(ctx))
-		{	// Argument
-			Arguments	arguments = new Arguments();
-			for (int i = 0; i < expressionList.size(); ++i)
-			{
-				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// メソッド呼び出し引数における (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
-				if (varType._type == TYPE.VOID)
-				{
-					return	new PyriteSyntaxException("void method is not suitable");
-				}
-
-				int	codePos = _currentMethodCodeDeclation._code.getCodePos();
-
-				arguments._paramTypeList.add(varType);
-				arguments._paramCodePosList.add(codePos);	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
-			}
-			return	arguments;
+		MultipleValueListType	resultType;
+		VarType	lVarType = (VarType)visit(ctx.expression(0));
+		if (lVarType._type == TYPE.MULTIPLE_LIST)
+		{
+			resultType = (MultipleValueListType)lVarType;
 		}
 		else
-		{	// MultipleValueType
-			MultipleValueType	multipleValueType = new MultipleValueType();
-
-			// スタック上に戻り値となる MultipleValue オブジェクトを作成する
-			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
-			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
-			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
-
-			for (int i = 0; i < expressionList.size(); ++i)
+		{
+			resultType = new MultipleValueListType();
+			if (lVarType._type == TYPE.MULTIPLE)
 			{
-				_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValue()の第二引数
-
-				// expressionの解析 (戻り値がsetValue()の第三引数)
-				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
-
-				if (varType._type == TYPE.VOID)
-				{
-					return	new PyriteSyntaxException("void method is not suitable");
-				}
-
-				// setValue() 呼び出し
-				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
-				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
-						+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
-						+ "I"
-						+ "Ljava.lang.Object;"
-						+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
-
-				multipleValueType.addType(varType);
+				lVarType = toSingleValueType(lVarType);	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
 			}
 
-			return	multipleValueType;
-
+			resultType.addType(lVarType);
+			resultType.addPos(_currentMethodCodeDeclation._code.getCodePos());	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
 		}
+
+		VarType	rVarType = (VarType)visit(ctx.expression(1));
+		assert (rVarType._type != TYPE.MULTIPLE_LIST);
+
+		if (rVarType._type == TYPE.MULTIPLE)
+		{
+			rVarType = toSingleValueType(rVarType);	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+		}
+
+		resultType.addType(rVarType);
+		resultType.addPos(_currentMethodCodeDeclation._code.getCodePos());	// 後で変換メソッドを差し込む必要がある場合に備え、現在位置を記憶
+
+		return	resultType;
+
+//		List<PyriteParser.ExpressionContext>	expressionList = ctx.expression();
+//
+//		if (isArgument(ctx))
+//		{	// Argument
+//			Arguments	arguments = new Arguments();
+//			for (int i = 0; i < expressionList.size(); ++i)
+//			{
+//				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// メソッド呼び出し引数における (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+//				if (varType._type == TYPE.VOID)
+//				{
+//					return	new PyriteSyntaxException("void method is not suitable");
+//				}
+//
+//				int	codePos = _currentMethodCodeDeclation._code.getCodePos();
+//
+//				arguments._paramTypeList.add(varType);
+//				arguments._paramCodePosList.add(codePos);
+//			}
+//			return	arguments;
+//		}
+//		else
+//		{	// MultipleValueType
+//			MultipleValueType	multipleValueType = new MultipleValueType();
+//
+//			// スタック上に戻り値となる MultipleValue オブジェクトを作成する
+//			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
+//			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+//			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
+//
+//			for (int i = 0; i < expressionList.size(); ++i)
+//			{
+//				_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValue()の第二引数
+//
+//				// expressionの解析 (戻り値がsetValue()の第三引数)
+//				VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+//
+//				if (varType._type == TYPE.VOID)
+//				{
+//					return	new PyriteSyntaxException("void method is not suitable");
+//				}
+//
+//				// setValue() 呼び出し
+//				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+//				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
+//						+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
+//						+ "I"
+//						+ "Ljava.lang.Object;"
+//						+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
+//
+//				multipleValueType.addType(varType);
+//			}
+//
+//			return	multipleValueType;
+//		}
 
 
 		/*
@@ -1741,12 +1795,21 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		if (varType._type == VarType.TYPE.MULTIPLE)
 		{
-			// スタック上の MultipleValue も最初の要素で置換する
+			// スタック上の MultipleValue を最初の要素で置換する
 			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
 			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toSingleValue",
 					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";)Ljava,lang.Object;"));
 
 			return	((MultipleValueType)varType)._varTypeList.get(0);
+		}
+		else if (varType._type == VarType.TYPE.MULTIPLE_LIST)
+		{
+			MultipleValueListType	multipleValueListType = (MultipleValueListType)varType;
+			for (int i = 1; i < multipleValueListType._varTypeList.size(); ++i)
+			{	// 最初の要素以外をスタックから除外する
+				_currentMethodCodeDeclation._code.addCodeOp(BC.POP);
+			}
+			return	multipleValueListType._varTypeList.get(0);
 		}
 		else
 		{
@@ -1757,17 +1820,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	// 引数が複数値型の場合はそのまま返す
 	// 引数が単値型の場合は複数値型に変換して返す。
 	// (ただしスタック上の値は何もしない。左辺値の場合、スタック上には何もないことがある)
-	public MultipleValueType	toMultipleValueType(VarType varType)
+	public MultipleValueListType	toMultipleValueType(VarType varType)
 	{
-		if (varType._type == VarType.TYPE.MULTIPLE)
+		if (varType._type == VarType.TYPE.MULTIPLE_LIST)
 		{
-			return	(MultipleValueType)varType;
+			return	(MultipleValueListType)varType;
 		}
 		else
 		{
-			MultipleValueType	multipleValueType = new MultipleValueType();
-			multipleValueType.addType(varType);
-			return	multipleValueType;
+			MultipleValueListType	multipleValueListType = new MultipleValueListType();
+			multipleValueListType.addType(varType);
+			return	multipleValueListType;
 		}
 	}
 
@@ -1840,8 +1903,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// メソッド引数を解析し、スタックに積む
 		// methodParameter
-		Arguments	inputParams = (Arguments)visit(ctx.arguments());
-		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(fqcn, inputParams._paramTypeList);
+		MultipleValueListType	inputParams = (MultipleValueListType)visit(ctx.arguments());
+		MethodParamSignature	methodParamSignature = _cr.resolveConstructor(fqcn, inputParams._varTypeList);
 		if (methodParamSignature == null)
 		{
 			throw new PyriteSyntaxException("constructor not found.");
@@ -2710,9 +2773,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					return	false;	// expressionの方であれば、右辺値として扱う(参照をスタックに積む)
 				}
 			}
-			else if (parent instanceof PyriteParser.ExpressionListContext
-					|| parent instanceof PyriteParser.PrimaryParensContext)
-			{	// expression (',' expression)+
+			else if (parent instanceof PyriteParser.ExpressionPairContext
+					|| parent instanceof PyriteParser.PrimaryParensContext
+					|| parent instanceof PyriteParser.PrimaryContext
+					|| parent instanceof PyriteParser.ExpressionPrimaryContext)
+			{	// expression ',' expression
 				// '(' expression ')'
 				;	// 一つ上に上がる
 			}
@@ -2771,9 +2836,55 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	@Override
 	public Object visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx)
 	{
+		// 以下では "x を解決する(戻り値の型)" と記述している。
+		// パターン：
+		//   ex. a = x
+		// 左辺値
+		//     + a を解決する(LValueType)。LValueTypeを返す。
+		// 右辺値
+		//     + x を解決する(VarType, スタック上に x が設定される)。VarType を返す。
+		// 代入
+		//   + VarType より代入を実行する。
+		//
+		// パターン：
+		//   ex. a, b, c.d = z()
+		// 左辺値
+		//   + (a, (b(p).f), c.d
+		//     + (a, (b(p).f) を解決する(MultipleValueListType)。
+		//     + c.d を解決する(LValueType, スタック上に c が設定される)。MultipleValueListType に LValueTypeを追加する。
+		//     + MultipleValueListType を返す。
+		//   + (a, (b(p).f)
+		//     + MultipleValueListType を作成する。
+		//     + a を解決する(LValueType)。MultipleValueListType に LValueTypeを設定する。
+		//     + b(p).f を解決する(LValueType, スタック上に p が設定される。b()の実行コードが設定される。実行後、スタックにはb(p)の返り値が設定される)。MultipleValueListType に LValueTypeを設定する。
+		//     + MultipleValueListType を返す。
+		// 右辺値 z()
+		//     + z() を解決する(MultipleValueType, スタック上に z() の戻り値である MultipleValue が設定される)。
+		//     + MultipleValueType を返す。
+		// 代入
+		//   + MultipleValueType より代入を実行する。
+		//
+		// パターン：
+		//   ex. a, b(p).f, c.d = x, y, z()
+		// 左辺値 上記と同じ
+		// 右辺値
+		//   + (x, y), z()
+		//     + (x, y) を解決する(ExpressioListType)。
+		//     + z() を解決する(MultipleValueType, スタック上に z() の戻り値である MultipleValue が設定される)。スタック上の MultipleValueを、保持する最初の要素に入れ替える。MultipleValueListType に VarType を追加する。
+		//     + MultipleValueListType を返す。
+		//   + x, y
+		//     + MultipleValueListType を作成する。
+		//     + x を解決する(VarType, スタック上に x が設定される)。MultipleValueListType に x の VarType を設定する。
+		//     + y を解決する(VarType, スタック上に y が設定される)。MultipleValueListType に y の VarType を設定する。
+		//     + MultipleValueListType を返す。
+		// 代入
+		//   + MultipleValueListType より代入を実行する。
+		//
+		//
+
 		List<LValueType>	lValueTypeList = new ArrayList<>();
 		// 左辺値
-		MultipleValueType	lType = toMultipleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		MultipleValueListType	lType = toMultipleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
 		// 左辺値のチェック
 		for (VarType lVarType : lType._varTypeList)
 		{
@@ -2796,7 +2907,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			break;
 
 		default:
-			// 演算代入自体が左辺要素であるかを調べる
+			// 演算代入自体が左辺要素ではないことを調べる
 			if (isLValueExpressionElement(ctx))
 			{	// 演算代入自体が左辺要素になる場合の挙動も不明
 				// ex. x += y = z
@@ -2805,16 +2916,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				throw new PyriteSyntaxException("LValue must be a variable or field.");
 			}
 
-			if (lValueTypeList.size() > 1 || rType._type == TYPE.MULTIPLE)
+			if (lValueTypeList.size() > 1 || rType._type == TYPE.MULTIPLE || rType._type == TYPE.MULTIPLE_LIST)
 			{	// 演算代入の多値代入はどうやったらよいか良くわからない
 				// 最初の要素以外を捨てる、という方法もあるが…
 				throw new PyriteSyntaxException("multiple value operative assignment");
 			}
 
-			// 左辺値への参照をスタックに積む
+			// 左辺値の参照をスタックに積む
 			CodeGenerateOperationalAssignmentVisitor visitor = new CodeGenerateOperationalAssignmentVisitor(_cr, _cpm, _idm, _fqcn, _thisClassFieldMember);
 			visitor.visit(ctx.expression(0));	// parse 左辺値
-			_currentMethodCodeDeclation._code.addCodeBlock(visitor._currentMethodCodeDeclation._code, refLExpressionPos);	// コードを挿入
+			_currentMethodCodeDeclation._code.addCodeBlock(visitor._currentMethodCodeDeclation._code, refLExpressionPos);	// 左辺値を参照するコードを挿入
 
 			// 演算を行う
 			int	operator;
@@ -2834,8 +2945,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			default:
 				throw new RuntimeException("assert");
 			}
-			rType = createOperatorCode(lType, rType, operator);	// 演算を実施し、演算結果で右辺値の型を置き換える
-			rType = toSingleValueType(rType);	// MultipleValue の場合、SingleValueに変換する
+			rType = createOperatorCode(lValueTypeList.get(0)._lValueVarType, rType, operator);	// 演算を実施し、演算結果で右辺値の型を置き換える
+			rType = toSingleValueType(rType);	// MultipleValue の場合(整数の割り算の場合)、SingleValueに変換する
 		}
 
 		// assign
@@ -2851,12 +2962,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		//   → そのまま代入。
 		// variableDeclaration が n, expression が 1 (VarType)
 		//  → エラー。
-		// variableDeclaration が 1, expression が n (MultipleValueType)
+		// variableDeclaration が 1, expression が n (MultipleValueType or MultipleValueListType)
 		//   → expression の 最初の要素を代入。残りの要素は捨てる。
-		// variableDeclaration が n, expression が n (MultipleValueType)
+		// variableDeclaration が n, expression が n (MultipleValueType or MultipleValueListType)
 		//  → variableDeclaration の個数まで、expression の対応する値を代入。
 
-		if (rType._type != TYPE.MULTIPLE)
+		if (rType._type != TYPE.MULTIPLE && rType._type != TYPE.MULTIPLE_LIST)
 		{	//  expression が 1 (VarType)
 			if (lValueTypeList.size() > 1)
 			{
@@ -2870,56 +2981,107 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// 式の値は単独
 			return	isRemainStackValue ? lValueType._lValueVarType : VarType.VOID;
 		}
-
-
-		// expression が n (MultipleValueType)
-		MultipleValueType	multipleValueType = (MultipleValueType)rType;
-		if (lValueTypeList.size() < multipleValueType._varTypeList.size())
-		{
-			throw new PyriteSyntaxException("unassigned local variable");
-		}
-		// 代入実行
-		// 一時的にスタック上の MultipleValue をローカル変数に保存しておき、そこから値を取得しつつ代入を行う。
-		_currentMethodCodeDeclation.pushLocalVarStack();
-		VarTypeName	expressionVar = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode(), multipleValueType);	// Pyriteコードで参照できない名称でローカル変数番号を割り当てる
-		_currentMethodCodeDeclation._code.addCodeOpASTORE(expressionVar._localVarNum);
-
-		// スタックに代入先オブジェクトが右の要素から順に並んでいるため、配列の逆順に代入を実行する
-		for (int i = lValueTypeList.size() - 1; i >= 0; --i)
-		{
-			_currentMethodCodeDeclation._code.addCodeOpALOAD(expressionVar._localVarNum);	// getValue()の第一引数
-			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// getValue()の第二引数
-
-			// getValue() 呼び出し	(代入する初期値がスタック上に設定される)
-			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -2 + 1);
-			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "getValue",
-					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";I)Ljava.lang.Object;"));
-
-			// 代入コードを作成
-			createAssignCode(lValueTypeList.get(i), multipleValueType._varTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。
-		}
-
-		// 返り値の設定
-		VarType	expressionValue;
-		if (isRemainStackValue)
-		{
-			// スタック上に MultipleValue を保存する
-			_currentMethodCodeDeclation._code.addCodeOpALOAD(expressionVar._localVarNum);	// lValueTypeList の要素数より多い部分の値は余分だが、特に問題ないためオブジェクトを再作成などは行わない
-
-			// 式の値の設定 (新しく左辺値の型で作り直す)
-			multipleValueType = new MultipleValueType();
-			for (LValueType lValueType : lValueTypeList)
+		else if (rType._type == TYPE.MULTIPLE)
+		{	// expression が n (MultipleValueType)
+			MultipleValueType	multipleValueType = (MultipleValueType)rType;
+			List<VarType>	rVarTypeList = multipleValueType._varTypeList;
+			if (lValueTypeList.size() > rVarTypeList.size())
 			{
-				multipleValueType.addType(lValueType._lValueVarType);
+				throw new PyriteSyntaxException("unassigned local variable");
 			}
-			expressionValue = multipleValueType;	// 式の値は複数
+			// 代入実行
+			// 一時的にスタック上の MultipleValue をローカル変数に保存しておき、そこから値を取得しつつ代入を行う。
+			_currentMethodCodeDeclation.pushLocalVarStack();
+			VarTypeName	expressionVar = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode(), multipleValueType);	// Pyriteコードで参照できない名称でローカル変数番号を割り当てる
+			_currentMethodCodeDeclation._code.addCodeOpASTORE(expressionVar._localVarNum);
+
+			// スタックに代入先オブジェクトが右の要素から順に並んでいるため、配列の逆順に代入を実行する
+			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+			{
+				_currentMethodCodeDeclation._code.addCodeOpALOAD(expressionVar._localVarNum);	// getValue()の第一引数
+				_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// getValue()の第二引数
+
+				// getValue() 呼び出し	(代入する初期値がスタック上に設定される)
+				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -2 + 1);
+				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "getValue",
+						"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";I)Ljava.lang.Object;"));
+
+				// 代入コードを作成
+				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。
+			}
+
+			// 返り値の設定
+			VarType	expressionValue;
+			if (isRemainStackValue)
+			{
+				// スタック上に MultipleValue を保存する
+				_currentMethodCodeDeclation._code.addCodeOpALOAD(expressionVar._localVarNum);	// lValueTypeList の要素数より多い部分の値は余分だが、特に問題ないためオブジェクトを再作成などは行わない
+
+				// 式の値の設定 (新しく左辺値の型で作り直す)
+				multipleValueType = new MultipleValueType();
+				for (LValueType lValueType : lValueTypeList)
+				{
+					multipleValueType.addType(lValueType._lValueVarType);
+				}
+				expressionValue = multipleValueType;	// 式の値は複数
+			}
+			else
+			{
+				expressionValue = VarType.VOID;	// スタックに値を残さない
+			}
+			_currentMethodCodeDeclation.popLocalVarStack();
+			return	expressionValue;
 		}
 		else
-		{
-			expressionValue = VarType.VOID;	// スタックに値を残さない
+		{	// expression が n (MultipleValueListType)
+			MultipleValueListType	multipleValueListType = (MultipleValueListType)rType;
+			List<VarType>	rVarTypeList = multipleValueListType._varTypeList;
+			if (lValueTypeList.size() > rVarTypeList.size())
+			{
+				throw new PyriteSyntaxException("unassigned local variable");
+			}
+			// 代入実行
+			// 代入の順番にスタック上の値を入れ替えたり、式の値をスタック上に残したりするため、ローカル変数を用いてコードを生成する
+			_currentMethodCodeDeclation.pushLocalVarStack();
+			// ローカル変数に代入値を保持
+			VarTypeName[]	assignVar = new VarTypeName[rVarTypeList.size()];
+			for (int i = rVarTypeList.size() - 1; i >= 0; --i)
+			{
+				assignVar[i] = _currentMethodCodeDeclation.putLocalVar("$" + ctx.hashCode() + ":" + i, rVarTypeList.get(i));	// ローカル変数番号を割り当てる。名前と型は使用しないので適当な値
+				_currentMethodCodeDeclation._code.addCodeOpASTORE(assignVar[i]._localVarNum);	// スタック上の値をローカル変数に保持
+			}
+			// ローカル変数から値を復元しつつ、代入コードを実施
+			// スタックに代入先オブジェクトが右の要素から順に並んでいるため、配列の逆順に代入を実行する
+			for (int i = lValueTypeList.size() - 1; i >= 0; --i)
+			{
+				_currentMethodCodeDeclation._code.addCodeOpALOAD(assignVar[i]._localVarNum);	// ローカル変数からスタックに値を復帰
+				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。スタック上に値は残さない。
+			}
+
+			// 返り値の設定
+			VarType	expressionValue;
+			if (isRemainStackValue)
+			{	// 式の値が必要な場合は、ローカル変数から復帰
+				for (int i = 0; i < lValueTypeList.size(); ++i)
+				{
+					_currentMethodCodeDeclation._code.addCodeOpALOAD(assignVar[i]._localVarNum);	// ローカル変数からスタックに値を復帰
+				}
+
+				// 式の値の設定 (新しく左辺値の型で作り直す)
+				multipleValueListType = new MultipleValueListType();
+				for (LValueType lValueType : lValueTypeList)
+				{
+					multipleValueListType.addType(lValueType._lValueVarType);
+				}
+				expressionValue = multipleValueListType;	// 式の値は複数
+			}
+			else
+			{
+				expressionValue = VarType.VOID;	// スタックに値を残さない
+			}
+			_currentMethodCodeDeclation.popLocalVarStack();
+			return	expressionValue;
 		}
-		_currentMethodCodeDeclation.popLocalVarStack();
-		return	expressionValue;
 //
 //		for (int i = lValueTypeList.size() - 1; i >= 0; --i)
 //		{
@@ -4284,9 +4446,28 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	protected Object	procInt(String value, int radix)
 	{
+		assert (radix == 2 || radix == 8 || radix == 10 || radix == 16);
+
+		try
+		{	// short で表せる場合は、高速コードを使用
+			int	n = Short.parseShort(value, radix);
+
+			// methodParameter
+			addCodeIPush(n);
+
+			// create object
+			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteInteger", "(I)L" + pyrite.lang.Integer.CLASS_NAME + ";"));
+
+			return	VarType.INT;
+		}
+		catch (NumberFormatException e)
+		{	// short で表せない場合は以下の通常コードを実行
+			;
+		}
+
 		// methodParameter
 		addCodeLDC(value);
-		assert (radix == 2 || radix == 8 || radix == 10 || radix == 16);
 		_currentMethodCodeDeclation._code.addCodeOpBIPUSH(radix);
 
 		// create object
