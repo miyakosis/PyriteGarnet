@@ -781,6 +781,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "getValue",
 						"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";I)Ljava.lang.Object;"));
 
+				// getValue()で設定される値の型は、java.lang.Object であるため、該当する型にcastする。
+				// もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する。
+				_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(lValueTypeList.get(i)._lValueVarType._fqcn._fqcnStr));
+
 				// 初期値代入コードを作成
 				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。
 			}
@@ -796,8 +801,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 
 			// ローカル変数定義
-			// 後でスタック上のMultipleValueを一時的にローカル変数に保持する必要があるが、
-			// MultipleValueを保持するローカル変数番号は変数定義のローカル変数より後に設定したいため、
 			// 先にローカル変数を全て定義する
 			List<LValueType>	lValueTypeList = new ArrayList<>();	// 代入のための左辺値型
 
@@ -1795,21 +1798,30 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	{
 		if (varType._type == VarType.TYPE.MULTIPLE)
 		{
+			MultipleValueType	multipleValueType = (MultipleValueType)varType;
+			VarType	resultType = multipleValueType._varTypeList.get(0);
+
 			// スタック上の MultipleValue を最初の要素で置換する
 			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
 			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toSingleValue",
 					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";)Ljava,lang.Object;"));
 
-			return	((MultipleValueType)varType)._varTypeList.get(0);
+			// getValue()で設定される値の型は、java.lang.Object であるため、該当する型にcastする。
+			// もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する。
+			_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(resultType._fqcn._fqcnStr));
+
+			return	resultType;
 		}
 		else if (varType._type == VarType.TYPE.MULTIPLE_LIST)
 		{
 			MultipleValueListType	multipleValueListType = (MultipleValueListType)varType;
+			VarType	resultType = multipleValueListType._varTypeList.get(0);
 			for (int i = 1; i < multipleValueListType._varTypeList.size(); ++i)
 			{	// 最初の要素以外をスタックから除外する
 				_currentMethodCodeDeclation._code.addCodeOp(BC.POP);
 			}
-			return	multipleValueListType._varTypeList.get(0);
+			return	resultType;
 		}
 		else
 		{
@@ -2136,7 +2148,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public Object visitExpressionArrayAccess(@NotNull PyriteParser.ExpressionArrayAccessContext ctx)
 	{
 		// debug:
-		String s = ctx.getText() + " " + ctx.expression(0).getText() + " + " + ctx.expression(1).getText();
+//		String s = ctx.getText() + " " + ctx.expression(0).getText() + " + " + ctx.expression(1).getText();
 
 		VarType	expressionType = toSingleValueType((VarType)visit(ctx.expression(0)));
 		VarType	indexType = toSingleValueType((VarType)visit(ctx.expression(1)));
@@ -2158,6 +2170,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKEVIRTUAL, -1 + 1);
 				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(Array.CLASS_NAME, "get", "(Lpyrite.lang.Integer;)Ljava.lang.Object;"));
 			}
+			// メソッド戻り値は、java.lang.Object であるため、該当する型にcastする。
+			// もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する。
+			_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(arrayType._arrayVarType._fqcn._fqcnStr));
 			return	arrayType._arrayVarType;
 		}
 		else if (expressionType._type == TYPE.ASSOC)
@@ -2177,6 +2193,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKEVIRTUAL, -1 + 1);
 				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(Assoc.CLASS_NAME, "get", "(Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
+			// メソッド戻り値は、java.lang.Object であるため、該当する型にcastする。
+			// もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する。
+			_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(assocType._valVarType._fqcn._fqcnStr));
 			return	assocType._valVarType;
 		}
 		else
@@ -2399,10 +2419,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		case ASSOC:
 			switch (ctx.op.getType())
 			{
-			case PyriteParser.EQUAL:	// -> NOTEQUAL
+			case PyriteParser.EQUAL:	// -> Jump if NOTEQUAL
 				op = BC.IF_ACMPNE;
 				break;
-			case PyriteParser.NOTEQUAL:	// -> EQUAL
+			case PyriteParser.NOTEQUAL:	// -> Jump if EQUAL
 				op = BC.IF_ACMPEQ;
 				break;
 			}
@@ -2421,11 +2441,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, "equals", "(Ljava.lang.Object;)Z"));
 			switch (ctx.op.getType())
 			{
-			case PyriteParser.EQUAL:	// -> NOTEQUAL
-				op = BC.IFNE;
-				break;
-			case PyriteParser.NOTEQUAL:	// -> EQUAL
+			case PyriteParser.EQUAL:	// -> Jump if zero
 				op = BC.IFEQ;
+				break;
+			case PyriteParser.NOTEQUAL:	// -> Jump if one
+				op = BC.IFNE;
 				break;
 			}
 			break;
@@ -3005,6 +3025,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -2 + 1);
 				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "getValue",
 						"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";I)Ljava.lang.Object;"));
+
+				// getValue()で設定される値の型は、java.lang.Object であるため、該当する型にcastする。
+				// (もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する)
+				_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
+				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(lValueTypeList.get(i)._lValueVarType._fqcn._fqcnStr));
 
 				// 代入コードを作成
 				createAssignCode(lValueTypeList.get(i), rVarTypeList.get(i), false);	// 代入のコード作成。代入後はスタック上に値は残さない。

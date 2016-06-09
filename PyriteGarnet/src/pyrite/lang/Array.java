@@ -30,9 +30,12 @@ public class Array extends pyrite.lang.Object implements Iterable
 	public java.lang.Object	set(Integer index, java.lang.Object val)
 	{
 		int	i = PyriteRuntime.toJavaInt(index);
-		if (i > _v.size())
+
+		// 容量を保証するのに、ensureCapacityが使えないため、ダミー要素を追加する
+		// _v.ensureCapacity(i + 1);
+		while (_v.size() < i + 1)
 		{
-			_v.ensureCapacity(i);
+			_v.add(null);
 		}
 
 		return	_v.set(i, val);

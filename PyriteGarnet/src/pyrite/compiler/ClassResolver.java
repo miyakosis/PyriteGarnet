@@ -363,19 +363,15 @@ public class ClassResolver
 	public VarType dispatchVariableC(FQCN fqcn, String fieldName)
 	{
 		VarType	resultType = null;
-
-		ClassFieldMember	cls = getClassFieldMember(fqcn);
-		if (cls != null)
+		for (ClassFieldMember cfm = getClassFieldMember(fqcn); cfm != null; cfm = cfm._superCFM)
 		{
-			resultType = cls._classFieldMap.get(fieldName);
-
+			resultType = cfm._classFieldMap.get(fieldName);
 			if (resultType != null)
 			{
-				return	resultType;
+				break;
 			}
 		}
-
-		return null;
+		return	resultType;
 	}
 
 
@@ -383,33 +379,41 @@ public class ClassResolver
 	public VarType dispatchVariableI(FQCN fqcn, String fieldName)
 	{
 		VarType	resultType = null;
-
-		ClassFieldMember	cls = getClassFieldMember(fqcn);
-		if (cls != null)
+		for (ClassFieldMember cfm = getClassFieldMember(fqcn); cfm != null; cfm = cfm._superCFM)
 		{
-			resultType = cls._instanceFieldMap.get(fieldName);
-
+			resultType = cfm._instanceFieldMap.get(fieldName);
 			if (resultType != null)
 			{
-				return	resultType;
+				break;
 			}
 		}
-
-		return null;
+		return	resultType;
 	}
 
 	// 該当クラスの該当クラスメソッドが存在するかを返す
 	public boolean existsMethodC(FQCN fqcn, String methodName)
 	{
-		ClassFieldMember	cfm = getClassFieldMember(fqcn);
-		return (cfm != null && cfm._classMethodNameMapList.containsKey(methodName));
+		for (ClassFieldMember cfm = getClassFieldMember(fqcn); cfm != null; cfm = cfm._superCFM)
+		{
+			if (cfm._classMethodNameMapList.containsKey(methodName))
+			{
+				return	true;
+			}
+		}
+		return	false;
 	}
 
 	// 該当クラスの該当クラスメソッドまたはインスタンスメソッドが存在するかを返す
 	public boolean existsMethodIC(FQCN fqcn, String methodName)
 	{
-		ClassFieldMember	cfm = getClassFieldMember(fqcn);
-		return (cfm != null && (cfm._classMethodNameMapList.containsKey(methodName) || cfm._instanceMethodNameMapList.containsKey(methodName)));
+		for (ClassFieldMember cfm = getClassFieldMember(fqcn); cfm != null; cfm = cfm._superCFM)
+		{
+			if (cfm._classMethodNameMapList.containsKey(methodName) || cfm._instanceMethodNameMapList.containsKey(methodName))
+			{
+				return	true;
+			}
+		}
+		return	false;
 	}
 
 

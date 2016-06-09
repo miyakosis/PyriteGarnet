@@ -120,6 +120,8 @@ public class Integer extends pyrite.lang.Number
 	@Override
 	public boolean	equals(java.lang.Object o)
 	{
+		boolean	cnd1 = (o instanceof Integer);
+		boolean	cnd2 = cnd1 && _v.equals(((Integer)o)._v);
 		return (o instanceof Integer) && _v.equals(((Integer)o)._v);
 	}
 
