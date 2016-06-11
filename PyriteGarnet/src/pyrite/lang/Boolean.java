@@ -1,5 +1,7 @@
 package pyrite.lang;
 
+import pyrite.runtime.PyriteRuntime;
+
 public class Boolean extends pyrite.lang.Object
 {
 	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Boolean";
@@ -16,6 +18,11 @@ public class Boolean extends pyrite.lang.Object
 	public static Boolean	valueOf(boolean b)
 	{
 		return	b ? TRUE : FALSE;
+	}
+
+	public String	toStr()
+	{
+		return	PyriteRuntime.toPyriteString(java.lang.Boolean.toString(_value));
 	}
 
 	public static class CompilerAccessor

@@ -1,6 +1,6 @@
 package pyrite.compiler.type;
 
-public class SwitchCase
+public class SwitchCase implements Comparable
 {
 	public final VarType	_type;	// null は default
 	public final int	_n;
@@ -47,8 +47,29 @@ public class SwitchCase
 		return	sb.toString().hashCode();
 	}
 
+	@Override
+	public boolean	equals(Object o)
+	{
+		return	((o instanceof SwitchCase) && _hashCode == ((SwitchCase)o)._hashCode);
+	}
+
+	@Override
 	public int	hashCode()
 	{
 		return	_hashCode;
+	}
+
+	@Override
+	public int compareTo(Object o)
+	{
+		SwitchCase	other = (SwitchCase)o;
+		if (_n != other._n)
+		{
+			return	_n - other._n;
+		}
+		else
+		{
+			return	_s.compareTo(other._s);
+		}
 	}
 }

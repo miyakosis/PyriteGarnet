@@ -2,6 +2,7 @@ package pyrite.compiler.type;
 
 import pyrite.compiler.FQCNParser;
 import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.lang.Array;
 
 public class ArrayType extends VarType
 {
@@ -16,7 +17,7 @@ public class ArrayType extends VarType
 		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			FQCN	fqcn = FQCNParser.getFQCN("pyrite.lang.Array");
+			FQCN	fqcn = FQCNParser.getFQCN(Array.CLASS_NAME);
 			varType = new ArrayType(typeId, fqcn, arrayVarType);
 		}
 

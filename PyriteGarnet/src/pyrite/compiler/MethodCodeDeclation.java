@@ -18,16 +18,26 @@ public class MethodCodeDeclation
 	public List<VarTypeName>	_inParamList;
 	public List<VarTypeName>	_outParamList;
 
+	// code
 	public BCContainer	_code = new BCContainer();
-
 
 	// ローカル変数のスタック
 	private HashMapStack<String, VarTypeName>	_localVarMapStack = new HashMapStack<String, VarTypeName>();
 	private int	_maxNLocalVar = 0;	// ローカル変数の使用数の最大
 
-
 	// Exception table
 	public List<ExceptionTableEntry>	_exceptionTableEntryList = new ArrayList<ExceptionTableEntry>();
+
+	public MethodCodeDeclation()
+	{
+	}
+
+	// ローカル変数情報を引き継いだオブジェクトを作成する
+	public MethodCodeDeclation(MethodCodeDeclation other)
+	{
+		_localVarMapStack = other._localVarMapStack;	// ローカル変数は参照しか行われないため、特にコピーして保持はしない
+	}
+
 
 //	public void	setClassName(String className)
 //	{

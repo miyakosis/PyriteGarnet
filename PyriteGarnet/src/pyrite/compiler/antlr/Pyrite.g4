@@ -613,7 +613,7 @@ label
     ;
 
 ifStatement
-    :	parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
+    :	parExpression fulfillmentBlock=block ('else' ('if' ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
     ;
 
 //	statement
@@ -966,7 +966,7 @@ integerLiteral
 //	fragment
 DecimalNumeral
     :   '0'
-    |   NonZeroDigit (Digits? | Underscores Digits)
+    |   ('-')? NonZeroDigit (Digits? | Underscores Digits)
     ;
 
 //	fragment

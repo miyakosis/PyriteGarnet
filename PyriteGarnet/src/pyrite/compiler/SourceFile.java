@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -76,6 +77,13 @@ public class SourceFile extends ClassRelatedFile
 			ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
 			classNameVisitor.visit(_tree);
 			_fqcn = classNameVisitor.getFQCN();
+
+			String	fileClassName = f.getName();
+			fileClassName = fileClassName.substring(0, fileClassName.indexOf('.'));
+			if (fileClassName.equals(_fqcn._className) == false)
+			{
+				Logger.getGlobal().warning("source file and class name is unmatched.");
+			}
 
 			File	srcPathFile = f.getParentFile();
 			String	srcPath = srcPathFile.getAbsolutePath();

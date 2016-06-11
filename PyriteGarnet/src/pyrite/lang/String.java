@@ -21,7 +21,7 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 	// methods
 	public String	add(String o)
 	{
-		return	new String(_v + o._v);
+		return	(o != null) ? new String(_v + o._v) : new String(_v + "(NULL)");
 	}
 
 	// cast

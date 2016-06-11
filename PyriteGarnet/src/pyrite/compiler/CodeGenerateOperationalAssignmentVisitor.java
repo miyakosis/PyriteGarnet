@@ -10,14 +10,15 @@ public class CodeGenerateOperationalAssignmentVisitor extends CodeGenerationVisi
 {
 
 	public CodeGenerateOperationalAssignmentVisitor(ClassResolver cr, ConstantPoolManager cpm,
-			ImportDeclarationManager idm, FQCN fqcn, ClassFieldMember thisClassFieldMember)
+			ImportDeclarationManager idm, FQCN fqcn, ClassFieldMember thisClassFieldMember, MethodCodeDeclation methodCodeDeclation)
 	{
 		super(cr, cpm, idm, fqcn, thisClassFieldMember);
 
-		_currentMethodCodeDeclation = new MethodCodeDeclation();	// コード領域を確保する。
+		_currentMethodCodeDeclation = new MethodCodeDeclation(methodCodeDeclation);	// コード領域を確保する。
 	}
 
-	public static boolean	isLValueExpressionElement(ParseTree ctx)
+	@Override
+	public boolean	isLValueExpressionElement(ParseTree ctx)
 	{	// 左辺値要素であっても、参照用のコードを生成する
 		return	false;
 	}

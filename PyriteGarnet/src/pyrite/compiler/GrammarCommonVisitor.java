@@ -162,7 +162,6 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 	@Override
 	public Object visitArray(@NotNull PyriteParser.ArrayContext ctx)
 	{
-
 		if (ctx.typeOrArray().size() == 1)
 		{	// array
 			VarType	valType = (VarType)visit(ctx.typeOrArray(0));

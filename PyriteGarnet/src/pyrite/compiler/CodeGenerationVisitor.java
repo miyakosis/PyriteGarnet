@@ -986,7 +986,21 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	// スタックに値が残っていれば除去する
 	protected void	removeStackValue(VarType varType)
 	{
-		if (varType._type != TYPE.VOID)
+		int	n;
+		if (varType._type == TYPE.MULTIPLE_LIST)
+		{
+			n = ((MultipleValueListType)varType)._varTypeList.size();
+		}
+		else if (varType._type != TYPE.VOID)
+		{
+			n = 1;
+		}
+		else
+		{
+			n = 0;
+		}
+
+		for (int i = 0; i < n; ++i)
 		{
 			_currentMethodCodeDeclation._code.addCodeOp(BC.POP);
 		}
@@ -2186,7 +2200,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 			if (isLValueExpressionElement(ctx))
 			{	// assign
-				return	new LValueType(LValueType.TYPE.ASSOC, expressionType, _cpm.getMethodRef(assocType._fqcn._fqcnStr, "set", "(Lpyrite.lang.Object;Ljava.lang.Object;)Ljava.lang.Object;"));
+				return	new LValueType(LValueType.TYPE.ASSOC, expressionType, _cpm.getMethodRef(assocType._fqcn._fqcnStr, "set", "(Ljava.lang.Object;Ljava.lang.Object;)Ljava.lang.Object;"));
 			}
 			else
 			{	// refer
@@ -2760,7 +2774,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	//   左辺値にある場合：フィールドへの値設定(スタックにオブジェクト参照を残したままにする) 右辺値にある場合：フィールド参照をスタックに詰む
 	// 左辺値の場合は、式の最後の要素がローカル変数またはフィールドでなければならない。
 	//
-	public static boolean	isLValueExpressionElement(ParseTree ctx)
+	// このメソッドはオーバーライドされる可能性があるため、クラスメソッドにできない
+	public boolean	isLValueExpressionElement(ParseTree ctx)
 	{
 		// 現在のnodeから、木を上位に辿り、左辺値か判定する
 		ParseTree	current;
@@ -2943,7 +2958,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 
 			// 左辺値の参照をスタックに積む
-			CodeGenerateOperationalAssignmentVisitor visitor = new CodeGenerateOperationalAssignmentVisitor(_cr, _cpm, _idm, _fqcn, _thisClassFieldMember);
+			CodeGenerateOperationalAssignmentVisitor visitor = new CodeGenerateOperationalAssignmentVisitor(_cr, _cpm, _idm, _fqcn, _thisClassFieldMember, _currentMethodCodeDeclation);
 			visitor.visit(ctx.expression(0));	// parse 左辺値
 			_currentMethodCodeDeclation._code.addCodeBlock(visitor._currentMethodCodeDeclation._code, refLExpressionPos);	// 左辺値を参照するコードを挿入
 
@@ -3161,7 +3176,24 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public void	createAssignCode(LValueType lValueType, VarType rType, boolean isRemainStackValue)
 	{
 		// 代入チェック
-		VarType lType = lValueType._lValueVarType;
+		VarType lType = null;
+		switch (lValueType._lValueType)
+		{
+		case LOCAL:
+		case INSTANCE:
+		case CLASS:
+			lType = lValueType._lValueVarType;
+			break;
+
+		case ARRAY:
+			lType = ((ArrayType)lValueType._lValueVarType)._arrayVarType;
+			break;
+
+		case ASSOC:
+			lType = ((AssocType)lValueType._lValueVarType)._valVarType;
+			break;
+		}
+
 		if (_cr.isAssignable(lType, rType) == false)
 		{
 			throw new PyriteSyntaxException("assign type unmached.");
@@ -3312,8 +3344,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 
-	// 'if' parExpression block ('else' (ifStatement | block))?
-	// 'if' parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?
+	// 'if' parExpression block ('else' ('if' ifStatement | block))?
+	// 'if' parExpression fulfillmentBlock=block ('else' ('if' ifStatement | elseBlock=block))?
 	@Override
 	public Object visitIfStatement(@NotNull PyriteParser.IfStatementContext ctx)
 	{
@@ -3347,31 +3379,30 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		if (elseContext == null)
 		{	// else 節が無い
-			int	condBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ブロックのコード終了バイト位置
-			int	condBlockCodeSize = condBlockEndPos - condBranchPos;
+			int	fulfillmentBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ブロックのコード終了バイト位置
+			int	fulfillmentBlockCodeSize = fulfillmentBlockEndPos - condBranchPos;
 
-			_currentMethodCodeDeclation._code.replaceCodeU2(condBlockCodeSize, condBranchPos + 1);	// 分岐条件を満たさない場合の飛び先オフセットを設定
+			_currentMethodCodeDeclation._code.replaceCodeU2(fulfillmentBlockCodeSize, condBranchPos + 1);	// 分岐条件を満たさない場合の飛び先オフセットを設定
 		}
 		else
 		{	// else 節
-			int	fulfillmentBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// fulfillmentBlock節終了時のJMP命令位置
+			int	fulfillmentJumpPos = _currentMethodCodeDeclation._code.getCodePos();	// fulfillmentBlock節終了時のJMP命令位置
 
 			// else 条件節が存在する場合は、条件を満たす場合のブロックの最後にジャンプ命令を追加
 			_currentMethodCodeDeclation._code.addCodeOp(BC.GOTO);
 			_currentMethodCodeDeclation._code.addCodeU2(0);	// プレースホルダで置いておく
 
-			int	condBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ブロックのコード終了バイト位置
-			int	condBlockCodeSize = condBlockEndPos - condBranchPos;
+			int	fulfillmentBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ブロックのコード終了バイト位置
+			int	fulfillmentBlockCodeSize = fulfillmentBlockEndPos - condBranchPos;
 
-			_currentMethodCodeDeclation._code.replaceCodeU2(condBlockCodeSize, condBranchPos + 1);	// 分岐条件を満たさない場合の飛び先オフセットを設定
+			_currentMethodCodeDeclation._code.replaceCodeU2(fulfillmentBlockCodeSize, condBranchPos + 1);	// 分岐条件を満たさない場合の飛び先オフセットを設定
 
 			// else 節
 			visit(elseContext);
 
 			int elsedBlockEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ブロックのコード終了バイト位置
-			int	elseBlockCodeSize = elsedBlockEndPos - fulfillmentBlockEndPos;
-			_currentMethodCodeDeclation._code.replaceCodeU2(elseBlockCodeSize, fulfillmentBlockEndPos + 1);	// fulfillmentBlock節終了時の飛び先オフセットを設定
-
+			int	elseBlockCodeSize = elsedBlockEndPos - fulfillmentJumpPos;
+			_currentMethodCodeDeclation._code.replaceCodeU2(elseBlockCodeSize, fulfillmentJumpPos + 1);	// fulfillmentBlock節終了時の飛び先オフセットを設定
 		}
 
 		return	null;
@@ -3428,11 +3459,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			throw new PyriteSyntaxException("condition must be boolean.");
 		}
 
-		int	condBranchPos = _currentMethodCodeDeclation._code.getCodePos();	  // 分岐命令バイト位置
 		// true -> 1, false -> 0 をスタックに積む
 		// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
 		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
 		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+		int	condBranchPos = _currentMethodCodeDeclation._code.getCodePos();	  // 分岐命令バイト位置
 		_currentMethodCodeDeclation._code.addCodeOp(BC.IFEQ);
 		_currentMethodCodeDeclation._code.addCodeU2(0);  // プレースホルダで置いておく
 
@@ -3446,7 +3477,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// 条件が満たされない場合のとび先を設定する
 		blockEndPos = _currentMethodCodeDeclation._code.getCodePos();
 		jmpDistance = blockEndPos - condBranchPos;
-		_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, condBranchPos + 1 + 4);
+		_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, condBranchPos + 1);
 
 		// labelに対応する break 文のとび先を設定する
 		for (int breakPos : _controlBlockManager.getBreakPosList())
@@ -3518,11 +3549,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			{
 				throw new PyriteSyntaxException("condition must be boolean.");
 			}
-			condBranchPos = _currentMethodCodeDeclation._code.getCodePos();	  // 条件が満たされない場合のジャンプ命令
-
 			// 現時点で、pyrite.lang.Boolean がスタックに積まれているので、IFEQ のために値を取得するメソッドを呼び出す
 			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
 			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMValue", "(L" + pyrite.lang.Boolean.CLASS_NAME + ";)I"));
+			condBranchPos = _currentMethodCodeDeclation._code.getCodePos();	  // 条件が満たされない場合のジャンプ命令
 			_currentMethodCodeDeclation._code.addCodeOp(BC.IFEQ);
 			_currentMethodCodeDeclation._code.addCodeU2(0);	 // プレースホルダで置いておく
 		}
@@ -3595,7 +3625,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		switch (expressionType._type)
 		{
 		case ARRAY:
-			ArrayType	arrayType = (ArrayType)lTypeName._type;
+			ArrayType	arrayType = (ArrayType)expressionType;
 			if (_cr.isInherited(arrayType._arrayVarType._fqcn, type._fqcn) == false)
 			{	// 代入不可
 				throw new PyriteSyntaxException("assign type unmached.");
@@ -3604,6 +3634,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		case ASSOC:
 			// TODO:Map.Entry が iterator() で返るが、これをなんとかして型チェックできないか。
+			// とりあえず、Map.Entryかどうかだけチェックする
+			if (_cr.isInherited(type._fqcn, FQCNParser.getFQCN("java.util", "Map.Entry")) == false)
+			{	// 代入不可
+				throw new PyriteSyntaxException("assign type unmached.");
+			}
 			// 現時点では、代入で型変換ができない場合、実行時エラーになる
 			break;
 
@@ -3612,6 +3647,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			{
 				throw new PyriteSyntaxException("enumlation target is not collection");
 			}
+			// java classの場合、expressionの型情報が不明なのでチェックできない。
 			// 現時点では、代入で型変換ができない場合、実行時エラーになる
 			break;
 
@@ -3622,6 +3658,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		 // iterator()
 		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKEINTERFACE);
 		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getIntergaceMethodRef("java.lang.Iterable", "iterator", "()Ljava.util.Iterator;"));
+		_currentMethodCodeDeclation._code.addCodeU1(1);	// argument count + 1
+		_currentMethodCodeDeclation._code.addCodeU1(0);	// constant
 
 		// iterator をローカルに保存
 		String	iteratorName = "$it" + ctx.hashCode();	// Pyriteコードでは定義できない名称
@@ -3630,10 +3668,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// iterator.hasNext()
 		int	condPos = _currentMethodCodeDeclation._code.getCodePos();			// 条件式バイト位置
-		_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD);
-		_currentMethodCodeDeclation._code.addCodeU2(iteratorTypeName._localVarNum);
+		_currentMethodCodeDeclation._code.addCodeOpALOAD(iteratorTypeName._localVarNum);
 		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKEINTERFACE);
 		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "hasNext", "()Z"));
+		_currentMethodCodeDeclation._code.addCodeU1(1);	// argument count + 1
+		_currentMethodCodeDeclation._code.addCodeU1(0);	// constant
 		int	condBranchPos = _currentMethodCodeDeclation._code.getCodePos();	  // 分岐命令バイト位置
 		_currentMethodCodeDeclation._code.addCodeOp(BC.IFEQ);
 		_currentMethodCodeDeclation._code.addCodeU2(0);	 // プレースホルダで置いておく
@@ -3642,10 +3681,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation._code.addCodeOpALOAD(iteratorTypeName._localVarNum);
 		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKEINTERFACE);
 		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getIntergaceMethodRef("java.util.Iterator", "next", "()Ljava/lang/Object;"));
+		_currentMethodCodeDeclation._code.addCodeU1(1);	// argument count + 1
+		_currentMethodCodeDeclation._code.addCodeU1(0);	// constant
 
 		// 変数に代入
 		_currentMethodCodeDeclation._code.addCodeOp(BC.CHECKCAST);
-		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(((ObjectType)type)._fqcn._fqcnStr));
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(type._fqcn._fqcnStr));
 		_currentMethodCodeDeclation._code.addCodeOpASTORE(lTypeName._localVarNum);
 
 		// ブロック内の処理
@@ -3927,7 +3968,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		SwitchBlock	defaultBlock = scMap.remove(SwitchCase.DEFAULT);
 		SwitchCase[]	cases = scMap.keySet().toArray(new SwitchCase[0]);
 		int	jumpTableSize = 4 + 4 + cases.length * 4 * 2;
-		Arrays.sort(cases);
+		Arrays.sort(cases);	// ジャンプテーブルは昇順でなければならない
 		int[]	jumpTable = new int[jumpTableSize / 4];
 		// DEFAULTのテーブル設定
 		int	jumpDistinationPos = (defaultBlock != null) ? defaultBlock._blockStartPos : switchEndPos;
