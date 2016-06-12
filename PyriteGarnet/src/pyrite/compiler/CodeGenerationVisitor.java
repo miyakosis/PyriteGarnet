@@ -512,6 +512,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		_currentMethodCodeDeclation.setClassName(_fqcn._className);
 		_currentMethodCodeDeclation.setMethodName(id);
 
+		if (isStatic == false)
+		{
+			_currentMethodCodeDeclation.putLocalVar("this", ObjectType.getType(_fqcn._fqcnStr));
+		}
+
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
 		List<VarTypeName>	outParamList = (List<VarTypeName>)visit(ctx.outputParameters());
 		// パラメータ名称重複チェック
@@ -535,6 +540,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				_currentMethodCodeDeclation.putLocalVar(varTypeName._name, varTypeName._type);
 			}
 		}
+
 
 		_currentMethodCodeDeclation.setInParamList(inParamList);
 		_currentMethodCodeDeclation.setOutParamList(outParamList);
@@ -581,9 +587,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	// ローカル変数定義 / クラスフィールド定義 / インスタンスフィールド定義
 	public static LValueType.TYPE	getVarDeclarationType(RuleContext ctx)
 	{
-		if (ctx.parent.parent instanceof PyriteParser.FieldDeclarationContext)
+		if (ctx.parent instanceof PyriteParser.FieldDeclarationContext)
 		{
-			PyriteParser.FieldDeclarationContext	fdctx = (PyriteParser.FieldDeclarationContext)ctx;
+			PyriteParser.FieldDeclarationContext	fdctx = (PyriteParser.FieldDeclarationContext)ctx.parent;
 			return	(fdctx.classInstanceModifier() != null) ? LValueType.TYPE.CLASS : LValueType.TYPE.INSTANCE;
 		}
 		else
@@ -1230,7 +1236,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodType	methodType = methodParamSignature.getMethodType();
 		byte	opCode;
 		if (methodType._isStatic)
-		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに詰むコードを除外する。
+		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに積むコードを除外する。
 			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
 			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
 			_currentMethodCodeDeclation._code.removeCode(expressionCodePosFrom, expressionCodePosTo);
@@ -1242,6 +1248,14 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		else
 		{
 			opCode = BC.INVOKEVIRTUAL;
+
+			if (expressionCodePosFrom == expressionCodePosTo)
+			{	// レシーバーが無いインスタンスメソッド呼び出しなので、自オブジェクトをレシーバとしてスタックに積むコードを追加する
+				// convertJavaPrimitiveTypeParameter() にて変換コードを差し込んだ後で、コード追加をする必要がある
+				BCContainer	addCode = new BCContainer();
+				addCode.addCodeOp(BC.ALOAD_0);
+				_currentMethodCodeDeclation._code.addCodeBlock(addCode, expressionCodePosFrom);
+			}
 		}
 		int	stackOffset = -1 * methodType._paramTypes.length + ((methodType._returnTypes.length > 0) ? 1 : 0);
 
@@ -1818,7 +1832,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// スタック上の MultipleValue を最初の要素で置換する
 			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
 			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toSingleValue",
-					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";)Ljava,lang.Object;"));
+					"(L" + pyrite.lang.MultipleValue.CLASS_NAME + ";)Ljava.lang.Object;"));
 
 			// getValue()で設定される値の型は、java.lang.Object であるため、該当する型にcastする。
 			// もし行わない場合、フィールドやメソッドが参照された時に java.lang.VerifyError が発生する。
@@ -2917,11 +2931,22 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		//
 		//
 
-		List<LValueType>	lValueTypeList = new ArrayList<>();
 		// 左辺値
-		MultipleValueListType	lType = toMultipleValueType((VarType)visit(ctx.expression(0)));	// get value of left subexpression
+		VarType	lType = (VarType)visit(ctx.expression(0));	// get value of left subexpression
+		MultipleValueListType	lMultipleValueListType;
+		if (lType._type == VarType.TYPE.MULTIPLE_LIST)
+		{
+			lMultipleValueListType = (MultipleValueListType)lType;
+		}
+		else
+		{	// 左辺値に MultipleValue が来るのはエラー時のみ。その際は下記チェックで文法エラーにする。
+			lMultipleValueListType = new MultipleValueListType();
+			lMultipleValueListType.addType(lType);
+		}
+
 		// 左辺値のチェック
-		for (VarType lVarType : lType._varTypeList)
+		List<LValueType>	lValueTypeList = new ArrayList<>();
+		for (VarType lVarType : lMultipleValueListType._varTypeList)
 		{
 			if (lVarType instanceof LValueType == false)
 			{
@@ -3272,6 +3297,60 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			{
 				paramTypeList = ((MultipleValueType)varType)._varTypeList;
 			}
+			else if (varType._type == TYPE.MULTIPLE_LIST)
+			{
+				paramTypeList = ((MultipleValueListType)varType)._varTypeList;
+
+//				// スタック上に戻り値となる MultipleValue オブジェクトを作成する
+				_currentMethodCodeDeclation._code.addCodeOpBIPUSH(paramTypeList.size());	// createMultipleValue()の引数
+				_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+				_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
+
+				// スタック上にはオブジェクトが右の式の値から左の式の値の順番に乗っているため、配列の後方から埋めていく
+				for (int i = paramTypeList.size() - 1; i >= 0; --i)
+				{
+					_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValueForReturn()の第三引数
+
+					// setValueForReturn() 呼び出し
+					_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValueForReturn", "("
+							+ "Ljava.lang.Object;"
+							+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
+							+ "I"
+							+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// 戻り値である MultipleValue が次の setValueForReturn() の第二引数になる
+				}
+
+//				MultipleValueType	multipleValueType = new MultipleValueType();
+				//
+//							// スタック上に戻り値となる MultipleValue オブジェクトを作成する
+//							_currentMethodCodeDeclation._code.addCodeOpBIPUSH(expressionList.size());	// createMultipleValue()の引数
+//							_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+//							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "createMultipleValue", "(I)" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));	// setValue()の第一引数がスタック上に設定される
+				//
+//							for (int i = 0; i < expressionList.size(); ++i)
+//							{
+//								_currentMethodCodeDeclation._code.addCodeOpBIPUSH(i);	// setValue()の第二引数
+				//
+//								// expressionの解析 (戻り値がsetValue()の第三引数)
+//								VarType	varType = toSingleValueType((VarType)visit(expressionList.get(i)));	// (メソッド戻り値による)MultipleValue は、最初の要素のみを有効にする
+				//
+//								if (varType._type == TYPE.VOID)
+//								{
+//									return	new PyriteSyntaxException("void method is not suitable");
+//								}
+				//
+//								// setValue() 呼び出し
+//								_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+//								_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "setValue", "("
+//										+ "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"
+//										+ "I"
+//										+ "Ljava.lang.Object;"
+//										+ ")" + "L" + pyrite.lang.MultipleValue.CLASS_NAME + ";"));
+				//
+//								multipleValueType.addType(varType);
+//							}
+
+			}
 			else
 			{
 				paramTypeList = new ArrayList<VarType>();
@@ -3408,19 +3487,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// label
-    // :    Identifier?
-	@Override
-	public Object visitLabel(PyriteParser.LabelContext ctx)
-	{
-		return	(ctx.Identifier() != null) ? ctx.Identifier().getText() : null;
-	}
 
-	// 'break' label ';'
+	// 'break' Identifier? ';'
 	@Override
 	public Object visitStatementBreak(@NotNull PyriteParser.StatementBreakContext ctx)
 	{
-		String	label = (String)visit(ctx.label());
+		String	label = (ctx.Identifier() != null) ? ctx.Identifier().getText() : null;
 
 		int	currentPos = _currentMethodCodeDeclation._code.getCodePos();	   // 現在の命令バイト位置
 		_controlBlockManager.setBreakPos(label, currentPos);
@@ -3430,11 +3502,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// 'continue' label ';'
+	// 'continue' Identifier? ';'
 	@Override
 	public Object visitStatementContinue(@NotNull PyriteParser.StatementContinueContext ctx)
 	{
-		String	label = (String)visit(ctx.label());
+		String	label = (ctx.Identifier() != null) ? ctx.Identifier().getText() : null;
 
 		int	currentPos = _currentMethodCodeDeclation._code.getCodePos();	   // 現在の命令バイト位置
 		_controlBlockManager.setContinuePos(label, currentPos);
@@ -3444,11 +3516,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// label 'while' parExpression block
+	// (Identifier ':')? 'while' parExpression block
 	@Override
 	public Object visitStatementWhile(@NotNull PyriteParser.StatementWhileContext ctx)
 	{
-		String	label = (String)visit(ctx.label());
+		String	label = (ctx.Identifier() != null) ? ctx.Identifier().getText() : null;
 		_controlBlockManager.push(ControlBlockManager.TYPE.WHILE, label);	// ラベルの有効範囲を設定(制御構文位置を一レベル深くする)
 
 		// 条件節
@@ -3499,11 +3571,11 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 	// for文のブロック (すぐにforControlで一度だけ参照されるため、グローバルに一つ保持するだけでよい)
 	private PyriteParser.BlockContext	_forBlockContext;
-	// label 'for' '(' forControl ')' block
+	// (Identifier ':')? 'for' '(' forControl ')' block
 	@Override
 	public Object visitStatementFor(@NotNull PyriteParser.StatementForContext ctx)
 	{
-		String	label = (String)visit(ctx.label());
+		String	label = (ctx.Identifier() != null) ? ctx.Identifier().getText() : null;
 		_controlBlockManager.push(ControlBlockManager.TYPE.FOR, label);	// ラベルの有効範囲を設定(制御構文位置を一レベル深くする)
 
 		_forBlockContext = ctx.block();	// ブロック本体をあとで解析する必要があるため、保持
@@ -3575,17 +3647,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation._code.addCodeOp(BC.GOTO);
 		_currentMethodCodeDeclation._code.addCodeU2(jmpDistance);
 
+		int	forEndPos = _currentMethodCodeDeclation._code.getCodePos();			// for文の終了バイト位置
 		if (condBranchPos >= 0)
 		{	// 条件がある場合は、条件が満たされない場合のとび先を設定する
-			blockEndPos = _currentMethodCodeDeclation._code.getCodePos();
-			jmpDistance = blockEndPos - condBranchPos;
+			jmpDistance = forEndPos - condBranchPos;
 			_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, condBranchPos + 1);
 		}
 
 		// labelに対応する break 文のとび先を設定する
 		for (int breakPos : _controlBlockManager.getBreakPosList())
 		{
-			jmpDistance = blockEndPos - breakPos;
+			jmpDistance = forEndPos - breakPos;
 			_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, breakPos + 1);
 		}
 
@@ -3875,11 +3947,13 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_controlBlockManager.push(ControlBlockManager.TYPE.SWITCH, null);	// ラベルの有効範囲を設定(制御構文位置を一レベル深くする)
 
 		// parExpression
-		VarType	varType = toSingleValueType((VarType)visit(ctx.parExpression()));
+		VarType	condVarType = toSingleValueType((VarType)visit(ctx.parExpression()));
 		// type は int か str
-		switch (varType._type)
+		switch (condVarType._type)
 		{
 		case INT:
+			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC);
+			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJavaInt", "(L" + pyrite.lang.Integer.CLASS_NAME + ";)I"));
 			break;
 		case STR:
 			throw new RuntimeException("not supported yet.");	// とりあえず未実装
@@ -3907,14 +3981,15 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{	// ブロック内のコード生成
 			sbList.add((SwitchBlock)visit(sbCtx));
 		}
-		// 最後のcaseブロックの不要なジャンプコードを除去
-		if (sbList.get(sbList.size() - 1)._isFallthrough == false)
-		{
-			_currentMethodCodeDeclation._code.removeCodeEnd(1 + 2);
-		}
+		// 特に除去しなくてもそんなに問題がないため、なにもしない
+//		// 最後のcaseブロックの不要なジャンプコードを除去
+//		if (sbList.get(sbList.size() - 1)._isFallthrough == false)
+//		{
+//			_currentMethodCodeDeclation._code.removeCodeEnd(1 + 2);
+//		}
 		int	switchEndPos = _currentMethodCodeDeclation._code.getCodePos();	// ここがcaseブロック最後のとび先
 		// caseブロックのジャンプとび先を設定する (最後のcaseブロックには設定しない)
-		for (int i = 0; i < sbList.size() - 1; ++i)
+		for (int i = 0; i < sbList.size(); ++i)
 		{
 			SwitchBlock	sblock = sbList.get(i);
 			if (sblock._isFallthrough == false)
@@ -3926,17 +4001,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 		// switchLabel
 		// ブロック末尾ラベル部分の解析
-		List<SwitchCase>	caseList = new ArrayList<SwitchCase>();
+		List<SwitchCase>	switchLabelList = new ArrayList<SwitchCase>();
 		for (PyriteParser.SwitchLabelContext slctx : ctx.switchLabel())
 		{
-			caseList.add((SwitchCase)visit(slctx));
+			switchLabelList.add((SwitchCase)visit(slctx));
 		}
 
 		// ラベルの型・重複チェック
 		Map<SwitchCase, SwitchBlock>	scMap = new HashMap<SwitchCase, SwitchBlock>();
-		for (SwitchCase scase : caseList)
+		for (SwitchCase scase : switchLabelList)
 		{
-			if (scase != SwitchCase.DEFAULT && scase._type != varType)
+			if (scase != SwitchCase.DEFAULT && scase._type != condVarType)
 			{
 				throw new PyriteSyntaxException("switch type unmatched.");
 			}
@@ -3951,7 +4026,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			for (SwitchCase scase : sblock._caseList)
 			{
-				if (scase != SwitchCase.DEFAULT && scase._type != varType)
+				if (scase != SwitchCase.DEFAULT && scase._type != condVarType)
 				{
 					throw new PyriteSyntaxException("switch type unmatched.");
 				}
@@ -3964,26 +4039,27 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 		}
 
-		// DEFAULT
-		SwitchBlock	defaultBlock = scMap.remove(SwitchCase.DEFAULT);
-		SwitchCase[]	cases = scMap.keySet().toArray(new SwitchCase[0]);
-		int	jumpTableSize = 4 + 4 + cases.length * 4 * 2;
+		// ジャンプテーブルの作成
+		SwitchBlock	defaultBlock = scMap.remove(SwitchCase.DEFAULT);			// defaultの飛び先だけ指定方法が違うため、特別扱いする
+		SwitchCase[]	cases = scMap.keySet().toArray(new SwitchCase[0]);		// default以外のブロックのラベル
+		int[]	jumpTable = new int[(cases.length + 1) * 2];					// default のジャンプオフセット, caseの個数, 0番目の case のラベル, 0番目の case のジャンプオフセット, 1番目の case のラベル, ... (case 数 + default個 ×2)
+		int	jumpTableSize = 4 * jumpTable.length;								// byte
+
 		Arrays.sort(cases);	// ジャンプテーブルは昇順でなければならない
-		int[]	jumpTable = new int[jumpTableSize / 4];
 		// DEFAULTのテーブル設定
 		int	jumpDistinationPos = (defaultBlock != null) ? defaultBlock._blockStartPos : switchEndPos;
 		int	jumpDistance = jumpDistinationPos + jumpTableSize - condBranchPos;
-		jumpTable[0] = jumpDistance;
-		jumpTable[1] = cases.length;
+		jumpTable[0] = jumpDistance;	// default のジャンプオフセット
+		jumpTable[1] = cases.length;	// case の個数
 		// case のテーブル設定
 		for (int i = 0; i < cases.length; ++i)
 		{
 			SwitchBlock	sblock = scMap.get(cases[i]);
 			jumpDistinationPos = (sblock != null) ? sblock._blockStartPos : switchEndPos;
-			jumpDistance = jumpDistinationPos + cases.length * 4 - condBranchPos;
+			jumpDistance = jumpDistinationPos + jumpTableSize - condBranchPos;
 
-			jumpTable[2 + i * 2] = cases[i]._n;
-			jumpTable[2 + i * 2 + 1] = jumpDistance;
+			jumpTable[(1 + i) * 2] = cases[i]._n;		// n番目の case のラベル
+			jumpTable[(1 + i) * 2 + 1] = jumpDistance;	// n番目の case のジャンプオフセット
 		}
 
 		// ジャンプテーブルの挿入
@@ -4267,6 +4343,18 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 
+	// 'This'
+	@Override
+	public Object visitPrimaryThis(@NotNull PyriteParser.PrimaryThisContext ctx)
+	{
+		if (_currentMethodCodeDeclation._isStatic)
+		{	// static コンテキストで this キーワードは使用できない
+			throw new PyriteSyntaxException("'this' is not usable at static context. ");
+		}
+		_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
+		return	ObjectType.getType(_fqcn._fqcnStr);
+	}
+
 	// Identifier
 	@Override
 	public Object visitPrimaryIdentifier(@NotNull PyriteParser.PrimaryIdentifierContext ctx)
@@ -4330,16 +4418,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		else
 		{
 			// reserve word
-			switch (id)
-			{
-			case "this":
-				if (_currentMethodCodeDeclation._isStatic)
-				{	// static コンテキストで this キーワードは使用できない
-					throw new PyriteSyntaxException("'this' is not usable at static context. ");
-				}
-				_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
-				return	ObjectType.getType(_fqcn._fqcnStr);
-
+//			switch (id)
+//			{
+//			case "this":
+//				if (_currentMethodCodeDeclation._isStatic)
+//				{	// static コンテキストで this キーワードは使用できない
+//					throw new PyriteSyntaxException("'this' is not usable at static context. ");
+//				}
+//				_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
+//				return	ObjectType.getType(_fqcn._fqcnStr);
+//
 				// キャストではここのコードに到達しないはず
 //			// 以降はキャストのための識別子
 //			case "obj":
@@ -4368,7 +4456,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //
 //			case "byt":
 //				return	ClassType.getType(VarType.BYT._fqcn);
-			}
+//			}
 
 			// local variable
 			VarTypeName	varTypeName = _currentMethodCodeDeclation.getLocalVar(id);

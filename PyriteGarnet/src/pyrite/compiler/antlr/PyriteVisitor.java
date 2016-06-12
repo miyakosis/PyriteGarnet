@@ -273,12 +273,6 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVariableDeclaration(PyriteParser.VariableDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PyriteParser#label}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLabel(PyriteParser.LabelContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link PyriteParser#ifStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -476,6 +470,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPrimaryParens(PyriteParser.PrimaryParensContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code primaryThis}
+	 * labeled alternative in {@link PyriteParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimaryThis(PyriteParser.PrimaryThisContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code primaryLiteral}
 	 * labeled alternative in {@link PyriteParser#primary}.

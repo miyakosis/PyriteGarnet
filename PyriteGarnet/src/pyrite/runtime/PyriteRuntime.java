@@ -152,6 +152,11 @@ public class PyriteRuntime
 		return	__mvca.setValue(mv, n, obj);
 	}
 
+	public static pyrite.lang.MultipleValue	setValueForReturn(java.lang.Object obj, pyrite.lang.MultipleValue mv, int n)
+	{
+		return	__mvca.setValue(mv, n, obj);
+	}
+
 	public static java.lang.Object	toSingleValue(pyrite.lang.MultipleValue mv)
 	{
 		return	__mvca.getValue(mv, 0);

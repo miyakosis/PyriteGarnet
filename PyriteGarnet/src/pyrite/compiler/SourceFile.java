@@ -100,6 +100,7 @@ public class SourceFile extends ClassRelatedFile
 			_cpm.getUtf8("main");
 			_cpm.getUtf8("([Ljava/lang/String;)V");
 			_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
+			_cpm.getUtf8("<clinit>");
 		}
 		catch (IOException e)
 		{
@@ -137,7 +138,7 @@ public class SourceFile extends ClassRelatedFile
 			VarType[]	inParamType = new VarType[0];
 			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
 
-			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, _fqcn._className, inParamType, outParamType, 0);
+			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, "<init>", inParamType, outParamType, 0);
 			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);
 
 			_isDefaultConstructorCreation = true;
@@ -145,11 +146,15 @@ public class SourceFile extends ClassRelatedFile
 
 		_cr.putClassFieldMember(_fqcn._fqcnStr, _declaredMember);	// このクラスのメンバーを登録
 
-		// 定義されているメソッドのコンスタントプールを作成
+		// 定義されているメソッド/フィールドのコンスタントプールを作成
 		createConstructorConstantPool(_declaredMember._constructorMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._classMethodMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._instanceMethodMap.values(), _cpm);
+		createFieldConstantPool(_declaredMember._classFieldMap.values(), _cpm);
+		createFieldConstantPool(_declaredMember._instanceFieldMap.values(), _cpm);
 	}
+
+
 
 	private List<MethodCodeDeclation>	_methodCodeDeclationList;
 	/**
@@ -222,6 +227,15 @@ public class SourceFile extends ClassRelatedFile
 			String	methodName = method._methodName;
 			String	paramStr = MethodType.createJvmMethodParamExpression(method._paramTypes, method._returnTypes);
 			cpm.getMethodRef(methodClassName, methodName, paramStr);
+		}
+	}
+
+	// 定義されているフィールドのコンスタントプールを作成
+	private static void createFieldConstantPool(Collection<VarType> varTypes, ConstantPoolManager cpm)
+	{
+		for (VarType varType : varTypes)
+		{
+			cpm.getUtf8(varType._jvmExpression.replace('.', '/'));
 		}
 	}
 
@@ -365,7 +379,7 @@ public class SourceFile extends ClassRelatedFile
 			}
 			os.write2(acc);
 			os.write2(cpm.getUtf8(name));
-			os.write2(cpm.getUtf8(type._jvmExpression));
+			os.write2(cpm.getUtf8(type._jvmExpression.replace('.', '/')));
 			os.write2(0);
 		}
 	}

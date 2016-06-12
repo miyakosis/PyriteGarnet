@@ -55,7 +55,7 @@ public class Compiler
 //		});
 
 //		__logger.setLevel(Level.ALL);
-		ch.setLevel(Level.ALL);
+		ch.setLevel(Level.WARNING);
 		logger.addHandler(ch);
 		logger.setUseParentHandlers(false);
 

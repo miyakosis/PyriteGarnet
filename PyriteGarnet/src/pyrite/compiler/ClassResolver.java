@@ -745,13 +745,20 @@ public class ClassResolver
 		// メソッドが存在するかチェックする
 		ClassFieldMember cls = getClassFieldMember(fqcn);
 
-		List<MethodType>	resultTypeList = new ArrayList<MethodType>();
 		List<MethodParamSignature>	resultMethodParamSignatureList = new ArrayList<MethodParamSignature>();
 
 		for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 		{
 			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
-			String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, fqcn._className, methodParamSignature._methodParamSignarure);
+//			String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, fqcn._className, methodParamSignature._methodParamSignarure);
+			StringBuilder	sb = new StringBuilder();
+			sb.append(Pattern.quote(cls._fqcn._fqcnStr));
+			sb.append("\\.");
+			sb.append("<init>");
+			sb.append("\\(");
+			sb.append(methodParamSignature._methodParamSignarure);
+			sb.append("\\)");
+			String	methodSignature = sb.toString();
 
 			for (MethodType m : cls._constructorMap.values())
 			{
@@ -768,7 +775,7 @@ public class ClassResolver
 			}
 		}
 
-		if (resultTypeList.size() > 0)
+		if (resultMethodParamSignatureList.size() > 0)
 		{	// 最適なメソッド定義がどれかを判別して返す
 			return	checkClassPriority(resultMethodParamSignatureList);
 		}

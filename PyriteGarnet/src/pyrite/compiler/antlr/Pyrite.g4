@@ -590,11 +590,11 @@ statement
     |   'var' variableDeclarationStatement ';' 		# StatementVar
     |   'return' expression? ';'					# StatementReturn
     |   'if' ifStatement							# StatementIf		// not used
-    |   label 'while' parExpression block			# StatementWhile
-    |   label 'for' '(' forControl ')' block		# StatementFor
+    |   (Identifier ':')? 'while' parExpression block			# StatementWhile
+    |   (Identifier ':')? 'for' '(' forControl ')' block		# StatementFor
     |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'	# StatementSwitch
-    |   'break' label ';'							# StatementBreak
-    |   'continue' label ';'						# StatementContinue
+    |   'break' Identifier? ';'							# StatementBreak
+    |   'continue' Identifier? ';'						# StatementContinue
     |   'try' block (catchClause+ finallyBlock? | finallyBlock)	# StatementTry
     |   'throw' expression ';'						# StatementThrow
     |   'synchronized' parExpression block			# StatementSynchronized
@@ -607,10 +607,6 @@ variableDeclarationStatement
 variableDeclaration
 	:   Identifier (':' typeOrArray)?
 	;
-
-label
-    :    Identifier?
-    ;
 
 ifStatement
     :	parExpression fulfillmentBlock=block ('else' ('if' ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
@@ -826,6 +822,7 @@ expression
 
 primary
     :	'(' expression ')'		# primaryParens
+    |   'this'                  # primaryThis
     |   literal                 # primaryLiteral		// not used
     |   Identifier              # primaryIdentifier
     ;

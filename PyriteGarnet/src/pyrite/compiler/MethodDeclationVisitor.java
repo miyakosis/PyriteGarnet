@@ -216,7 +216,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		VarType[] returnTypes = {ObjectType.getType(className)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_fqcn, className, paramTypes, returnTypes, Modifier.PUBLIC);	// TODO:暫定で public で作成する
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, "<init>", paramTypes, returnTypes, Modifier.PUBLIC);	// TODO:暫定で public で作成する
 
 		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
