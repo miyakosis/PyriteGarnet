@@ -150,8 +150,8 @@ public class SourceFile extends ClassRelatedFile
 		createConstructorConstantPool(_declaredMember._constructorMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._classMethodMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._instanceMethodMap.values(), _cpm);
-		createFieldConstantPool(_declaredMember._classFieldMap.values(), _cpm);
-		createFieldConstantPool(_declaredMember._instanceFieldMap.values(), _cpm);
+		createFieldConstantPool(_declaredMember._classFieldMap, _cpm);
+		createFieldConstantPool(_declaredMember._instanceFieldMap, _cpm);
 	}
 
 
@@ -231,11 +231,12 @@ public class SourceFile extends ClassRelatedFile
 	}
 
 	// 定義されているフィールドのコンスタントプールを作成
-	private static void createFieldConstantPool(Collection<VarType> varTypes, ConstantPoolManager cpm)
+	private static void createFieldConstantPool(Map<String, VarType> map, ConstantPoolManager cpm)
 	{
-		for (VarType varType : varTypes)
+		for (Map.Entry<String, VarType> entry : map.entrySet())
 		{
-			cpm.getUtf8(varType._jvmExpression.replace('.', '/'));
+			cpm.getUtf8(entry.getKey());
+			cpm.getUtf8(entry.getValue()._jvmExpression.replace('.', '/'));
 		}
 	}
 
@@ -330,14 +331,16 @@ public class SourceFile extends ClassRelatedFile
 			//	attribute_info attributes[attributes_count];
 			//}
 				byte[]	code = StringUtil.toByteArray(method._code.getCodeList());
+				List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
+				int	attrubuteLength = 2 + 2 + 4 + code.length + 2 + (exceptionTableEntryList.size() * 2 * 4) + 2 + 0;	// max_stack ～ attribute_info の長さ
+
 				os.write2(cpm.getUtf8("Code"));
-				os.write4(2 + 2 + 4 + code.length + 2 + 0 + 2 + 0);	// max_stack 以降の長さ
+				os.write4(attrubuteLength);
 				os.write2(method.getMaxStack());
 				os.write2(method.getMaxLocal());
 				os.write4(code.length);
 				os.write(code);
 
-				List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
 				os.write2(exceptionTableEntryList.size());	// exception_table_length
 				for (ExceptionTableEntry entry : exceptionTableEntryList)
 				{

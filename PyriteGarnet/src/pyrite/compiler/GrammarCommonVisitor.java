@@ -243,9 +243,9 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 	{
 		String	fqcnStr = ctx.getText();
 		FQCN	fqcn = _idm.resolveClassName(fqcnStr);
-		if (_cr.existsFQCN(fqcn) == false)
+		if (fqcn == null || _cr.existsFQCN(fqcn) == false)
 		{
-			throw new PyriteSyntaxException("class not found.");
+			throw new PyriteSyntaxException("class not found.:" + fqcnStr);
 		}
 		return	ObjectType.getType(fqcn._fqcnStr);
 	}

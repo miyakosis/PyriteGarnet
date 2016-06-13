@@ -200,17 +200,26 @@ public class ClassResolver
 	{
 		Logger.getGlobal().finest("\t" + filePathName);
 		String[]	element = filePathName.split("/");
-		String	packageName = element[0];
-		String	className = element[element.length - 1];
-		className = className.substring(0, className.indexOf('.'));
+		String	packageName;
 
 		// パッケージ情報を保持する
-		_packageMapMap.put(packageName);
-		for (int i = 1; i < element.length - 1; ++i)
+		if (element.length == 1)
 		{
-			packageName = packageName + "." + element[i];
+			packageName = "";
 			_packageMapMap.put(packageName);
 		}
+		else
+		{
+			packageName = element[0];
+			_packageMapMap.put(packageName);
+			for (int i = 1; i < element.length - 1; ++i)
+			{
+				packageName = packageName + "." + element[i];
+				_packageMapMap.put(packageName);
+			}
+		}
+		String	className = element[element.length - 1];
+		className = className.substring(0, className.indexOf('.'));
 
 		ClassRelatedFile	crf = _packageMapMap.get(packageName, className);
 		if (crf == null)
@@ -1182,7 +1191,11 @@ public class ClassResolver
 							throw new PyriteSyntaxException(".pyrc info unmatched.");
 						}
 						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
-						_classMethodMap.put(signature, newMethodType);
+
+						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
+						boolean result = _classMethodNameMapList.remove(methodType._methodName, methodType);
+						assert(result);
+						addMethodType(newMethodType);
 					}
 					else if ((methodType = _instanceMethodMap.get(signature)) != null)
 					{
@@ -1191,7 +1204,11 @@ public class ClassResolver
 							throw new PyriteSyntaxException(".pyrc info unmatched.");
 						}
 						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
-						_instanceMethodMap.put(signature, newMethodType);
+
+						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
+						boolean result = _instanceMethodNameMapList.remove(methodType._methodName, methodType);
+						assert(result);
+						addMethodType(newMethodType);
 					}
 					else
 					{

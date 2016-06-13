@@ -58,6 +58,7 @@ public class Compiler
 		ch.setLevel(Level.WARNING);
 		logger.addHandler(ch);
 		logger.setUseParentHandlers(false);
+		logger.setLevel(Level.ALL);
 
 		Compiler.getInstance().compile(args);
 		Compiler.getInstance().createClassFiles();

@@ -4391,28 +4391,31 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //				return	new AssignLeftExpressionType(varTypeName._type, 1, varTypeName._localVarNum, null, null);
 			}
 
-			varType = _thisClassFieldMember._instanceFieldMap.get(id);
-			if (varType != null)
-			{	// instance field
-				if (_currentMethodCodeDeclation._isStatic)
-				{	// static メソッドで インスタンス変数は使用できない
-					throw new PyriteSyntaxException("instance field is not usable at static context. ");
+			for (ClassFieldMember cfm = _thisClassFieldMember; cfm != null; cfm = cfm._superCFM)
+			{
+				varType = cfm._instanceFieldMap.get(id);
+				if (varType != null)
+				{	// instance field
+					if (_currentMethodCodeDeclation._isStatic)
+					{	// static メソッドで インスタンス変数は使用できない
+						throw new PyriteSyntaxException("instance field is not usable at static context. ");
+					}
+					_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);	// 代入先オブジェクトとして自オブジェクトを指定
+					return	new LValueType(LValueType.TYPE.INSTANCE, varType, _cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+
+					//				cgv.setLeftExpressionVarType(2, -1, className, _id);
+//					return	varType;
+//					return	new AssignLeftExpressionType(varType, 2, -1, _fqcn._fqcnStr, id);
 				}
-				_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);	// 代入先オブジェクトとして自オブジェクトを指定
-				return	new LValueType(LValueType.TYPE.INSTANCE, varType, _cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
 
-				//				cgv.setLeftExpressionVarType(2, -1, className, _id);
-//				return	varType;
-//				return	new AssignLeftExpressionType(varType, 2, -1, _fqcn._fqcnStr, id);
-			}
-
-			varType = _thisClassFieldMember._classFieldMap.get(id);
-			if (varType != null)
-			{	// class field
-				return	new LValueType(LValueType.TYPE.CLASS, varType, _cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-//				cgv.setLeftExpressionVarType(3, -1, className, _id);
-//				return	varType;
-//				return	new AssignLeftExpressionType(varType, 3, -1, _fqcn._fqcnStr, id);
+				varType = cfm._classFieldMap.get(id);
+				if (varType != null)
+				{	// class field
+					return	new LValueType(LValueType.TYPE.CLASS, varType, _cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+//					cgv.setLeftExpressionVarType(3, -1, className, _id);
+//					return	varType;
+//					return	new AssignLeftExpressionType(varType, 3, -1, _fqcn._fqcnStr, id);
+				}
 			}
 		}
 		else
@@ -4482,61 +4485,64 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				return	varTypeName._type;
 			}
 
-			if (_currentMethodCodeDeclation._isStatic)
+			for (ClassFieldMember cfm = _thisClassFieldMember; cfm != null; cfm = cfm._superCFM)
 			{
-				// class field
-				varType = _thisClassFieldMember._classFieldMap.get(id);
-				if (varType != null)
+				if (_currentMethodCodeDeclation._isStatic)
 				{
-					_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
-					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-					return	varType;
-				}
+					// class field
+					varType = cfm._classFieldMap.get(id);
+					if (varType != null)
+					{
+						_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+						return	varType;
+					}
 
-				// class method
-				if (_thisClassFieldMember._classMethodNameMapList.containsKey(id))
-				{
-					return	MethodNameType.getType(_fqcn, id, false);
-				}
+					// class method
+					if (cfm._classMethodNameMapList.containsKey(id))
+					{
+						return	MethodNameType.getType(_fqcn, id, false);
+					}
 
-				// instance field / instance method
-				varType = _thisClassFieldMember._instanceFieldMap.get(id);
-				if (varType != null || _thisClassFieldMember._instanceMethodNameMapList.containsKey(id))
-				{
-					throw new PyriteSyntaxException("instance field / method is not usable at static context. ");
+					// instance field / instance method
+					varType = cfm._instanceFieldMap.get(id);
+					if (varType != null || cfm._instanceMethodNameMapList.containsKey(id))
+					{
+						throw new PyriteSyntaxException("instance field / method is not usable at static context. ");
+					}
 				}
-			}
-			else
-			{	// instance → class の順で判定
-				// instance field
-				varType = _thisClassFieldMember._instanceFieldMap.get(id);
-				if (varType != null)
-				{
-					_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
-					_currentMethodCodeDeclation._code.addCodeOp(BC.GETFIELD);
-					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-					return	varType;
-				}
+				else
+				{	// instance → class の順で判定
+					// instance field
+					varType = cfm._instanceFieldMap.get(id);
+					if (varType != null)
+					{
+						_currentMethodCodeDeclation._code.addCodeOp(BC.ALOAD_0);
+						_currentMethodCodeDeclation._code.addCodeOp(BC.GETFIELD);
+						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+						return	varType;
+					}
 
-				// instance method
-				if (_thisClassFieldMember._instanceMethodNameMapList.containsKey(id))
-				{
-					return	MethodNameType.getType(_fqcn, id, false);
-				}
+					// instance method
+					if (cfm._instanceMethodNameMapList.containsKey(id))
+					{
+						return	MethodNameType.getType(_fqcn, id, false);
+					}
 
-				// class field
-				varType = _thisClassFieldMember._classFieldMap.get(id);
-				if (varType != null)
-				{
-					_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
-					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-					return	varType;
-				}
+					// class field
+					varType = cfm._classFieldMap.get(id);
+					if (varType != null)
+					{
+						_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
+						return	varType;
+					}
 
-				// class method
-				if (_thisClassFieldMember._classMethodNameMapList.containsKey(id))
-				{
-					return	MethodNameType.getType(_fqcn, id, false);
+					// class method
+					if (cfm._classMethodNameMapList.containsKey(id))
+					{
+						return	MethodNameType.getType(_fqcn, id, false);
+					}
 				}
 			}
 
