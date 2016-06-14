@@ -658,7 +658,7 @@ public class ClassResolver
 			String	paramSignature = paramSignaturePrev;
 			if (inputParamTypeClassHierarchy._type == VarType.NULL)
 			{
-				paramSignature += "L[.+?];";	// どのクラスにも合うように正規表現設定する
+				paramSignature += "L.+?;";	// どのクラスにも合うように正規表現設定する
 			}
 			else
 			{

@@ -218,6 +218,10 @@ public class BC
 	// オペレーション実行後に増減するスタックの量
 	public final static Map<Byte, Integer>	STACK_INCDEC = new HashMap<Byte, Integer>();
 
+	// オペレータのオペランド数
+	public final static Map<Byte, Integer>	N_OPERAND = new HashMap<Byte, Integer>();
+
+
 	static
 	{
 		STACK_INCDEC.put(AALOAD, -1);
@@ -425,6 +429,218 @@ public class BC
 		STACK_INCDEC.put(SWAP, 0);
 		STACK_INCDEC.put(TABLESWITCH, -1);
 		STACK_INCDEC.put(WIDE, 0);
+
+
+		N_OPERAND.put(AALOAD, 0);
+		N_OPERAND.put(AASTORE, 0);
+		N_OPERAND.put(ACONST_NULL, 0);
+		N_OPERAND.put(ALOAD, 1);
+		N_OPERAND.put(ALOAD_0, 0);
+		N_OPERAND.put(ALOAD_1, 0);
+		N_OPERAND.put(ALOAD_2, 0);
+		N_OPERAND.put(ALOAD_3, 0);
+		N_OPERAND.put(ANEWARRAY, 2);
+		N_OPERAND.put(ARETURN, 0);
+		N_OPERAND.put(ARRAYLENGTH, 0);
+		N_OPERAND.put(ASTORE, 1);
+		N_OPERAND.put(ASTORE_0, 0);
+		N_OPERAND.put(ASTORE_1, 0);
+		N_OPERAND.put(ASTORE_2, 0);
+		N_OPERAND.put(ASTORE_3, 0);
+		N_OPERAND.put(ATHROW, 0);
+		N_OPERAND.put(BALOAD, 0);
+		N_OPERAND.put(BASTORE, 0);
+		N_OPERAND.put(BIPUSH, 1);
+		N_OPERAND.put(CALOAD, 0);
+		N_OPERAND.put(CASTORE, 0);
+		N_OPERAND.put(CHECKCAST, 2);
+		N_OPERAND.put(D2F, 0);
+		N_OPERAND.put(D2I, 0);
+		N_OPERAND.put(D2L, 0);
+		N_OPERAND.put(DADD, 0);
+		N_OPERAND.put(DALOAD, 0);
+		N_OPERAND.put(DASTORE, 0);
+		N_OPERAND.put(DCMPG, 0);
+		N_OPERAND.put(DCMPL, 0);
+		N_OPERAND.put(DCONST_0, 0);
+		N_OPERAND.put(DCONST_1, 0);
+		N_OPERAND.put(DDIV, 0);
+		N_OPERAND.put(DLOAD, 1);
+		N_OPERAND.put(DLOAD_0, 0);
+		N_OPERAND.put(DLOAD_1, 0);
+		N_OPERAND.put(DLOAD_2, 0);
+		N_OPERAND.put(DLOAD_3, 0);
+		N_OPERAND.put(DMUL, 0);
+		N_OPERAND.put(DNEG, 0);
+		N_OPERAND.put(DREM, 0);
+		N_OPERAND.put(DRETURN, 0);
+		N_OPERAND.put(BREAKPOINT, 0);	// 要定義確認
+		N_OPERAND.put(DSTORE, 1);
+		N_OPERAND.put(DSTORE_0, 0);
+		N_OPERAND.put(DSTORE_1, 0);
+		N_OPERAND.put(DSTORE_2, 0);
+		N_OPERAND.put(DSTORE_3, 0);
+		N_OPERAND.put(DSUB, 0);
+		N_OPERAND.put(DUP, 0);
+		N_OPERAND.put(DUP2, 0);
+		N_OPERAND.put(DUP2_X1, 0);
+		N_OPERAND.put(DUP2_X2, 0);
+		N_OPERAND.put(DUP_X1, 0);
+		N_OPERAND.put(DUP_X2, 0);
+		N_OPERAND.put(F2D, 0);
+		N_OPERAND.put(F2I, 0);
+		N_OPERAND.put(F2L, 0);
+		N_OPERAND.put(FADD, 0);
+		N_OPERAND.put(FALOAD, 0);
+		N_OPERAND.put(FASTORE, 0);
+		N_OPERAND.put(FCMPG, 0);
+		N_OPERAND.put(FCMPL, 0);
+		N_OPERAND.put(FCONST_0, 0);
+		N_OPERAND.put(FCONST_1, 0);
+		N_OPERAND.put(FCONST_2, 0);
+		N_OPERAND.put(FDIV, 0);
+		N_OPERAND.put(FLOAD, 1);
+		N_OPERAND.put(FLOAD_0, 0);
+		N_OPERAND.put(FLOAD_1, 0);
+		N_OPERAND.put(FLOAD_2, 0);
+		N_OPERAND.put(FLOAD_3, 0);
+		N_OPERAND.put(FMUL, 0);
+		N_OPERAND.put(FNEG, 0);
+		N_OPERAND.put(FREM, 0);
+		N_OPERAND.put(FRETURN, 0);
+		N_OPERAND.put(FSTORE, 1);
+		N_OPERAND.put(FSTORE_0, 0);
+		N_OPERAND.put(FSTORE_1, 0);
+		N_OPERAND.put(FSTORE_2, 0);
+		N_OPERAND.put(FSTORE_3, 0);
+		N_OPERAND.put(FSUB, 0);
+		N_OPERAND.put(GETFIELD, 2);
+		N_OPERAND.put(GETSTATIC, 2);
+		N_OPERAND.put(GOTO, 2);
+		N_OPERAND.put(GOTO_W, 4);
+		N_OPERAND.put(I2B, 0);
+		N_OPERAND.put(I2C, 0);
+		N_OPERAND.put(I2D, 0);
+		N_OPERAND.put(I2F, 0);
+		N_OPERAND.put(I2L, 0);
+		N_OPERAND.put(I2S, 0);
+		N_OPERAND.put(IADD, 0);
+		N_OPERAND.put(IALOAD, 0);
+		N_OPERAND.put(IAND, 0);
+		N_OPERAND.put(IASTORE, 0);
+		N_OPERAND.put(ICONST_0, 0);
+		N_OPERAND.put(ICONST_1, 0);
+		N_OPERAND.put(ICONST_2, 0);
+		N_OPERAND.put(ICONST_3, 0);
+		N_OPERAND.put(ICONST_4, 0);
+		N_OPERAND.put(ICONST_5, 0);
+		N_OPERAND.put(ICONST_M1, 0);
+
+		// TODO:
+		N_OPERAND.put(IDIV, 0);
+		N_OPERAND.put(IFEQ, 2);
+		N_OPERAND.put(IFGE, 2);
+		N_OPERAND.put(IFGT, 2);
+		N_OPERAND.put(IFLE, 2);
+		N_OPERAND.put(IFLT, 2);
+		N_OPERAND.put(IFNE, 2);
+		N_OPERAND.put(IFNONNULL, 2);
+		N_OPERAND.put(IFNULL, 2);
+		N_OPERAND.put(IF_ACMPEQ, 2);
+		N_OPERAND.put(IF_ACMPNE, 2);
+		N_OPERAND.put(IF_ICMPEQ, 2);
+		N_OPERAND.put(IF_ICMPGE, 2);
+		N_OPERAND.put(IF_ICMPGT, 2);
+		N_OPERAND.put(IF_ICMPLE, 2);
+		N_OPERAND.put(IF_ICMPLT, 2);
+		N_OPERAND.put(IF_ICMPNE, 2);
+		N_OPERAND.put(IINC, 2);
+		N_OPERAND.put(ILOAD, 1);
+		N_OPERAND.put(ILOAD_0, 0);
+		N_OPERAND.put(ILOAD_1, 0);
+		N_OPERAND.put(ILOAD_2, 0);
+		N_OPERAND.put(ILOAD_3, 0);
+		N_OPERAND.put(IMPDEP1, 0);	// no def
+		N_OPERAND.put(IMPDEP2, 0);	// no def
+		N_OPERAND.put(IMUL, 0);
+		N_OPERAND.put(INEG, 0);
+		N_OPERAND.put(INSTANCEOF, 2);
+		N_OPERAND.put(INVOKEDYNAMIC, 4);	// no def 引数の数をさらに減少?
+		N_OPERAND.put(INVOKEINTERFACE, 4);
+		N_OPERAND.put(INVOKESPECIAL, 2);
+		N_OPERAND.put(INVOKESTATIC, 2);
+		N_OPERAND.put(INVOKEVIRTUAL, 2);
+		N_OPERAND.put(IOR, 0);
+		N_OPERAND.put(IREM, 0);
+		N_OPERAND.put(IRETURN, 0);
+		N_OPERAND.put(ISHL, 0);
+		N_OPERAND.put(ISHR, 0);
+		N_OPERAND.put(ISTORE, 1);
+		N_OPERAND.put(ISTORE_0, 0);
+		N_OPERAND.put(ISTORE_1, 0);
+		N_OPERAND.put(ISTORE_2, 0);
+		N_OPERAND.put(ISTORE_3, 0);
+		N_OPERAND.put(ISUB, 0);
+		N_OPERAND.put(IUSHR, 0);
+		N_OPERAND.put(IXOR, 0);
+		N_OPERAND.put(JSR, 2);
+		N_OPERAND.put(JSR_W, 4);
+		N_OPERAND.put(L2D, 0);
+		N_OPERAND.put(L2F, 0);
+		N_OPERAND.put(L2I, 0);
+		N_OPERAND.put(LADD, 0);
+		N_OPERAND.put(LALOAD, 0);
+		N_OPERAND.put(LAND, 0);
+		N_OPERAND.put(LASTORE, 0);
+		N_OPERAND.put(LCMP, 0);
+		N_OPERAND.put(LCONST_0, 0);
+		N_OPERAND.put(LCONST_1, 0);
+		N_OPERAND.put(LDC, 1);
+		N_OPERAND.put(LDC_W, 2);
+		N_OPERAND.put(LDC2_W, 2);
+		N_OPERAND.put(LDIV, 0);
+		N_OPERAND.put(LLOAD, 1);
+		N_OPERAND.put(LLOAD_0, 0);
+		N_OPERAND.put(LLOAD_1, 0);
+		N_OPERAND.put(LLOAD_2, 0);
+		N_OPERAND.put(LLOAD_3, 0);
+		N_OPERAND.put(LMUL, 0);
+		N_OPERAND.put(LNEG, 0);
+
+		// TODO
+		N_OPERAND.put(LOOKUPSWITCH, 0);
+		N_OPERAND.put(LOR, 0);
+		N_OPERAND.put(LREM, 0);
+		N_OPERAND.put(LRETURN, 0);
+		N_OPERAND.put(LSHL, 0);
+		N_OPERAND.put(LSHR, 0);
+		N_OPERAND.put(LSTORE, 0);
+		N_OPERAND.put(LSTORE_0, 0);
+		N_OPERAND.put(LSTORE_1, 0);
+		N_OPERAND.put(LSTORE_2, 0);
+		N_OPERAND.put(LSTORE_3, 0);
+		N_OPERAND.put(LSUB, 0);
+		N_OPERAND.put(LUSHR, 0);
+		N_OPERAND.put(LXOR, 0);
+		N_OPERAND.put(MONITORENTER, 0);
+		N_OPERAND.put(MONITOREXIT, 0);
+		N_OPERAND.put(MULTIANEWARRAY, 1);	// 配列の次元数分をさらに減少
+		N_OPERAND.put(NEW, 1);
+		N_OPERAND.put(NEWARRAY, 0);
+		N_OPERAND.put(NOP, 0);
+		N_OPERAND.put(POP, 0);
+		N_OPERAND.put(POP2, 0);
+		N_OPERAND.put(PUTFIELD, 0);	// 設定するフィールドがlong, doubleの場合はさらに0?
+		N_OPERAND.put(PUTSTATIC, 0);	// 設定するフィールドがlong, doubleの場合はさらに0?
+		N_OPERAND.put(RET, 0);
+		N_OPERAND.put(RETURN, 0);
+		N_OPERAND.put(SALOAD, 0);
+		N_OPERAND.put(SASTORE, 0);
+		N_OPERAND.put(SIPUSH, 1);
+		N_OPERAND.put(SWAP, 0);
+		N_OPERAND.put(TABLESWITCH, 0);
+		N_OPERAND.put(WIDE, 0);
+
 	}
 
 	public final static int	ACC_PUBLIC = 0x0001;		// C F M IC

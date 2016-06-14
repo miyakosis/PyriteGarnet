@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import pyrite.compiler.ClassResolver.ClassFieldMember;
 import pyrite.compiler.ClassResolver.MethodParamSignature;
 import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.compiler.MethodCodeDeclation.ExceptionTableEntry;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.antlr.PyriteParser.StatementContext;
 import pyrite.compiler.type.ArrayType;
@@ -4152,16 +4153,18 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			for (PyriteParser.CatchClauseContext catchCtx : ctx.catchClause())
 			{
-				int	exceptionStartPos = _currentMethodCodeDeclation._code.getCodePos();
+				int	catchStartPos = _currentMethodCodeDeclation._code.getCodePos();
 				VarType	exceptionType = (VarType)visit(catchCtx);
 				catchClauseEndPosList.add(_currentMethodCodeDeclation._code.getCodePos());
 				_currentMethodCodeDeclation._code.addCodeOp(BC.GOTO);
 				_currentMethodCodeDeclation._code.addCodeU2(0);	// プレースホルダで置いておく
 
 				// Exception table 登録
-				_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, blockEndPos + 3, exceptionStartPos, _cpm.getClassRef(exceptionType._fqcn._fqcnStr));
+				_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, blockEndPos + 3, catchStartPos, _cpm.getClassRef(exceptionType._fqcn._fqcnStr));
 			}
 		}
+
+		// TODO: return や throw をした際の finally の実行
 
 		// finally
 		int	jmpDistPos;
@@ -4169,7 +4172,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			// block 内で例外が発生した際のfinallyコード(最後に例外をathrowする)と、例外が発生しなかった際のfinallyコードの両方を作成する。
 			// バイトコードは、例外発生時のfinally → 通常のfinally(finally節を抜けて後続処理に続く) の順番にする。
-			int	currentStackSize = _currentMethodCodeDeclation._code.getCurrentStackSize();	// 現時点でのスタックサイズ
+			int	currentStackSize = _currentMethodCodeDeclation._code.getCurrentStackSize();	// 現時点でのスタックサイズを保持しておく
 			_currentMethodCodeDeclation._code.setCurrentStackSize(_currentMethodCodeDeclation._code.getMaxStack());	// どこのタイミングで例外が発生してくるか分からないため、最大サイズをベースに増減計算をする
 
 			int	finallyStartPos = _currentMethodCodeDeclation._code.getCodePos();
@@ -4185,7 +4188,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// 例外再送出コードの追加
 			_currentMethodCodeDeclation._code.addCodeOpALOAD(exceptionVar._localVarNum);
 			_currentMethodCodeDeclation._code.addCodeOp(BC.ATHROW);
-			int	finallyEndPos = _currentMethodCodeDeclation._code.getCodePos();
 
 
 			// 通常finally コードの追加
@@ -4199,6 +4201,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// try-catch 節のどこで例外が発生しても finally 節を実行するよう、any で登録する
 			_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, finallyStartPos, finallyStartPos, 0);	// anyの場合は0
 
+			// block や catch 節にて、return や throw がある場合、finally のコードをその直前で実行するため、通常 finally コードをその前に挿入する
+			insertFinallyCode(finallyCodeList, blockStartPos, finallyStartPos, catchClauseEndPosList, _currentMethodCodeDeclation.getExceptionTableList());
+
 			jmpDistPos = finallyNStartPos;
 		}
 		else
@@ -4208,18 +4213,87 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 
 
 		// ジャンプ位置の設定
+		// ブロック終了時のジャンプ
 		int	jmpDistance = jmpDistPos - blockEndPos;
-		_currentMethodCodeDeclation._code.replaceCodeU2(blockEndPos + 1, jmpDistance);
+		_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, blockEndPos + 1);
 
+		// catch節終了時のジャンプ
 		for (int i = 0; i < catchClauseEndPosList.size(); ++i)
 		{
 			int	pos = catchClauseEndPosList.get(i);
 			jmpDistance = jmpDistPos - pos;
-			_currentMethodCodeDeclation._code.replaceCodeU2(pos + 1, jmpDistance);
+			_currentMethodCodeDeclation._code.replaceCodeU2(jmpDistance, pos + 1);
 		}
-		// TODO: コード挿入で他のレベルのジャンプ位置がずれないか要検討。相対位置だから大丈夫かも?
 
 		return	null;
+	}
+
+	// block や catch 節にて、return や throw がある場合、finally のコードをその直前で実行するため、通常 finally コードをその前に挿入する
+	// その際に、保持している catch節末尾のジャンプ位置、Exception テーブルの範囲、飛び先をコード挿入に合わせて修正する
+	protected void insertFinallyCode(
+			List<Byte> finallyCodeList,
+			int startPos,
+			int endPos,
+			List<Integer> catchClauseEndPosList, List<ExceptionTableEntry> exceptionTableList)
+	{
+		int	codeLen = finallyCodeList.size();
+		List<Byte>	baseCodeList = _currentMethodCodeDeclation._code.getCodeList();
+
+		int pos = startPos;
+		for (;;)
+		{
+			int	jmpOp = searchJmpOp(baseCodeList, pos, endPos);	// ジャンプコードの位置を検索する
+			if (jmpOp < 0)
+			{
+				break;
+			}
+
+			// コード挿入位置以降のジャンプ位置をずらす
+			for (int i = 0; i < catchClauseEndPosList.size(); ++i)
+			{
+				if (jmpOp < catchClauseEndPosList.get(i))
+				{	// 新しい値で置き換える
+					catchClauseEndPosList.set(i, catchClauseEndPosList.get(i) + codeLen);
+				}
+			}
+
+			for (int i = 0; i < exceptionTableList.size(); ++i)
+			{
+				ExceptionTableEntry	e = exceptionTableList.get(i);
+				if (jmpOp < e._endPc)
+				{	// 新しい値で置き換える
+					ExceptionTableEntry	newE = new ExceptionTableEntry(e._startPc, e._endPc + codeLen, e._handlerPc + codeLen, e._catchType);
+					exceptionTableList.set(i, newE);
+				}
+				else if (jmpOp < e._handlerPc)
+				{	// 新しい値で置き換える
+					ExceptionTableEntry	newE = new ExceptionTableEntry(e._startPc, e._endPc, e._handlerPc + codeLen, e._catchType);
+					exceptionTableList.set(i, newE);
+				}
+			}
+
+			// finallyコードの挿入
+			_currentMethodCodeDeclation._code.addCodeBlock(finallyCodeList, pos);
+
+			pos = jmpOp + codeLen + 1;
+		}
+	}
+
+	private int searchJmpOp(List<Byte> baseCodeList, int startPos, int endPos)
+	{
+		int	operandNum = 0;
+		for (int pos = startPos; pos < endPos; pos += operandNum)
+		{
+			byte	op = baseCodeList.get(pos);
+
+			if (op == BC.ARETURN || op == BC.RETURN || op == BC.ATHROW)
+			{
+				return	pos;
+			}
+
+			operandNum = 1 + BC.getOperandNum(op);
+		}
+		return	-1;
 	}
 
 	// catchClause
