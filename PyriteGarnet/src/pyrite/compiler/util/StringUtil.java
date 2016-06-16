@@ -94,4 +94,21 @@ public class StringUtil
 		}
 		return	ba;
 	}
+
+	public static int	toInt(byte b1, byte b2, byte b3, byte b4)
+	{
+		return	((b1 << 24) & 0xff000000)
+				| ((b2 << 16) & 0x00ff0000)
+				| ((b3 << 8) & 0x0000ff00)
+				| (b4 & 0x000000ff);
+	}
+	/*
+	public static int	toInt(byte[] ba, int pos)
+	{
+		return	((ba[pos] << 24) & 0xff000000)
+				| ((ba[pos + 1] << 16) & 0x00ff0000)
+				| ((ba[pos + 2] << 8) & 0x0000ff00)
+				| (ba[pos + 3] & 0x000000ff);
+	}
+	*/
 }

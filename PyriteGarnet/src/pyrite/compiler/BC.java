@@ -221,7 +221,6 @@ public class BC
 	// オペレータのオペランド数
 	public final static Map<Byte, Integer>	N_OPERAND = new HashMap<Byte, Integer>();
 
-
 	static
 	{
 		STACK_INCDEC.put(AALOAD, -1);
@@ -606,15 +605,13 @@ public class BC
 		N_OPERAND.put(LLOAD_3, 0);
 		N_OPERAND.put(LMUL, 0);
 		N_OPERAND.put(LNEG, 0);
-
-		// TODO
-		N_OPERAND.put(LOOKUPSWITCH, 0);
+		N_OPERAND.put(LOOKUPSWITCH, 0);	// TODO:
 		N_OPERAND.put(LOR, 0);
 		N_OPERAND.put(LREM, 0);
 		N_OPERAND.put(LRETURN, 0);
 		N_OPERAND.put(LSHL, 0);
 		N_OPERAND.put(LSHR, 0);
-		N_OPERAND.put(LSTORE, 0);
+		N_OPERAND.put(LSTORE, 1);
 		N_OPERAND.put(LSTORE_0, 0);
 		N_OPERAND.put(LSTORE_1, 0);
 		N_OPERAND.put(LSTORE_2, 0);
@@ -624,22 +621,22 @@ public class BC
 		N_OPERAND.put(LXOR, 0);
 		N_OPERAND.put(MONITORENTER, 0);
 		N_OPERAND.put(MONITOREXIT, 0);
-		N_OPERAND.put(MULTIANEWARRAY, 1);	// 配列の次元数分をさらに減少
-		N_OPERAND.put(NEW, 1);
-		N_OPERAND.put(NEWARRAY, 0);
+		N_OPERAND.put(MULTIANEWARRAY, 3);
+		N_OPERAND.put(NEW, 2);
+		N_OPERAND.put(NEWARRAY, 1);
 		N_OPERAND.put(NOP, 0);
 		N_OPERAND.put(POP, 0);
 		N_OPERAND.put(POP2, 0);
-		N_OPERAND.put(PUTFIELD, 0);	// 設定するフィールドがlong, doubleの場合はさらに0?
-		N_OPERAND.put(PUTSTATIC, 0);	// 設定するフィールドがlong, doubleの場合はさらに0?
-		N_OPERAND.put(RET, 0);
+		N_OPERAND.put(PUTFIELD, 2);
+		N_OPERAND.put(PUTSTATIC, 2);
+		N_OPERAND.put(RET, 1);
 		N_OPERAND.put(RETURN, 0);
 		N_OPERAND.put(SALOAD, 0);
 		N_OPERAND.put(SASTORE, 0);
-		N_OPERAND.put(SIPUSH, 1);
+		N_OPERAND.put(SIPUSH, 2);
 		N_OPERAND.put(SWAP, 0);
-		N_OPERAND.put(TABLESWITCH, 0);
-		N_OPERAND.put(WIDE, 0);
+		N_OPERAND.put(TABLESWITCH, 0);	// TODO
+		N_OPERAND.put(WIDE, 0);		// TODO
 
 	}
 

@@ -152,6 +152,11 @@ public class Compiler
 		sf.parseMethodDeclaration();
 	}
 
+	// 指定ソースファイルのクラス名・メソッド定義を解決する
+	public void compileMetohdDeclation(SourceFile sf)
+	{
+		sf.parseMethodDeclaration();
+	}
 
 	// コンパイルがすべて正常終わったので、クラスファイルを作成する
 	private void createClassFiles() throws IOException

@@ -325,46 +325,51 @@ public class ClassResolver
 			{	// そのようなクラスは無い
 				return	null;
 			}
+			else if (crf instanceof SourceFile)
+			{	// クラス名まで解析されているので、クラス名・メソッド定義のコンパイル実行
+				Compiler.getInstance().compileMetohdDeclation((SourceFile)crf);
 
-			// phase3の段階で、SourceFileは _classCache に登録されているはずなので、ここではClassPathFileのみが取得されるはず
-			assert (crf instanceof ClassPathFile);
-
-			ClassPathFile	cpf = (ClassPathFile)crf;
-			if (cpf.isNeedCompile())
-			{	// コンパイルが必要
-				// クラス名・メソッド定義のコンパイル実行
-				Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourceFilePath());
-
-				// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
 				return	_classCache.get(fqcn._fqcnStr);
 			}
-			else if (cpf.existsClassFile())
-			{	// クラスファイルのみがある
-				try
-				{	// クラス情報をClassLoaderを用いて取得する
-					Class<?>	c = Class.forName(fqcn._fqcnStr);
-					cls = new ClassFieldMember(fqcn, c, this);
-
-					if (cpf.existsPyriteClassFile())
-					{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
-						cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
-					}
-					_classCache.put(fqcn._fqcnStr, cls);
-					return	cls;
-				}
-				catch (ClassNotFoundException e)
-				{
-					throw new RuntimeException("must exist");
-					//						_classCache.put(packageClassName, null);
-					//						return	null;
-				}
-			}
 			else
-			{	// クラスファイルが無いし、Pyriteコンパイルもできない
-				// (このケースはありえない?)
-				return	null;
+			{
+				assert (crf instanceof ClassPathFile);
+
+				ClassPathFile	cpf = (ClassPathFile)crf;
+				if (cpf.isNeedCompile())
+				{	// コンパイルが必要
+					// クラス名・メソッド定義のコンパイル実行
+					Compiler.getInstance().compileMetohdDeclation(fqcn, cpf.getSourceFilePath());
+
+					// コンパイルによってクラス名が正常に解決できるなら、_classCacheにオブジェクトが登録されている
+					return	_classCache.get(fqcn._fqcnStr);
+				}
+				else if (cpf.existsClassFile())
+				{	// クラスファイルのみがある
+					try
+					{	// クラス情報をClassLoaderを用いて取得する
+						Class<?>	c = Class.forName(fqcn._fqcnStr);
+						cls = new ClassFieldMember(fqcn, c, this);
+
+						if (cpf.existsPyriteClassFile())
+						{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
+							cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
+						}
+						_classCache.put(fqcn._fqcnStr, cls);
+						return	cls;
+					}
+					catch (ClassNotFoundException e)
+					{
+						throw new RuntimeException("assert:must exist");
+					}
+				}
+				else
+				{	// クラスファイルが無いし、Pyriteコンパイルもできない
+					throw new RuntimeException("assert:must exist");
+				}
 			}
 		}
+
 		return	cls;
 	}
 

@@ -213,7 +213,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 			paramTypes[i] = inParamList.get(i)._type;
 		}
 
-		VarType[] returnTypes = {ObjectType.getType(className)};
+		VarType[] returnTypes = {ObjectType.getType(_fqcn._fqcnStr)};
 
 		// メソッド定義を作成
 		 MethodType	type = (MethodType)MethodType.getType(_fqcn, "<init>", paramTypes, returnTypes, Modifier.PUBLIC);	// TODO:暫定で public で作成する

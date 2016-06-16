@@ -136,7 +136,7 @@ public class SourceFile extends ClassRelatedFile
 		if (_declaredMember._constructorMap.size() == 0)
 		{	// コンストラクタが定義されていない場合は、デフォルトコンストラクタの宣言を作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
-			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._className)};
+			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._fqcnStr)};
 
 			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, "<init>", inParamType, outParamType, 0);
 			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);

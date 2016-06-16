@@ -137,6 +137,27 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 //		return	undeclaredMethodSet;
 //	}
 
+	// packageDeclaration? importDeclaration* classDeclaration EOF
+	@Override
+	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
+	{
+		// package と import は解析済みのためスキップ
+
+		// class
+		visit(ctx.classDeclaration());
+		return	null;
+	}
+
+
+	/*
+	// package
+	@Override
+	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
+	{	// import節の qualifiedName の解決は、メソッド本体の qualifiedName の解決と競合するため、ここでは何も処理を行わない
+		// (解析済みであるため行う必要もない)
+		return	null;
+	}
+
 	// 'import' qualifiedName ('.' '*')? ';'
 	@Override
 	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
@@ -144,6 +165,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		// (解析済みであるため行う必要もない)
 		return	null;
 	}
+	*/
 
 	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
 	@Override
@@ -1125,6 +1147,8 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				{	// クラスメソッド
 					return	MethodNameType.getType(expressionVarType._fqcn, id, true);
 				}
+
+				// TODO: instance.class field の場合、どうするか
 
 				// TODO:クラス.クラスはとりあえず未サポート
 				throw new PyriteSyntaxException("id is not declared. " + id);
@@ -4190,8 +4214,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			_currentMethodCodeDeclation._code.addCodeOp(BC.ATHROW);
 
 
-			// 通常finally コードの追加
+			// finally コードの取得
 			List<Byte>	finallyCodeList = _currentMethodCodeDeclation._code.getCodeBlock(finallyBlockStartPos, finallyBlockEndPos);
+
+			// block や catch 節にて、return がある場合、finally のコードを実行してからreturnするため、通常 finally コードを挿入する
+			int[]	posParams = new int[]{blockEndPos, finallyStartPos};
+			insertFinallyCode(finallyCodeList, blockStartPos, finallyStartPos, catchClauseEndPosList, _currentMethodCodeDeclation.getExceptionTableList(), posParams);
+			blockEndPos = posParams[0];
+			finallyStartPos = posParams[1];
+
+			// 通常finally コードの追加(insertFinallyCodeでコード末尾がずれるので、insert後にコードを追加する)
 			int	finallyNStartPos = _currentMethodCodeDeclation._code.getCodePos();
 			// 例外が発生した際のスタックサイズの増加の方が大きいこと、finally ブロックの出入りの際はスタック増減はないことより、スタック増減は考慮しない
 			_currentMethodCodeDeclation._code.addCodeBlock(finallyCodeList, finallyNStartPos);
@@ -4200,9 +4232,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			// Exception table 登録
 			// try-catch 節のどこで例外が発生しても finally 節を実行するよう、any で登録する
 			_currentMethodCodeDeclation.addExceptionTableEntry(blockStartPos, finallyStartPos, finallyStartPos, 0);	// anyの場合は0
-
-			// block や catch 節にて、return や throw がある場合、finally のコードをその直前で実行するため、通常 finally コードをその前に挿入する
-			insertFinallyCode(finallyCodeList, blockStartPos, finallyStartPos, catchClauseEndPosList, _currentMethodCodeDeclation.getExceptionTableList());
 
 			jmpDistPos = finallyNStartPos;
 		}
@@ -4234,14 +4263,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			List<Byte> finallyCodeList,
 			int startPos,
 			int endPos,
-			List<Integer> catchClauseEndPosList, List<ExceptionTableEntry> exceptionTableList)
+			List<Integer> catchClauseEndPosList,
+			List<ExceptionTableEntry> exceptionTableList,
+			int[] posParams)
 	{
 		int	codeLen = finallyCodeList.size();
-		List<Byte>	baseCodeList = _currentMethodCodeDeclation._code.getCodeList();
 
 		int pos = startPos;
 		for (;;)
 		{
+			List<Byte>	baseCodeList = _currentMethodCodeDeclation._code.getCodeList();
 			int	jmpOp = searchJmpOp(baseCodeList, pos, endPos);	// ジャンプコードの位置を検索する
 			if (jmpOp < 0)
 			{
@@ -4249,6 +4280,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 
 			// コード挿入位置以降のジャンプ位置をずらす
+			// catch節末尾のジャンプ位置
 			for (int i = 0; i < catchClauseEndPosList.size(); ++i)
 			{
 				if (jmpOp < catchClauseEndPosList.get(i))
@@ -4257,6 +4289,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				}
 			}
 
+			// exception table 設定
 			for (int i = 0; i < exceptionTableList.size(); ++i)
 			{
 				ExceptionTableEntry	e = exceptionTableList.get(i);
@@ -4272,10 +4305,20 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				}
 			}
 
+			// block 末尾のジャンプ位置、例外発生時のfinallyの位置
+			for (int i = 0; i < posParams.length; ++i)
+			{
+				if (jmpOp < posParams[i])
+				{
+					posParams[i] += codeLen;
+				}
+			}
+
 			// finallyコードの挿入
-			_currentMethodCodeDeclation._code.addCodeBlock(finallyCodeList, pos);
+			_currentMethodCodeDeclation._code.addCodeBlock(finallyCodeList, jmpOp);
 
 			pos = jmpOp + codeLen + 1;
+			endPos += codeLen;
 		}
 	}
 
@@ -4286,12 +4329,35 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			byte	op = baseCodeList.get(pos);
 
-			if (op == BC.ARETURN || op == BC.RETURN || op == BC.ATHROW)
+			switch (op)
 			{
+			case BC.ARETURN:
+			case BC.RETURN:
 				return	pos;
-			}
 
-			operandNum = 1 + BC.getOperandNum(op);
+			case BC.LOOKUPSWITCH:
+				for (operandNum = 1; (pos + operandNum) % 4 != 0; operandNum += 1)
+				{
+					;	// skip padding
+				}
+				operandNum += 4;	// default byte
+				int	nPair = StringUtil.toInt(baseCodeList.get(pos + operandNum), baseCodeList.get(pos + operandNum + 1), baseCodeList.get(pos + operandNum + 2), baseCodeList.get(pos + operandNum + 3));
+				operandNum += nPair * 4 * 2;	// match offset pairs
+				break;
+
+			case BC.WIDE:
+				throw new RuntimeException("not implemented.");
+
+			case BC.DRETURN:
+			case BC.FRETURN:
+			case BC.IRETURN:
+			case BC.LRETURN:
+			case BC.TABLESWITCH:
+				throw new RuntimeException("assertion");	// Pyrite では未使用のはず
+
+			default:
+				operandNum = 1 + BC.N_OPERAND.get(op);
+			}
 		}
 		return	-1;
 	}

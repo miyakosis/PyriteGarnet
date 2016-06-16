@@ -268,7 +268,8 @@ public class BCContainer
 	// コード領域から指定範囲のコードを取得する
 	public List<Byte>	getCodeBlock(int from, int to)
 	{
-		return	_code.subList(from, to);
+//		return	_code.subList(from, to);	// 後で要素に追加があるため、コピーを作成して返す
+		return	new ArrayList<Byte>(_code.subList(from, to));
 	}
 
 
