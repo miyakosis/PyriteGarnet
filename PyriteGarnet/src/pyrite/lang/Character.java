@@ -23,8 +23,7 @@ public class Character extends pyrite.lang.Object
 		_v = val;
 	}
 
-
-	// cast
+	// convert
 	public Integer	toInt()
 	{
 		return	PyriteRuntime.toPyriteInteger(_v);

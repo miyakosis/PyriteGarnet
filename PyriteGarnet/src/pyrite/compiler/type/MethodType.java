@@ -5,10 +5,9 @@ import java.lang.reflect.Modifier;
 import pyrite.compiler.FQCNParser.FQCN;
 
 
-
+// メソッドの引数などを保持する型
 public class MethodType extends VarType
 {
-//	public final FQCN	_fqcn;		// メソッドが所属するクラス
 	public final String	_methodName;
 	public final VarType[]	_paramTypes;
 	public final VarType[]	_returnTypes;
@@ -17,7 +16,7 @@ public class MethodType extends VarType
 
 	public final String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列(返り値は含まれない)
 
-	public final String	_jvmMethodParamExpression;	// メソッド引数のJVM表現
+	public final String	_jvmMethodParamExpression;	// メソッド引数部分のJVM表現
 
 	public static VarType	getType(FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, int modifier)
 	{
@@ -53,7 +52,6 @@ public class MethodType extends VarType
 	{
 		super(TYPE.METHOD, typeId, fqcn, null);
 
-//		_fqcn = fqcn;
 		_methodName = methodName;
 		_paramTypes = paramTypes;
 		_returnTypes = returnTypes;
@@ -130,45 +128,4 @@ public class MethodType extends VarType
 
 		return	createMethodSignature(packageClassName, methodName, sb.toString());
 	}
-
-	/*
-	private void	addParamStr(VarType[] params, StringBuilder sb)
-	{
-		if (params.length == 0)
-		{
-			sb.append("V");
-		}
-		else
-		{
-			for (VarType p : params)
-			{
-				assert (p._jvmExpression != null);
-				sb.append(p._jvmExpression);
-			}
-		}
-	}
-	*/
-/*
-	protected static int	createHashCode(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(TYPE.METHOD).append(packageClassName).append(".").append(methodName);
-
-		sb.append("(");
-		for (VarType param : paramTypes)
-		{
-			sb.append(param._jvmExpression);
-		}
-		sb.append(")");
-		sb.append("(");
-		for (VarType param : returnTypes)
-		{
-			sb.append(param._jvmExpression);
-		}
-		sb.append(")");
-		sb.append(isStatic);
-
-		return	sb.toString().hashCode();
-	}
-	*/
 }

@@ -4,8 +4,6 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import pyrite.compiler.ClassResolver.ClassFieldMember;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
@@ -49,7 +47,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
-	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
+	public Object visitCompilationUnit(PyriteParser.CompilationUnitContext ctx)
 	{
 		// import
 		_idm.addImportDeclaretionStr("java.lang.*");		// ソースに記述が無くてもインポートされる型
@@ -75,7 +73,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 	// 'import' qualifiedName ('.' '*')? ';'
 	@Override
-	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
+	public Object visitImportDeclaration(PyriteParser.ImportDeclarationContext ctx)
 	{
 		// 文字列を返す
 		String	packageClassName = ctx.qualifiedName().getText();
@@ -85,7 +83,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
 	@Override
-	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
+	public Object visitClassDeclaration(PyriteParser.ClassDeclarationContext ctx)
 	{
 		if (ctx.type() != null)
 		{
@@ -128,7 +126,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
     //	:   classInstanceModifier? 'var' variableDeclarationStatement ';'
     //	;
 	@Override
-	public Object visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx)
+	public Object visitFieldDeclaration(PyriteParser.FieldDeclarationContext ctx)
 	{
 		boolean	isStatic = (ctx.classInstanceModifier() != null);
 
@@ -146,7 +144,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	// variableDeclarationStatement
 	//	:  variableDeclaration (',' variableDeclaration)* ('=' expression)?
 	@Override
-	public Object visitVariableDeclarationStatement(@NotNull PyriteParser.VariableDeclarationStatementContext ctx)
+	public Object visitVariableDeclarationStatement(PyriteParser.VariableDeclarationStatementContext ctx)
 	{
 		List<VarTypeName>	varTypeNameList = new ArrayList<VarTypeName>();
 		for (PyriteParser.VariableDeclarationContext varCtx : ctx.variableDeclaration())
@@ -195,7 +193,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	//        methodBody
 	//    ;
 	@Override
-	public Object visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx)
+	public Object visitConstructorDeclaration(PyriteParser.ConstructorDeclarationContext ctx)
 	{
 		String className = ctx.Identifier().getText();
 
@@ -235,7 +233,7 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	//		methodBody
 	//		;
 	@Override
-	public Object visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx)
+	public Object visitMethodDeclaration(PyriteParser.MethodDeclarationContext ctx)
 	{
 		int	modifier = (ctx.classInstanceModifier() != null) ? Modifier.STATIC : 0x00;
 		modifier |= Modifier.PUBLIC;		// TODO:暫定で public で作成する
@@ -272,25 +270,25 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 
 	@Override
-	public Object visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx)
+	public Object visitInputParameters(PyriteParser.InputParametersContext ctx)
 	{
 		return	super.visitInputParameters(ctx);
 	}
 
 	@Override
-	public Object visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx)
+	public Object visitInputParameter(PyriteParser.InputParameterContext ctx)
 	{
 		return	super.visitInputParameter(ctx);
 	}
 
 	@Override
-	public Object visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx)
+	public Object visitOutputParameters(PyriteParser.OutputParametersContext ctx)
 	{
 		return	super.visitOutputParameters(ctx);
 	}
 
 	@Override
-	public Object visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx)
+	public Object visitOutputParameter(PyriteParser.OutputParameterContext ctx)
 	{
 		return	super.visitOutputParameter(ctx);
 	}

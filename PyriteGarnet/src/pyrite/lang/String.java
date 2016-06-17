@@ -24,11 +24,13 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 		return	(o != null) ? new String(_v + o._v) : new String(_v + "(NULL)");
 	}
 
-	// cast
+
+	// convert
 	public String	toStr()
 	{
 		return	this;
 	}
+
 
 	// override
 	@Override
@@ -81,6 +83,5 @@ public class String extends pyrite.lang.Object implements Serializable, CharSequ
 		{
 			return	new String(s);
 		}
-
 	}
 }

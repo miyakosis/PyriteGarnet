@@ -1,11 +1,12 @@
 package pyrite.compiler;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteBaseVisitor;
 import pyrite.compiler.antlr.PyriteParser;
 
+/*
+ * クラス名を解析するクラス
+ */
 public class ClassNameVisitor extends PyriteBaseVisitor<Object>
 {
 	private String	_packageName;
@@ -14,7 +15,7 @@ public class ClassNameVisitor extends PyriteBaseVisitor<Object>
 
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
-	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
+	public Object visitCompilationUnit(PyriteParser.CompilationUnitContext ctx)
 	{
 		// package
 		if (ctx.packageDeclaration() != null)
@@ -37,14 +38,14 @@ public class ClassNameVisitor extends PyriteBaseVisitor<Object>
 
 	// 'package' qualifiedName ';'
 	@Override
-	public Object visitPackageDeclaration(@NotNull PyriteParser.PackageDeclarationContext ctx)
+	public Object visitPackageDeclaration(PyriteParser.PackageDeclarationContext ctx)
 	{
 		return	ctx.qualifiedName().getText();
 	}
 
 	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
 	@Override
-	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
+	public Object visitClassDeclaration(PyriteParser.ClassDeclarationContext ctx)
 	{
 		String	classNameStr = ctx.Identifier().getText();
 

@@ -23,7 +23,7 @@ public class Float extends pyrite.lang.Number
 		throw new RuntimeException("not implemented");
 	}
 
-	// cast
+	// convert
 	public Integer	toInt()
 	{
 		throw new RuntimeException("not implemented");
@@ -38,5 +38,4 @@ public class Float extends pyrite.lang.Number
 	{
 		throw new RuntimeException("not implemented");
 	}
-
 }

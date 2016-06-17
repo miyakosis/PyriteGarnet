@@ -1,8 +1,13 @@
 package pyrite.compiler.type;
 
+/*
+ * Switch文のcase情報を保持するクラス
+ */
 public class SwitchCase implements Comparable
 {
-	public final VarType	_type;	// null は default
+	public final VarType	_type;	// null : default VarType.INT: 数値リテラルの case VarType.STR: 文字列リテラルの case
+
+	// ラベル定数
 	public final int	_n;
 	public final String	_s;
 

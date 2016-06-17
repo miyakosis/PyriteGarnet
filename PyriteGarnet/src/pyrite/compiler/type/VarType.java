@@ -13,11 +13,12 @@ public class VarType
 {
 	public final static String	CLASS_NAME = "pyrite.compiler.type.VarType";
 
+	// 型のタイプ
 	public static enum	TYPE {NULL, VOID, OBJ, NUM, INT, DEC, FLT, STR, CHR, BOL, BYT, ARRAY, ASSOC,
 		MULTIPLE, MULTIPLE_LIST,
 		PACKAGE, CLASS, METHOD, METHOD_NAME,
 		JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY,
-		};
+	};
 
 	// typeIdをキーに、VarTypeをキャッシュするMap
 	// new VarType(TYPE) より先にMapを生成しておく必要がある
@@ -63,127 +64,12 @@ public class VarType
 	// METHOD, PARTIALID,
 	// JVM_OBJECT, JVM_INT, JVM_LONG, JVM_SHORT, JVM_FLOAT, JVM_DOUBLE, JVM_CHAR, JVM_BYTE, JVM_BOOLEAN, JVM_ARRAY
 
-	static
-	{
-		/*
-		__varTypeMap.put(NULL._typeId, NULL);
-		__varTypeMap.put(VOID._typeId, VOID);
-		__varTypeMap.put(OBJ._typeId, OBJ);
-		__varTypeMap.put(NUM._typeId, NUM);
-		__varTypeMap.put(INT._typeId, INT);
-		__varTypeMap.put(FLT._typeId, FLT);
-		__varTypeMap.put(STR._typeId, STR);
-		__varTypeMap.put(CHR._typeId, CHR);
-		__varTypeMap.put(BOL._typeId, BOL);
-		__varTypeMap.put(BYT._typeId, BYT);
-
-		__varTypeMap.put(JVM_INT._typeId, JVM_INT);
-		__varTypeMap.put(JVM_LONG._typeId, JVM_LONG);
-		__varTypeMap.put(JVM_SHORT._typeId, JVM_SHORT);
-		__varTypeMap.put(JVM_FLOAT._typeId, JVM_FLOAT);
-		__varTypeMap.put(JVM_DOUBLE._typeId, JVM_DOUBLE);
-		__varTypeMap.put(JVM_CHAR._typeId, JVM_CHAR);
-		__varTypeMap.put(JVM_BYTE._typeId, JVM_BYTE);
-		__varTypeMap.put(JVM_BOOLEAN._typeId, JVM_BOOLEAN);
-		*/
-	}
-
-//	// static
-//	public static VarType	getType(TYPE type)
-//	{
-//		int	hashCode = createHashCode(type, nArrayLevel);
-//		VarType	varType = __varTypeMap.get(hashCode);
-//		if (varType == null)
-//		{
-//			varType = new VarType(type, nArrayLevel);
-//			__varTypeMap.put(hashCode, varType);
-//		}
-//
-//		return	varType;
-//	}
-
-
-/*
-	protected static int	createHashCode(TYPE type)
-	{
-		return	type.hashCode();
-	}
-
-	protected static int	createHashCode(TYPE type, String id)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(type).append(id);
-		return	sb.toString().hashCode();
-	}
-
-	protected static String	createJVMExpression(TYPE type)
-	{
-		StringBuilder	sb = new StringBuilder();
-		switch (type)
-		{
-		case VOID:
-			sb.append("V");
-			break;
-		case INT:
-			sb.append("Ljava.lang.");
-			break;
-		case STR:
-			sb.append("Ljava.lang.String;");
-			break;
-		case BOL:
-			sb.append("Z");
-			break;
-		default:
-			return	null;
-		}
-
-		return	sb.toString();
-	}
-*/
-
-//	protected static String	createJVMExpression(TYPE type, int nArrayLevel)
-//	{
-//		StringBuilder	sb = new StringBuilder();
-//		for (int i = 0; i < nArrayLevel; ++i)
-//		{
-//			sb.append("[");
-//		}
-//		switch (type)
-//		{
-//		case VOID:
-//			sb.append("V");
-//			break;
-//		case INT:
-//			sb.append("Ljava.lang.");
-//			break;
-//		case STR:
-//			sb.append("Ljava.lang.String;");
-//			break;
-//		case BOL:
-//			sb.append("Z");
-//			break;
-//		default:
-//			return	null;
-//		}
-//
-//		return	sb.toString();
-//	}
 
 // instance
 	public final TYPE	_type;
 	public final String	_typeId;	// オブジェクトを一意に識別する文字列。大抵は_jvmExpressionと同じだが、ArrayやAssocは保持する型情報もこの文字列に含め、一意性を確保している。
 	public final FQCN	_fqcn;
 	public final String	_jvmExpression;	// オブジェクトをjava vmで参照するための文字列。
-
-//	// for PARTIALID
-//	protected String	_id;
-//
-//	// for METHOD, CLASS, PACKAGE
-//	protected String	_package;
-//	// for METHOD, CLASS
-//	protected String	_class;
-//	// for METHOD
-//	protected String	_method;
 
 	// constructor for sub classes
 	protected VarType(TYPE type, String typeId, FQCN fqcn, String jvmExpression)
@@ -297,15 +183,6 @@ public class VarType
 		__varTypeMap.put(_typeId, this);
 	}
 
-//	protected VarType(TYPE type, int nArrayLevel, String id)
-//	{
-//		_type = type;
-//		_nArrayLevel = nArrayLevel;
-//		_id = id;
-//
-//		_hashCode = createHashCode(type, nArrayLevel, id);
-//	}
-
 	@Override
 	public int	hashCode()
 	{
@@ -323,27 +200,6 @@ public class VarType
 	{
 		return	_typeId;
 	}
-
-//	public boolean	isPartialId()
-//	{
-//		return	_type == TYPE.PARTIALID;
-//	}
-
-
-//	// ID 先頭要素の型解決を行った後の型を返す
-//	public VarType	resolveType(CodeGenerationVisitor cgv)
-//	{
-//		return	this;	// PartialIdType 以外は型解決済みなので、自分自身を返す
-//	}
-
-	// CodeGenerationVisitor に移動
-	//	// この型に続く識別子の型を解決する。
-//	// サブクラス毎にそれぞれ続くことができる型が異なるため、とり得る型をそれぞれでチェックする。
-//	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, ParseTree idNode)
-//	{
-//		throw new PyriteSyntaxException("id is not defined.:" + idNode.getText());
-//	}
-
 
 	// Javaのインターフェース定義からPyriteコンパイル時の型を作成する
 	public static VarType	parseJavaTypeName(String typeStr)
@@ -552,67 +408,4 @@ public class VarType
 			return	jvmType;
 		}
 	}
-
-
-	//
-	// 配列次元数の差分の型を返す
-//	public VarType	getArrayType(int addNArrayLevel)
-//	{
-//		assert (_nArrayLevel + addNArrayLevel >= 0);
-//		return	getType(_type, _nArrayLevel + addNArrayLevel);
-//	}
-
-
-//
-//	protected VarType(String className, int nArrayLevel, boolean isPartialId)
-//	{
-//		_className = className;
-//		_nArrayLevel = nArrayLevel;
-//		_isPartialId = isPartialId;
-//
-//		_hashCode = createHashCode(className, nArrayLevel, isPartialId);
-//	}
-//
-//	public boolean	isPartialId()
-//	{
-//		return	_isPartialId;
-//	}
-//
-//
-//// static
-//	private static Map<Integer, VarType>	__varTypeMap = new HashMap<Integer, VarType>();
-//
-//	public static VarType	getVarType(String className)
-//	{
-//		return	getVarType(className, 0);
-//	}
-//
-//	public static VarType	getVarType(String className, int nArrayLevel)
-//	{
-//		int	hashCode = createHashCode(className, nArrayLevel, true);
-//		VarType	varType = __varTypeMap.get(hashCode);
-//		if (varType == null)
-//		{
-//			varType = new VarType(className, nArrayLevel, true);
-//		}
-//
-//		return	varType;
-//	}
-//
-//
-//	// ドット続きのidについて、解析前で型が確定していない状態を示す
-//	public static VarType	getPartialVarType(String className)
-//	{
-//		int	hashCode = createHashCode(className, 0, false);
-//		VarType	varType = __varTypeMap.get(hashCode);
-//		if (varType == null)
-//		{
-//			varType = new VarType(className, 0, false);
-//		}
-//
-//		return	varType;
-//	}
-
-
-
 }

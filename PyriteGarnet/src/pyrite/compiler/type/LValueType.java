@@ -1,8 +1,10 @@
 package pyrite.compiler.type;
 
+// 左辺値を保持する型
 // VarTypeと同義に扱うため継承している
 public class LValueType extends VarType
 {
+	// 代入の種類。ローカル変数への代入や、instance field への代入
 	// local value, instance field, class field, array 要素への代入, assoc 要素への代入
 	public static enum	TYPE {LOCAL, INSTANCE, CLASS, ARRAY, ASSOC};
 
@@ -12,12 +14,8 @@ public class LValueType extends VarType
 
 	public LValueType(TYPE lValueType, VarType varType, int refNum)
 	{
-//		super(type._type, null, type._fqcn, null);	// 基底クラスに保持する情報としては、型情報とFQCNのみが必要。このオブジェクトをキャッシュにしなために、typeIdはnull
 		_lValueType = lValueType;
 		_lValueVarType = varType;
 		_refNum = refNum;
-
-
 	}
-
 }

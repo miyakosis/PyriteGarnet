@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+/*
+ * break や continue 文のため、制御ブロック情報を保持するクラス
+ */
 public class ControlBlockManager
 {
 	public static enum TYPE {INIT, WHILE, FOR, SWITCH};
@@ -81,27 +84,6 @@ public class ControlBlockManager
 			throw new PyriteSyntaxException("label not found.");
 		}
 	}
-
-/*
-	public void setContinuePos(int condPos)
-	{
-		_currentCB.setContinuePos(condPos);
-	}
-
-	public int getContinuePos(String label)
-	{
-		ControlBlock	cb = findControlBrock(label);
-
-		if (cb._type == TYPE.WHILE || cb._type == TYPE.FOR)
-		{
-			return	cb._continuePos;
-		}
-		else
-		{
-			throw new PyriteSyntaxException("label is only for control statement.");
-		}
-	}
-*/
 
 	public List<Integer>	getBreakPosList()
 	{

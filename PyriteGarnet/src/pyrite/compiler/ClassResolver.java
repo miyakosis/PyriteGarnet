@@ -35,7 +35,7 @@ import pyrite.lang.MultipleValue;
 
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 /*
- * クラスパス：
+ * クラスパスにある、ファイル存在パターン：
  *	.pyr .class .pyrc
  *   o    o      o
  *   o    o      o
@@ -60,14 +60,7 @@ public class ClassResolver
 	private Map<String, ClassFieldMember>	_classCache = new HashMap<String, ClassFieldMember>();	// key:fqcn value:ClassFieldMember
 
 
-	// クラスパスエントリから、
-	// 　指定jarファイルを展開してクラスファイルを取得する。
-	// 　指定ディレクトリ配下のクラスファイルを取得する。
-	public ClassResolver()
-	{
-	}
-
-	// メソッド呼び出しのチェックに使用
+	// コンパイルフェーズ (メソッド呼び出しのチェックに使用)
 	private int	_phase = 0;	// 0:init 1:init(クラスパス解析中) 2:クラスパスに含まれるクラス取得済み(メソッド定義解析中) 3:メソッド定義解析済み (メソッド本体コンパイル中)
 	public void	setPhase(int phase)
 	{
@@ -100,6 +93,10 @@ public class ClassResolver
 	// クラスパスに含まれるクラスを解決する
 	public void	resolveClasspath() throws IOException
 	{
+		// クラスパスエントリから、
+		//   指定jarファイルを展開してクラスファイルを取得する。
+		//   指定ディレクトリ配下のクラスファイルを取得する。
+
 		Logger.getGlobal().info("resolveClasspath");
 		String	separator = System.getProperty(PROPERTY_KEY_CLASS_PATH_SEPARATOR);
 		String	classPath = System.getProperty(PROPERTY_KEY_CLASS_PATH);
@@ -241,8 +238,6 @@ public class ClassResolver
 			}
 		}
 		// crf instanceof SourceFile の場合は、そのクラスはコンパイル対象として登録されているため、何もしない
-
-//		System.out.println(packageName + " / " + packageClassFile._className);
 	}
 
 	// パッケージに含まれるクラス名のリストを返す
@@ -472,7 +467,7 @@ public class ClassResolver
 			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
 			for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 			{	// methodParamSignature : 入力パラメータから作成された識別子
-//				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);	// エスケープが不完全
+//				String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, methodNameType._methodName, methodParamSignature._methodParamSignarure);	// エスケープが不完全なので、下記コードで代替
 				StringBuilder	sb = new StringBuilder();
 				sb.append(Pattern.quote(cls._fqcn._fqcnStr));
 				sb.append("\\.");
@@ -520,29 +515,10 @@ public class ClassResolver
 						}
 					}
 				}
-
-//				MethodType	resultType = (MethodType)cls._classMethodMap.get(methodSignature);
-//				if (resultType != null)
-//				{
-//					resultTypeList.add(resultType);
-//					resultMethodParamSignatureList.add(methodParamSignature);
-//				}
-//				if (isStaticOnly == false)
-//				{
-//					resultType = (MethodType)cls._instanceMethodMap.get(methodSignature);
-//					if (resultType != null)
-//					{
-//						resultTypeList.add(resultType);
-//						resultMethodParamSignatureList.add(methodParamSignature);
-//					}
-//				}
 			}
 
 			if (resultMethodParamSignatureList.size() > 0)
 			{	// 最適なメソッド定義がどれかを判別して返す
-//				int	resultIdx = checkClassPriority(resultMethodParamSignatureList);	// ?
-//				return	resultTypeList.get(resultIdx);
-
 				return	checkClassPriority(resultMethodParamSignatureList);
 			}
 			// 該当するメソッドが一つも無いので、クラス階層を遡ってチェックする
@@ -764,7 +740,7 @@ public class ClassResolver
 		for (MethodParamSignature methodParamSignature : methodParamSignatureList)
 		{
 			// すべての入力メソッドパラメータ識別子について、当クラスのメソッド定義が存在するかチェックする
-//			String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, fqcn._className, methodParamSignature._methodParamSignarure);
+//			String	methodSignature = MethodType.createMethodSignature(cls._fqcn._fqcnStr, fqcn._className, methodParamSignature._methodParamSignarure);	// エスケープ対応が不完全なため、下記コードで代替
 			StringBuilder	sb = new StringBuilder();
 			sb.append(Pattern.quote(cls._fqcn._fqcnStr));
 			sb.append("\\.");
@@ -812,37 +788,7 @@ public class ClassResolver
 		return	false;
 	}
 
-//	// baseClassにsubClassを代入可能か(subClass と baseClass が継承関係にあるか)を調べる
-//	public boolean	isAssignable(FQCN baseClass, FQCN subClass)
-//	{
-//		if (subClass == null)
-//		{	// nullの FQCN はnull。nullは常に代入可能
-//			return	true;
-//		}
-//
-//		// subClass について、baseClass と同じものがあるかを super class 方向に調べていく
-//		for (ClassFieldMember cfm = getClassFieldMember(subClass); cfm != null; cfm = cfm._superCFM)
-//		{
-//			if (cfm._fqcn == baseClass || cfm._interfaceSet.contains(baseClass))
-//			{
-//				if (baseClass == FQCNParser.getFQCN(pyrite.lang.Array.CLASS_NAME))
-//				{
-//
-//				}
-//				else if (baseClass == FQCNParser.getFQCN(pyrite.lang.Assoc.CLASS_NAME))
-//				{
-//
-//				}
-//				else
-//				{
-//					return	true;
-//				}
-//			}
-//		}
-//		return	false;
-//	}
-
-	// lTypeにrTypeを代入可能か(rType が lType と同じか、継承しているか)を調べる
+	// lTypeにrTypeを代入可能か(rType が lType と同じ、または継承しているか)を調べる
 	public boolean	isAssignable(VarType lType, VarType rType)
 	{
 		// precond:lType._fqcnは、Array と Assoc の両方を継承することはない
@@ -895,96 +841,6 @@ public class ClassResolver
 		}
 		return	false;
 	}
-
-	//	public MethodDeclation dispatchMethodDeclation(
-//			String packageClassName,
-//			String methodName,
-//			List<MethodParam> inParamList,
-//			boolean isStaticOnly)
-//	{
-//		VarType	resultType = null;
-//
-//		ClassFieldMember	cls = _classCache.get(packageClassName);
-//		assert (cls != null);
-//
-//		String	methodSignature = createMethodSignature(packageClassName, methodName, inParamList);
-//
-//		resultType = cls._classMethodMap.get(methodSignature);
-//
-//		if (resultType != null)
-//		{
-//			List<MethodParam>	outParamList = new ArrayList<MethodParam>();
-//			outParamList.add(new MethodParam(resultType));
-//
-//			MethodDeclation	methodDeclation = new MethodDeclation();
-//			methodDeclation.setClassName(packageClassName);
-//			methodDeclation.setMethodName(methodName);
-//			methodDeclation.setInParamList(inParamList);
-//			methodDeclation.setOutParamList(outParamList);
-//			methodDeclation.setStatic(true);
-//
-//			return	methodDeclation;
-//		}
-//		else if (isStaticOnly == false)
-//		{
-//			resultType = cls._instanceMethodMap.get(methodSignature);
-//			if (resultType != null)
-//			{
-//				List<MethodParam>	outParamList = new ArrayList<MethodParam>();
-//				outParamList.add(new MethodParam(resultType));
-//
-//				MethodDeclation	methodDeclation = new MethodDeclation();
-//				methodDeclation.setClassName(packageClassName);
-//				methodDeclation.setMethodName(methodName);
-//				methodDeclation.setInParamList(inParamList);
-//				methodDeclation.setOutParamList(outParamList);
-//				methodDeclation.setStatic(false);
-//
-//				return	methodDeclation;
-//			}
-//		}
-//
-//		return	null;	// no such method
-//	}
-//
-//	public static String	createMethodSignature(
-//			String className,
-//			String methodName,
-//			Class[] inParamList)
-//	{
-//		StringBuilder	sb = new StringBuilder();
-//		sb.append(className);
-//		sb.append(".");
-//		sb.append(methodName);
-//		sb.append("(");
-//		for (Class param : inParamList)
-//		{
-//			sb.append(param.getName());
-//		}
-//		sb.append(")");
-//
-//		return	sb.toString();
-//	}
-//
-//	public static String	createMethodSignature(
-//			String className,
-//			String methodName,
-//			List<MethodParam> inParamList)
-//	{
-//		StringBuilder	sb = new StringBuilder();
-//		sb.append(className);
-//		sb.append(".");
-//		sb.append(methodName);
-//		sb.append("(");
-//		for (MethodParam param : inParamList)
-//		{
-//			sb.append(param.getJVMExpression());
-//		}
-//		sb.append(")");
-//
-//		return	sb.toString();
-//	}
-
 
 	// クラスのフィールド定義・メソッド定義を保持する
 	public static class	ClassFieldMember
@@ -1061,8 +917,6 @@ public class ClassResolver
 				}
 			}
 
-//			System.out.println(packageClassName);
-
 			for (Method m : c.getDeclaredMethods())
 			{
 				String	methodName = m.getName();
@@ -1071,9 +925,6 @@ public class ClassResolver
 				int	modifier = m.getModifiers();
 
 				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, modifier));
-
-//				MethodType	type = createMethodType(packageClassName, methodName, paramTypeClasses, returnTypeClass, isStatic);
-//				System.out.println("\t" + packageClassName + " . " + methodName + ":" + type._methodSignature);
 			}
 
 			for (Constructor<?> cn : c.getDeclaredConstructors())
@@ -1166,9 +1017,7 @@ public class ClassResolver
 
 		public boolean	isInstancable()
 		{
-			// ACC_ANNOTATION : 0x2000
-			// ACC_ENUM : 0x4000
-			return	!(Modifier.isInterface(_modifier) || Modifier.isAbstract(_modifier) || (_modifier & (0x2000 | 0x4000)) != 0);
+			return	!(Modifier.isInterface(_modifier) || Modifier.isAbstract(_modifier) || (_modifier & (BC.ACC_ANNOTATION | BC.ACC_ENUM)) != 0);
 		}
 
 		// Pyrite class file を読み込み、そこに記載された型情報(複数の戻り値の情報)でメソッド戻り値を上書きする
@@ -1232,7 +1081,7 @@ public class ClassResolver
 	}
 
 
-
+	// 引数の型階層の一つを保持するクラス
 	public static class	ClassHierarchy
 	{
 		public final VarType	_type;
@@ -1257,6 +1106,7 @@ public class ClassResolver
 		}
 	}
 
+	// メソッドシグネチャと、それぞれの引数に対応する型を保持するクラス
 	public static class	MethodParamSignature
 	{
 		public final String	_methodParamSignarure;
@@ -1288,5 +1138,4 @@ public class ClassResolver
 			return	_methodParamSignarure;
 		}
 	}
-
 }

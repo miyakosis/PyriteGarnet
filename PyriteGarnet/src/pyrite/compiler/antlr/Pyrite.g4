@@ -25,9 +25,10 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// version 0.0-n
+// version 0.0.0
 
 // refer Java1.7.g4
+// commented lines are original Java 1.7 syntax.
 grammar Pyrite;
 
 @header

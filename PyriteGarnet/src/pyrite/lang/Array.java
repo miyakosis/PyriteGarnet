@@ -11,6 +11,7 @@ public class Array extends pyrite.lang.Object implements Iterable
 
 	private final ArrayList<java.lang.Object>	_v = new ArrayList<java.lang.Object>();
 
+	// method
 	public int	size()
 	{
 		return	_v.size();
@@ -26,7 +27,6 @@ public class Array extends pyrite.lang.Object implements Iterable
 		return	_v.get(PyriteRuntime.toJavaInt(index));
 	}
 
-	//
 	public java.lang.Object	set(Integer index, java.lang.Object val)
 	{
 		int	i = PyriteRuntime.toJavaInt(index);
@@ -43,7 +43,7 @@ public class Array extends pyrite.lang.Object implements Iterable
 
 
 	@Override
-	public Iterator iterator()
+	public Iterator<java.lang.Object> iterator()
 	{
 		return _v.iterator();
 	}

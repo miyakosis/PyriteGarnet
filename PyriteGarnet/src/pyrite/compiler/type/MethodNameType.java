@@ -3,9 +3,9 @@ package pyrite.compiler.type;
 import pyrite.compiler.FQCNParser.FQCN;
 
 // メソッド解決のため、メソッド名称の存在のみを保持するクラス
+// (メソッドの実体である MethodType は、メソッド引数を考慮して解決しないと判定できない)
 public class MethodNameType extends VarType
 {
-//	public final FQCN	_fqcn;		// メソッドが所属するクラス
 	public final String	_methodName;
 	public final boolean	_isStatic;	// true:class method のみ有効 false:class method/instance method のどちらでもよい
 
@@ -28,7 +28,6 @@ public class MethodNameType extends VarType
 	{
 		super(TYPE.METHOD_NAME, typeId, fqcn, null);
 
-//		_fqcn = fqcn;
 		_methodName = methodName;
 		_isStatic = isStatic;
 	}

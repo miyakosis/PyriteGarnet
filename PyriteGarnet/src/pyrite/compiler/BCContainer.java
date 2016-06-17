@@ -273,67 +273,9 @@ public class BCContainer
 	}
 
 
-
-/*
-	public int	getCodePos()
-	{
-		return	_code.size();
-	}
-
-	public List<Byte>	getCodeList()
-	{
-		return	_code;
-	}
-
-	public void	addCodeOp(byte op, int stackIncDec)
-	{
-		// TODO:stack管理
-		_code.add(op);
-	}
-
-	public void	addCodeOp(byte op)
-	{
-		addCodeOp(op, 0);
-	}
-
-	public void	addCodeU1(int n)
-	{
-		_code.add((byte)n);
-	}
-
-	public void	addCodeU2(int n)
-	{
-		_code.add((byte)(n >> 8));
-		_code.add((byte)n);
-	}
-
-	public void	addCodeU4(int n)
-	{
-		_code.add((byte)(n >> 24));
-		_code.add((byte)(n >> 16));
-		_code.add((byte)(n >> 8));
-		_code.add((byte)n);
-	}
-
-	public void	addCodeOpBIPUSH(int n)
-	{
-		switch (n)
-		{
-		case -1:	addCodeOp(BC.ICONST_M1);	break;
-		case 0:	addCodeOp(BC.ICONST_0);	break;
-		case 1:	addCodeOp(BC.ICONST_1);	break;
-		case 2:	addCodeOp(BC.ICONST_2);	break;
-		case 3:	addCodeOp(BC.ICONST_3);	break;
-		case 4:	addCodeOp(BC.ICONST_4);	break;
-		case 5:	addCodeOp(BC.ICONST_5);	break;
-		default:
-			addCodeOp(BC.BIPUSH);
-			addCodeU1(n);
-			break;
-		}
-	}
-*/
-
+	/*
+	 * コードの使用スタック数を保持するクラス
+	 */
 	public static class	MaxStack
 	{
 		private int	_currentStack = 0;

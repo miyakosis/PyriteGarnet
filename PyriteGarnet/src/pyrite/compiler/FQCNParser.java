@@ -5,6 +5,9 @@ import java.util.Map;
 
 import pyrite.compiler.util.StringUtil;
 
+/*
+ *  Fully Qualified Class Name をキャッシングするクラス
+ */
 public class FQCNParser
 {
 	private static Map<String, FQCN>	__fqcnMap = new HashMap<String, FQCN>();	// K:fqcnStr, V:FQCN
@@ -44,6 +47,9 @@ public class FQCNParser
 		return	fqcn;
 	}
 
+	/*
+	 *  Fully Qualified Class Name
+	 */
 	public static class	FQCN
 	{
 		public final String	_fqcnStr;
@@ -57,6 +63,7 @@ public class FQCNParser
 			_className = className;
 		}
 
+		@Override
 		public String	toString()
 		{
 			return	_fqcnStr;

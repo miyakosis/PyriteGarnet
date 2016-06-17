@@ -3,6 +3,7 @@ package pyrite.lang;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class Assoc extends pyrite.lang.Object implements Iterable
 {
@@ -10,6 +11,7 @@ public class Assoc extends pyrite.lang.Object implements Iterable
 
 	private final Map<java.lang.Object, java.lang.Object>	_v = new HashMap<java.lang.Object, java.lang.Object>();
 
+	// method
 	public int	size()
 	{
 		return	_v.size();
@@ -31,7 +33,7 @@ public class Assoc extends pyrite.lang.Object implements Iterable
 	}
 
 	@Override
-	public Iterator iterator()
+	public Iterator<Entry<java.lang.Object, java.lang.Object>> iterator()
 	{
 		return _v.entrySet().iterator();
 	}

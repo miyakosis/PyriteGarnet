@@ -44,18 +44,8 @@ public class Compiler
 				return rec.getMessage() + "\n";
 			}
 		});
-
-//		(logger.getHandlers())[0].setFormatter(new Formatter()
-//		{
-//			@Override
-//			public String format(LogRecord rec)
-//			{
-//				return rec.getMessage();
-//			}
-//		});
-
-//		__logger.setLevel(Level.ALL);
 		ch.setLevel(Level.WARNING);
+
 		logger.addHandler(ch);
 		logger.setUseParentHandlers(false);
 		logger.setLevel(Level.ALL);
@@ -109,22 +99,6 @@ public class Compiler
 		}
 
 		_cr.setPhase(3);
-		/*
-		// import文までを処理する。
-		for (int i = 0; i < _sourceFileList.size(); ++i)
-		{
-			_sourceFileList.get(i).parseImport();
-		}
-
-		// import文のチェック。
-		// ソースファイル間で相互参照がある場合、コンパイル位置に存在する参照先ソースファイルについて、
-		// import文およびclass名のチェックまでが終わっている状態ではないとimportが妥当かチェックできない。
-		for (int i = 0; i < _sourceFileList.size(); ++i)
-		{
-			_sourceFileList.get(i).checkImport();
-		}
-		*/
-
 
 		// メソッドの中身を処理する
 		// 参照先ソースファイルの全てのメソッド定義が出揃っていないと、メソッド呼び出しが解決できない。

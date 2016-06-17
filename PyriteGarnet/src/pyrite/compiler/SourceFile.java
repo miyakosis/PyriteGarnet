@@ -39,10 +39,6 @@ import pyrite.compiler.util.StringUtil;
  */
 public class SourceFile extends ClassRelatedFile
 {
-//	public final String	_srcFilePathName;
-
-//	public final String	_srcPath;
-
 	private ParseTree	_tree;
 
 	private ClassResolver	_cr;
@@ -64,7 +60,7 @@ public class SourceFile extends ClassRelatedFile
 			_srcFilePathName = srcFilePathName;
 			_cr = cr;
 
-			File	f = new File(srcFilePathName);
+			File	f = new File(srcFilePathName).getCanonicalFile();
 			InputStream	is = new FileInputStream(f);
 
 			ANTLRInputStream input = new ANTLRInputStream(is);
@@ -82,11 +78,10 @@ public class SourceFile extends ClassRelatedFile
 			fileClassName = fileClassName.substring(0, fileClassName.indexOf('.'));
 			if (fileClassName.equals(_fqcn._className) == false)
 			{
-				Logger.getGlobal().warning("source file and class name is unmatched.");
+				Logger.getGlobal().warning("source file and class name is unmatched." + fileClassName);
 			}
 
-			File	srcPathFile = f.getParentFile();
-			String	srcPath = srcPathFile.getAbsolutePath();
+			String	srcPath = f.getParent();
 			_classFilePathName = srcPath + "/" + _fqcn._className + ".class";
 			_pyriteClassFilePathName = srcPath + "/" + _fqcn._className + ".pyrc";
 
@@ -420,6 +415,4 @@ public class SourceFile extends ClassRelatedFile
 			}
 		}
 	}
-
-
 }

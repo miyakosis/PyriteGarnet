@@ -1,5 +1,8 @@
 package pyrite.compiler.type;
 
+/*
+ * 変数型と変数名を保持するクラス
+ */
 public class VarTypeName
 {
 	public final VarType	_type;

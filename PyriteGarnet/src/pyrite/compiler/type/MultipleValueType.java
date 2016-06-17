@@ -6,7 +6,7 @@ import java.util.List;
 import pyrite.compiler.FQCNParser;
 
 // 複数の型情報を保持するためのクラス。pyrite.lang.MultipleValue に対応する型。
-//複数値を返すメソッドの戻り値を表す。
+// 複数値を返すメソッドの戻り値を表す。
 // MultipleValueListType との違いは、スタック上に pyrite.lang.MultipleValue オブジェクトが存在し、それが複数オブジェクトの参照を保持する事。
 public class MultipleValueType extends VarType
 {

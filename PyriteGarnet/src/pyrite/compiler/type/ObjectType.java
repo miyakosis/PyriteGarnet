@@ -4,12 +4,8 @@ import pyrite.compiler.FQCNParser;
 import pyrite.compiler.FQCNParser.FQCN;
 
 
-
 public class ObjectType extends VarType
 {
-	// for className
-//	public FQCN	_fqcn;
-
 	public static VarType getType(String fqcnStr)
 	{
 		StringBuilder	sb = new StringBuilder();
@@ -29,107 +25,5 @@ public class ObjectType extends VarType
 	protected ObjectType(String typeId, FQCN fqcn)
 	{
 		super(TYPE.OBJ, typeId, fqcn, typeId);
-
-//		_fqcn = fqcn;
 	}
-
-	// CodeGenerationVisitor に移動
-//	// この型に続く識別子の型を解決する。
-//	//   Object.Instance field
-//	//   Object.Instance method
-//	//   Class.Class field
-//	//   Object.Class method
-//	@Override
-//	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, ParseTree idNode)
-//	{
-//		ClassResolver	cr = cgv._cr;
-//		ConstantPoolManager	cpm = cgv._cpm;
-//		MethodCodeDeclation	methodDeclaretion = cgv._currentMethodCodeDeclation;
-//
-//		String	id = idNode.getText();
-//		VarType	varType;
-//		if (cgv.isAssignLeftExpressionElement(idNode))
-//		{	// assign
-//			// assign()で値設定するため、ここでコードは作成しない。
-//			// 代わりに setLeftExpressionVarType() を呼び出し、設定情報を保持しておく。
-//
-//			varType = cr.dispatchVariableI(_fqcn, id);
-//			if (varType != null)
-//			{
-////				cgv.setLeftExpressionVarType(2, -1, _fqcn._fqcnStr, id);
-////				return	varType;
-//				return	new AssignLeftExpressionType(varType, 2, -1, _fqcn._fqcnStr, id);
-//			}
-//
-//			varType = cr.dispatchVariableC(_fqcn, id);
-//			if (varType != null)
-//			{
-////				cgv.setLeftExpressionVarType(3, -1, _fqcn._fqcnStr, id);
-////				return	varType;
-//				return	new AssignLeftExpressionType(varType, 3, -1, _fqcn._fqcnStr, id);
-//			}
-//		}
-//		else
-//		{
-//			varType = cr.dispatchVariableI(_fqcn, id);
-//			if (varType != null)
-//			{	// インスタンスフィールド
-//				methodDeclaretion.addCodeOp(BC.GETFIELD);
-//				methodDeclaretion.addCodeU2(cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-//
-//				return	varType;
-//			}
-//
-//			varType = cr.dispatchVariableC(_fqcn, id);
-//			if (varType != null)
-//			{	// クラスフィールド
-//				methodDeclaretion.addCodeOp(BC.GETSTATIC);
-//				methodDeclaretion.addCodeU2(cpm.getFieldRef(_fqcn._fqcnStr, id, varType._jvmExpression));
-//
-//				return	varType;
-//			}
-//		}
-//
-//		if (cr.existsMethodIC(_fqcn, id))
-//		{	// クラスメソッド/インスタンスメソッド
-//			return	MethodNameType.getType(_fqcn, id, false);
-//		}
-//
-//		// 不明なIdentifier
-//		throw new RuntimeException("id is not declared." + id);
-//	}
-
-
-	// :
-	/*
-	public static VarType	getType(String fqcn)
-	{
-		int	hashCode = createHashCode(TYPE.OBJ, packageClassName);
-		VarType	varType = __varTypeMap.get(hashCode);
-		if (varType == null)
-		{
-			varType = new ObjectType(TYPE.OBJ, packageClassName);
-			__varTypeMap.put(hashCode, varType);
-		}
-
-		return	varType;
-	}
-
-	protected static String	createJVMExpression(TYPE type, String packageClassName)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append("L").append(packageClassName).append(";");
-		return	sb.toString();
-	}
-
-	protected ObjectType(TYPE type, String packageClassName)
-	{
-		super._type = type;
-		super._hashCode = createHashCode(type, packageClassName);
-		super._jvmExpression = createJVMExpression(type, packageClassName);
-
-		_fqcn._fqcnStr = packageClassName;
-	}
-
-	*/
 }

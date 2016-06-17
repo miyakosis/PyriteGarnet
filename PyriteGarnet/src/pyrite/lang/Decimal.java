@@ -52,7 +52,7 @@ public class Decimal extends pyrite.lang.Number
 	}
 
 
-	// cast
+	// convert
 	public Integer	toInt()
 	{
 		return	PyriteRuntime.toPyriteInteger(_v.toBigInteger());

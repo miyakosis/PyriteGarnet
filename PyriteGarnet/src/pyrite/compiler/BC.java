@@ -3,7 +3,9 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/*
+ * バイトコード情報を保持するクラス
+ */
 public class BC
 {
 	public final static Charset	UTF8 = Charset.forName("UTF-8");
@@ -640,18 +642,23 @@ public class BC
 
 	}
 
-	public final static int	ACC_PUBLIC = 0x0001;		// C F M IC
-	public final static int	ACC_PRIVATE = 0x0002;		//   F M IC
-	public final static int	ACC_PROTECTED = 0x0004;		//   F M IC
-	public final static int	ACC_STATIC = 0x0008;		//   F M IC
-	public final static int	ACC_FINAL = 0x0010;			// C F M IC
-	public final static int	ACC_SUPER = 0x0020;			// C
+	public final static int	ACC_PUBLIC 		= 0x0001;	// C F M IC
+	public final static int	ACC_PRIVATE 	= 0x0002;	//   F M IC
+	public final static int	ACC_PROTECTED 	= 0x0004;	//   F M IC
+	public final static int	ACC_STATIC 		= 0x0008;	//   F M IC
+	public final static int	ACC_FINAL 		= 0x0010;	// C F M IC
+	public final static int	ACC_SUPER 		= 0x0020;	// C
 	public final static int	ACC_SYNCHRONIZED = 0x0020;	//     M
-	public final static int	ACC_VOLATILE = 0x0040;		//   F
-	public final static int	ACC_TRANSIENT = 0x0080;		//   F
-	public final static int	ACC_NATIVE = 0x0100;		//     M
-	public final static int	ACC_INTERFACE = 0x0200;		// C     IC
-	public final static int	ACC_ABSTRACT = 0x0400;		// C   M IC
-	public final static int	ACC_STRICT = 0x0800;		//     M
+	public final static int	ACC_VOLATILE 	= 0x0040;	//   F
+	public final static int	ACC_BRIDGE 		= 0x0040;	//     M
+	public final static int	ACC_TRANSIENT 	= 0x0080;	//   F
+	public final static int	ACC_VARARGS 	= 0x0080;	//     M
+	public final static int	ACC_NATIVE 		= 0x0100;	//     M
+	public final static int	ACC_INTERFACE 	= 0x0200;	// C     IC
+	public final static int	ACC_ABSTRACT 	= 0x0400;	// C   M IC
+	public final static int	ACC_STRICT 		= 0x0800;	//     M
+	public final static int	ACC_SYNTHETIC 	= 0x1000;	// C F M IC
+	public final static int	ACC_ANNOTATION 	= 0x2000;	// C     IC
+	public final static int	ACC_ENUM 		= 0x4000;	// C F   IC
 
 }

@@ -89,7 +89,8 @@ public class Integer extends pyrite.lang.Number
 		return	new Integer(_v.xor(o._v));
 	}
 
-	// cast
+	
+	// convert
 	public Integer	toInt()
 	{
 		return	this;

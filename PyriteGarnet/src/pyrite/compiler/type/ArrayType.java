@@ -4,8 +4,12 @@ import pyrite.compiler.FQCNParser;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.lang.Array;
 
+/*
+ * 配列型
+ */
 public class ArrayType extends VarType
 {
+	// 配列に保持する型
 	public final VarType	_arrayVarType;
 
 	public static VarType getType(VarType arrayVarType)
@@ -78,23 +82,4 @@ public class ArrayType extends VarType
 		super(TYPE.ARRAY, typeId, fqcn, "L" + fqcn._fqcnStr + ";");
 		_arrayVarType = arrayVarType;
 	}
-
-
-	/*
-	protected static int	createHashCode(TYPE type, VarType arrayVarType)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(type).append(arrayVarType.hashCode());
-		return	sb.toString().hashCode();
-	}
-
-	protected static String	createJVMExpression(TYPE type, VarType arrayVarType)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append("<");
-		sb.append(arrayVarType._jvmExpression);
-
-		return	sb.toString();
-	}
-	*/
 }

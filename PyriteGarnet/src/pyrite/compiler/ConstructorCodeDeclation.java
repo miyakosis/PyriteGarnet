@@ -1,5 +1,8 @@
 package pyrite.compiler;
 
+/*
+ * コンストラクタの定義情報
+ */
 public class ConstructorCodeDeclation extends MethodCodeDeclation
 {
 	// フィールド初期化コードを挿入する位置

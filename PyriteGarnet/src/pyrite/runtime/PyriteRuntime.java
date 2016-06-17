@@ -7,6 +7,9 @@ import java.math.BigInteger;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 
+/*
+ * 実行時型変換などの機能を提供するクラス
+ */
 public class PyriteRuntime
 {
 	public final static String	CLASS_NAME = "pyrite.runtime.PyriteRuntime";

@@ -9,30 +9,20 @@ import java.util.Set;
 
 import pyrite.compiler.FQCNParser.FQCN;
 
-/**
+/*
+ * import定義を管理するクラス
+ *
  * import は、FQCN でクラス名まで指定されたものと、*で終わるパッケージが指定されたものがある。
- * importでクラス名の重複があっても、エラーとしてはいけない。
- * ソースコード内でクラス名が指定され、そのクラス名に対応するFQCNが複数取り合える場合にエラーにする必要がある。
- * この際に、FQCN指定とパッケージ指定で重複がある場合は、
+ * import でパッケージ違いでクラス名の重複があっても、エラーとしてはいけない。
+ * ソースコード内でクラス名が参照され、そのクラス名に対応するFQCNが複数取り得る場合にエラーにする必要がある。
+ * FQCN指定とパッケージ指定で重複がある場合は、FQCN指定を優先する
  */
 public class ImportDeclarationManager
 {
-	// java.lang.* 配下のクラスに優先して pyrite.lang.* のクラスを選択するクラス名。
-	// Integer 等と指定された際に、java.lang.Integer と pyrite.lang.Integer の複数定義でエラーになることを防ぐ。(pyrite.lang.Integer と識別する)
-	// ただし、import で FQCN で指定された場合はそれを優先する。
-	public final static String[]	IMPORT_PYRITE_LANG_CLASSES =
-		{
-			"Array", "Assoc", "Boolean", "Character", "Decimal", "Float", "Integer", "MultipleValue", "Number", "Object", "String",
-		};
-
-
-
-	private ClassResolver _cr;
+	private final ClassResolver _cr;
 
 	// import文を保持する
 	private List<String>	_importDeclartionStrList = new ArrayList<String>();
-
-	//	public HashMapMap<String, String, String>	_importMap = new HashMapMap<String, String, String>();	// key:class name value:full class name full class name
 
 	// クラス名に対応するimport宣言
 	private Map<String, ImportDeclaration>	_importMap = new HashMap<String, ImportDeclaration>();	// key:class name value:ImportDeclaration
@@ -95,15 +85,13 @@ public class ImportDeclarationManager
 	}
 
 
-
 	/**
 	 * 指定されたパッケージに含まれるクラスそれぞれについて、
 	 *  * そのクラスが FQCN 指定されていれば何もしない
 	 *  * そのクラスが FQCN 指定されていなければ、指定されたパッケージを優先する。(FQCN指定されているとみなす)
 	 *
-	 *  これは、同じパッケージのクラスをパッケージ指定のクラスより優先したり、
+	 *  これは、ソースコードと同じパッケージ内のクラスをパッケージ指定のクラスより優先したり、
 	 *  java.lang.* 配下のクラスに優先して pyrite.lang.* のクラスを優先したりするため。
-	 *
 	 */
 	public void	overridePackage(String packageName)
 	{
@@ -124,34 +112,6 @@ public class ImportDeclarationManager
 			}
 		}
 	}
-
-
-	/*
-	public String[]	resolveClassName(String packageName, String className)
-	{
-		String	packageClassName = StringUtil.concat(packageName, className);
-
-		if (_cr.getClassFieldMember(packageClassName) != null)
-		{
-			return	new String[]{packageName, className};	// そのまま返す
-		}
-
-		if (packageName.equals(""))
-		{	// クラス名の場合、import宣言されているか確認する
-			ImportDeclaration	importDeclaration = _importMap.get(className);
-			if (importDeclaration != null)
-			{
-				if (importDeclaration.isDuplicatedDeclaration())
-				{
-					throw new PyriteSyntaxException("class name is ambiguity");
-				}
-				String	fqcn = importDeclaration.getFQCN();
-				return	StringUtil.splitLastElement(fqcn, '.');
-			}
-		}
-		return	null;
-	}
-	*/
 
 	/**
 	 * import節を考慮してクラス名を解決して返す
@@ -208,7 +168,6 @@ public class ImportDeclarationManager
 		{
 			_fqcnAstSet.add(fqcn);
 		}
-
 
 		public FQCN	getFQCN()
 		{

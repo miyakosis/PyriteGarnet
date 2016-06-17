@@ -18,11 +18,6 @@ public class MultipleValueListType extends VarType
 		super(TYPE.MULTIPLE_LIST, null, null, "MultipleValueListType");	// Type cache には保存しないよう、typeId は null。jvmExpressionも使用されない。
 	}
 
-//	public MultipleValueListType(List<VarType>	varTypeList)
-//	{
-//		_varTypeList = varTypeList;
-//	}
-
 	public void	addType(VarType varType)
 	{
 		_varTypeList.add(varType);

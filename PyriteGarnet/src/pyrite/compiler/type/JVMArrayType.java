@@ -1,10 +1,12 @@
 package pyrite.compiler.type;
 
-
+/*
+ * JVM とのインターフェースとして、JVMの配列の情報を保持する型
+ */
 public class JVMArrayType extends VarType
 {
-	public final VarType	_arrayVarType;
-	public final int	_nArrayDimension;
+	public final VarType	_arrayVarType;	// 配列に保持する型
+	public final int	_nArrayDimension;	// 配列の次元
 
 	public static VarType getType(VarType arrayVarType, int nArrayLevel)
 	{

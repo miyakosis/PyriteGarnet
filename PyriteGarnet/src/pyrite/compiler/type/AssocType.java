@@ -4,6 +4,9 @@ import pyrite.compiler.FQCNParser;
 import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.lang.Assoc;
 
+/*
+ * 連想配列型
+ */
 public class AssocType extends VarType
 {
 	public final VarType	_keyVarType;

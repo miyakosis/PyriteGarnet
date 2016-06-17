@@ -2,6 +2,9 @@ package pyrite.compiler.type;
 
 import java.util.List;
 
+/*
+ * Switch文のブロック情報を保持するクラス
+ */
 public class SwitchBlock
 {
 	public final int	_blockStartPos;

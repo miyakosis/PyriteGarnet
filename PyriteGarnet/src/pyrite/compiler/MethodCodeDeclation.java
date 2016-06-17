@@ -8,11 +8,13 @@ import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapStack;
 
+/*
+ * メソッドの定義およびコードを保持するクラス
+ */
 public class MethodCodeDeclation
 {
 	public final static	List<VarTypeName>	EMPTY_PARAMETER = new ArrayList<>();
 
-//	public String	_className;	// TODO:未使用?
 	public String	_methodName;
 	public boolean	_isStatic;
 	public List<VarTypeName>	_inParamList;
@@ -28,6 +30,7 @@ public class MethodCodeDeclation
 	// Exception table
 	public List<ExceptionTableEntry>	_exceptionTableEntryList = new ArrayList<ExceptionTableEntry>();
 
+	// 空のメソッド定義情報でオブジェクトを作成する
 	public MethodCodeDeclation()
 	{
 	}
@@ -39,11 +42,6 @@ public class MethodCodeDeclation
 	}
 
 
-//	public void	setClassName(String className)
-//	{
-//		_className = className;
-//	}
-
 	public void	setMethodName(String methodName)
 	{
 		_methodName = methodName;
@@ -52,10 +50,6 @@ public class MethodCodeDeclation
 	public void setStatic(boolean isStatic)
 	{
 		_isStatic = isStatic;
-//		if (isStatic == false)
-//		{
-//			putLocalVar("this", ObjectType.getType(_className));
-//		}
 	}
 
 	public void setInParamList(List<VarTypeName> methodParamList)
@@ -85,7 +79,7 @@ public class MethodCodeDeclation
 		_localVarMapStack.pop();
 	}
 
-	// true:現在のレベルで同名のローカル変数が登録済み false:それ以外
+	// @return true:現在のレベルで同名のローカル変数が登録済み false:それ以外
 	public boolean	isDuplicatedLocalVar(String name)
 	{
 		VarTypeName	var = _localVarMapStack.get(name);
