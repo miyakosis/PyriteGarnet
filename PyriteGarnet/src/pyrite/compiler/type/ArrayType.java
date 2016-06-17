@@ -1,62 +1,85 @@
 package pyrite.compiler.type;
 
+import pyrite.compiler.FQCNParser;
+import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.lang.Array;
 
-
-
+/*
+ * 配列型
+ */
 public class ArrayType extends VarType
 {
+	// 配列に保持する型
 	public final VarType	_arrayVarType;
-	public final int	_nArrayLevel;
 
-	public static VarType getType(VarType arrayVarType, int nArrayLevel)
+	public static VarType getType(VarType arrayVarType)
 	{
-		int	hashCode = createHashCode(TYPE.ARRAY, arrayVarType, nArrayLevel);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("<").append(arrayVarType._typeId);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new ArrayType(TYPE.ARRAY, arrayVarType, nArrayLevel);
-			__varTypeMap.put(hashCode, varType);
+			FQCN	fqcn = FQCNParser.getFQCN(Array.CLASS_NAME);
+			varType = new ArrayType(typeId, fqcn, arrayVarType);
 		}
 
 		return	varType;
 	}
 
-	protected static int	createHashCode(TYPE type, VarType arrayVarType, int nArrayLevel)
+	// JVMArrayType より対応する ArrayTypeを作成する
+	public static VarType getType(JVMArrayType jvmArrayType)
 	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(type).append(arrayVarType.hashCode());
-		for (int i = 0; i < nArrayLevel; ++i)
+		VarType	pyriteType = VarType.getAssociatedPyriteType(jvmArrayType._arrayVarType);
+
+		VarType	resultArrayType = ArrayType.getType(pyriteType);
+		for (int i = 1; i < jvmArrayType._nArrayDimension; ++i)
 		{
-			sb.append("[");
+			resultArrayType = ArrayType.getType(resultArrayType);
 		}
-		return	sb.toString().hashCode();
+		return	resultArrayType;
 	}
 
-	protected static String	createJVMExpression(TYPE type, VarType arrayVarType, int nArrayLevel)
+	// 配列を辿り、保持している ArrayType 以外の VarType を返す
+	public static VarType	getContentVarType(ArrayType arrayType)
 	{
-		StringBuilder	sb = new StringBuilder();
-		for (int i = 0; i < nArrayLevel; ++i)
+		int	dimension;
+		for (dimension = 1;; ++dimension)
 		{
-			sb.append("[");
+			if (arrayType._arrayVarType._type == TYPE.ARRAY)
+			{
+				// ArrayのArrayであるため、次のレベルを探索する
+				arrayType = (ArrayType)arrayType._arrayVarType;
+			}
+			else
+			{	// 保持される型である
+				return	arrayType._arrayVarType;
+			}
 		}
-		sb.append(arrayVarType._jvmExpression);
-
-		return	sb.toString();
 	}
 
-	protected ArrayType(TYPE type, VarType arrayVarType, int nArrayLevel)
+	// 配列を辿り、保持している ArrayType 以外の VarType の次元を返す
+	public static int	getContentDimension(ArrayType arrayType)
 	{
-		super._type = type;
-		super._hashCode = createHashCode(TYPE.ARRAY, arrayVarType, nArrayLevel);
-		super._jvmExpression = createJVMExpression(TYPE.ARRAY, arrayVarType, nArrayLevel);
+		int	dimension;
+		for (dimension = 1;; ++dimension)
+		{
+			if (arrayType._arrayVarType._type == TYPE.ARRAY)
+			{
+				// ArrayのArrayであるため、次のレベルを探索する
+				arrayType = (ArrayType)arrayType._arrayVarType;
+			}
+			else
+			{	// 保持される型である
+				return	dimension;
+			}
+		}
+	}
 
+	protected ArrayType(String typeId, FQCN fqcn, VarType arrayVarType)
+	{
+		super(TYPE.ARRAY, typeId, fqcn, "L" + fqcn._fqcnStr + ";");
 		_arrayVarType = arrayVarType;
-		_nArrayLevel = nArrayLevel;
-	}
-
-	public VarType	getType(int nArrayLevelDiff)
-	{
-		int	nextLevel = _nArrayLevel + nArrayLevelDiff;
-		return	(nextLevel == 0) ? _arrayVarType : getType(_arrayVarType, nArrayLevelDiff);
 	}
 }

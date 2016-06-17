@@ -2,28 +2,28 @@ package pyrite.lang;
 
 import pyrite.runtime.PyriteRuntime;
 
-public class Character extends pyrite.lang.Object
+public class Byte extends pyrite.lang.Object
 {
-	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Character";
+	public final static java.lang.String	CLASS_NAME = "pyrite.lang.Byte";
 
-	private final char	_v;
+	private final byte	_v;
 
-	public Character(Character c)
+	public Byte(Byte val)
 	{
-		_v = c._v;
+		_v = val._v;
 	}
 
-	public Character(Integer code)
+	public Byte(Integer val)
 	{
-		_v = (char)PyriteRuntime.toJavaInt(code);
+		_v = (byte)PyriteRuntime.toJavaInt(val);
 	}
 
-	private Character(char val)
+	private Byte(byte val)
 	{
 		_v = val;
 	}
 
-	// convert
+	// cast
 	public Integer	toInt()
 	{
 		return	PyriteRuntime.toPyriteInteger(_v);
@@ -34,6 +34,7 @@ public class Character extends pyrite.lang.Object
 		return	PyriteRuntime.toPyriteString(java.lang.String.valueOf(_v));
 	}
 
+
 	@Override
 	public int	hashCode()
 	{
@@ -43,9 +44,8 @@ public class Character extends pyrite.lang.Object
 	@Override
 	public boolean	equals(java.lang.Object o)
 	{
-		return (o instanceof Character) && _v == ((Character)o)._v;
+		return (o instanceof Byte) && _v == ((Byte)o)._v;
 	}
-
 
 
 	public static class CompilerAccessor
@@ -58,14 +58,14 @@ public class Character extends pyrite.lang.Object
 			}
 		}
 
-		public char	javaValue(Character c)
+		public byte	javaValue(Byte b)
 		{
-			return	c._v;
+			return	b._v;
 		}
 
-		public Character	pyriteValue(char c)
+		public Byte	pyriteValue(byte b)
 		{
-			return	new Character(c);
+			return	new Byte(b);
 		}
 	}
 }

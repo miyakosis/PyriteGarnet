@@ -1,80 +1,65 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.CodeGenerationVisitor;
+import java.lang.reflect.Modifier;
+
+import pyrite.compiler.FQCNParser.FQCN;
 
 
-
+// メソッドの引数などを保持する型
 public class MethodType extends VarType
 {
-	public String	_packageClassName;
-	public String	_methodName;
-	public VarType[]	_paramTypes;
-	public VarType[]	_returnTypes;
-	public boolean	_isStatic;
+	public final String	_methodName;
+	public final VarType[]	_paramTypes;
+	public final VarType[]	_returnTypes;
+	public final boolean	_isStatic;
+	public final int	_modifier;
 
-	public String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列
+	public final String	_methodSignature;	// 名前解決のためメソッドのクラス、メソッド名、引数の型よりメソッドを一意に識別する文字列(返り値は含まれない)
 
-	public String	_jvmMethodParamExpression;	// メソッド引数のJVM表現
+	public final String	_jvmMethodParamExpression;	// メソッド引数部分のJVM表現
 
-	public static VarType	getType(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
+	public static VarType	getType(FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, int modifier)
 	{
-		int	hashCode = createHashCode(packageClassName, methodName, paramTypes, returnTypes, isStatic);
-		VarType	varType = __varTypeMap.get(hashCode);
-		if (varType == null)
-		{
-			varType = new MethodType(TYPE.METHOD, packageClassName, methodName, paramTypes, returnTypes, isStatic);
-			__varTypeMap.put(hashCode, varType);
-		}
+		boolean	isStatic = ((modifier & Modifier.STATIC) != 0);
 
-		return	varType;
-	}
-
-	protected static int	createHashCode(String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
-	{
 		StringBuilder	sb = new StringBuilder();
-		sb.append(TYPE.METHOD).append(packageClassName).append(".").append(methodName);
-
+		sb.append("METHOD:").append(fqcn._fqcnStr).append(".").append(methodName);
 		sb.append("(");
 		for (VarType param : paramTypes)
 		{
-			sb.append(param._jvmExpression);
+			sb.append(param._typeId);
 		}
 		sb.append(")");
 		sb.append("(");
 		for (VarType param : returnTypes)
 		{
-			sb.append(param._jvmExpression);
+			sb.append(param._typeId);
 		}
 		sb.append(")");
 		sb.append(isStatic);
 
-		return	sb.toString().hashCode();
-	}
-
-
-	public static String	createMethodSignature(String packageClassName, String methodName, String methodParamSignature)
-	{
-		StringBuilder	sb = new StringBuilder();
-		sb.append(packageClassName);
-		sb.append(".");
-		sb.append(methodName);
-		sb.append("(");
-		sb.append(methodParamSignature);
-		sb.append(")");
-
-		return	sb.toString();
-	}
-
-	public static String	createMethodSignature(String packageClassName, String methodName, VarType[] paramTypes)
-	{
-		StringBuilder	sb = new StringBuilder();
-		for (VarType param : paramTypes)
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
+		if (varType == null)
 		{
-			assert (param._jvmExpression != null);
-			sb.append(param._jvmExpression);
+			varType = new MethodType(typeId, fqcn, methodName, paramTypes, returnTypes, isStatic, modifier);
 		}
 
-		return	createMethodSignature(packageClassName, methodName, sb.toString());
+		return	varType;
+	}
+
+	protected MethodType(String typeId, FQCN fqcn, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic, int modifier)
+	{
+		super(TYPE.METHOD, typeId, fqcn, null);
+
+		_methodName = methodName;
+		_paramTypes = paramTypes;
+		_returnTypes = returnTypes;
+		_isStatic = isStatic;
+		_modifier = modifier;
+
+		_methodSignature = createMethodSignature(fqcn._fqcnStr, methodName, paramTypes);
+		_jvmMethodParamExpression = createJvmMethodParamExpression(paramTypes, returnTypes);
 	}
 
 	public static String createJvmMethodParamExpression(VarType[] paramTypes, VarType[] returnTypes)
@@ -88,18 +73,17 @@ public class MethodType extends VarType
 		}
 		sb.append(")");
 
-		if (returnTypes.length > 1)
+		switch (returnTypes.length)
 		{
-			throw new RuntimeException("not supported yet");
-		}
-
-		if (returnTypes.length == 0)
-		{
+		case 0:
 			sb.append("V");
-		}
-		else
-		{
+			break;
+		case 1:
 			sb.append(returnTypes[0]._jvmExpression);
+			break;
+		default:
+			sb.append("Lpyrite.lang.MultipleValue;");
+			break;
 		}
 
 		return	sb.toString();
@@ -119,60 +103,29 @@ public class MethodType extends VarType
 		return	sb.toString();
 	}
 
-
-	protected MethodType(TYPE type, String packageClassName, String methodName, VarType[] paramTypes, VarType[] returnTypes, boolean isStatic)
-	{
-		_type = type;
-		_packageClassName = packageClassName;
-		_methodName = methodName;
-		_paramTypes = paramTypes;
-		_returnTypes = returnTypes;
-		_isStatic = isStatic;
-
-		_hashCode = createHashCode(packageClassName, methodName, paramTypes, returnTypes, isStatic);
-		_methodSignature = createMethodSignature(packageClassName, methodName, paramTypes);
-		_jvmMethodParamExpression = createJvmMethodParamExpression(paramTypes, returnTypes);
-	}
-
-
-	// 識別子解決の段階では、メソッド名に続く識別子は存在しないため、例外を発行
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	@Override
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		throw new RuntimeException("id is not declared." + id);
-	}
-
-
-	public String getParamStr()
+	public static String	createMethodSignature(String packageClassName, String methodName, String methodParamSignature)
 	{
 		StringBuilder	sb = new StringBuilder();
+		sb.append(packageClassName);
+		sb.append(".");
+		sb.append(methodName);
 		sb.append("(");
-		addParamStr(_paramTypes, sb);
+		sb.append(methodParamSignature);
 		sb.append(")");
-		addParamStr(_returnTypes, sb);	// TODO:とりあえず今はパラメータが1個以下のみ
 
 		return	sb.toString();
 	}
 
-	private void	addParamStr(VarType[] params, StringBuilder sb)
+	// 引数の型で戻り値の型は一意に決まるため、戻り値の型はシグネチャに含めない
+	public static String	createMethodSignature(String packageClassName, String methodName, VarType[] paramTypes)
 	{
-		if (params.length == 0)
+		StringBuilder	sb = new StringBuilder();
+		for (VarType param : paramTypes)
 		{
-			sb.append("V");
+			assert (param._jvmExpression != null);
+			sb.append(param._jvmExpression);
 		}
-		else
-		{
-			for (VarType p : params)
-			{
-				assert (p._jvmExpression != null);
-				sb.append(p._jvmExpression);
-			}
-		}
+
+		return	createMethodSignature(packageClassName, methodName, sb.toString());
 	}
 }

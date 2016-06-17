@@ -3,30 +3,30 @@ package pyrite.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.TerminalNode;
-
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteBaseVisitor;
-import pyrite.compiler.antlr.PyriteLexer;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.ArrayType;
+import pyrite.compiler.type.AssocType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
-import pyrite.compiler.util.StringUtil;
 
 public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 {
+	public final ClassResolver	_cr;
 	public final ImportDeclarationManager	_idm;
 
-	public GrammarCommonVisitor(ImportDeclarationManager idm)
+	public GrammarCommonVisitor(ClassResolver cr, ImportDeclarationManager idm)
 	{
+		_cr = cr;
 		_idm = idm;
 	}
 
-	// '(' (inputParameter (',' inputParameter)*)? ')'
+	// inputParameters
+    // :   '(' (inputParameter (',' inputParameter)*)? ')'
 	@Override
-	public Object visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx)
+	public Object visitInputParameters(PyriteParser.InputParametersContext ctx)
 	{
 		List<VarTypeName>	paramList = new ArrayList<VarTypeName>();
 		if (ctx.inputParameter() != null)
@@ -41,11 +41,12 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return	paramList;
 	}
 
-	// type Identifier
+	// inputParameter
+    // :   'var'? Identifier ':' typeOrArray
 	@Override
-	public Object visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx)
+	public Object visitInputParameter(PyriteParser.InputParameterContext ctx)
 	{
-		VarType	type = (VarType)visit(ctx.type());
+		VarType	type = (VarType)visit(ctx.typeOrArray());
 		String	name = ctx.Identifier().getText();
 
 		return	new VarTypeName(type, name);
@@ -55,9 +56,10 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 //		return	methodParam;
 	}
 
-	// '(' (outputParameter (',' outputParameter)*)? ')'
+	// outputParameters
+    // :   '(' (outputParameter (',' outputParameter)*)? ')'
 	@Override
-	public Object visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx)
+	public Object visitOutputParameters(PyriteParser.OutputParametersContext ctx)
 	{
 		List<VarTypeName>	paramList = new ArrayList<VarTypeName>();
 		if (ctx.outputParameter() != null)
@@ -72,11 +74,12 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 		return	paramList;
 	}
 
-	// type Identifier?
+	// outputParameter
+    // :   ('var'? Identifier ':')? typeOrArray
 	@Override
-	public Object visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx)
+	public Object visitOutputParameter(PyriteParser.OutputParameterContext ctx)
 	{
-		VarType	type = (VarType)visit(ctx.type());
+		VarType	type = (VarType)visit(ctx.typeOrArray());
 		String	name = ctx.Identifier() != null ? ctx.Identifier().getText() : null;
 
 		return	new VarTypeName(type, name);
@@ -90,19 +93,22 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 //		return	methodParam;
 	}
 
+
+/*
 	// primitiveType ('[' ']')*		# TypePrimitiveType	// primitiveType ('[' ']')*
 	@Override
-	public Object visitTypePrimitiveType(@NotNull PyriteParser.TypePrimitiveTypeContext ctx)
+	public Object visitTypePrimitiveType(PyriteParser.TypePrimitiveTypeContext ctx)
 	{
 		VarType	type = (VarType)visit(ctx.primitiveType());
 		int	nArrayLevel = getArrayLevel(ctx);
 
 		return	(nArrayLevel == 0) ? type : ArrayType.getType(type, nArrayLevel);
 	}
-
+*/
+/*
 	// classOrInterfaceType ('[' ']')*	# TypeClassType	// classOrInterfaceType ('[' ']')*
 	@Override
-	public Object visitTypeClassType(@NotNull PyriteParser.TypeClassTypeContext ctx)
+	public Object visitTypeClassType(PyriteParser.TypeClassTypeContext ctx)
 	{
 		String	name = ctx.classOrInterfaceType().getText();
 		int	nArrayLevel = getArrayLevel(ctx);
@@ -119,16 +125,18 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 
 		return	(nArrayLevel == 0) ? type : ArrayType.getType(type, nArrayLevel);
 	}
-
+*/
+	/*
 	private int	getArrayLevel(PyriteParser.TypeContext ctx)
 	{
 		List<TerminalNode> tokenList = ctx.getTokens(PyriteLexer.LBRACK);
 		return	(tokenList != null) ? tokenList.size() : 0;
 	}
+	*/
 
 	//  type (',' type)*
 	@Override
-	public Object visitTypeList(@NotNull PyriteParser.TypeListContext ctx)
+	public Object visitTypeList(PyriteParser.TypeListContext ctx)
 	{
 		List<VarType>	typeList = new ArrayList<VarType>();
 
@@ -142,14 +150,43 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 
 	// '(' expression ')'
 	@Override
-	public Object visitPrimaryParens(@NotNull PyriteParser.PrimaryParensContext ctx)
+	public Object visitPrimaryParens(PyriteParser.PrimaryParensContext ctx)
 	{
 		return visit(ctx.expression());
 	}
 
+	// array
+	//	:   '[' typeOrArray (':' typeOrArray)? ']'
+	@Override
+	public Object visitArray(PyriteParser.ArrayContext ctx)
+	{
+		if (ctx.typeOrArray().size() == 1)
+		{	// array
+			VarType	valType = (VarType)visit(ctx.typeOrArray(0));
+			return	ArrayType.getType((VarType)valType);
+		}
+		else
+		{	// assoc
+			VarType	keyType = (VarType)visit(ctx.typeOrArray(0));
+			VarType	valType = (VarType)visit(ctx.typeOrArray(1));
+			return	AssocType.getType(keyType, valType);
+		}
+	}
+
+//	@Override
+//	// type ':' type
+//	public Object visitArraySpecAssoc(PyriteParser.ArraySpecAssocContext ctx)
+//	{
+//		VarType	keyType = (VarType)visit(ctx.type(0));
+//		VarType	valType = (VarType)visit(ctx.type(1));
+//
+//		return	new VarType[]{keyType, valType};
+//	}
+
+
+
 //	primitiveType
 //    :   'obj'
-//    |   'var'
 //    |   'num'
 //    |   'int'
 //    |   'flt'
@@ -159,29 +196,56 @@ public class GrammarCommonVisitor extends PyriteBaseVisitor<Object>
 //    |   'byt'
 //    ;
 	@Override
-	public Object visitPrimitiveType(@NotNull PyriteParser.PrimitiveTypeContext ctx)
+	public Object visitPrimitiveType(PyriteParser.PrimitiveTypeContext ctx)
 	{
 		String	name = ctx.getText();
 
 		switch (name)
 		{
+		case "obj":
+			return	VarType.OBJ;
+
+		case "num":
+			return	VarType.NUM;
+
 		case "int":
 			return	VarType.INT;
+
+		case "dec":
+			return	VarType.DEC;
+
+		case "flt":
+			return	VarType.FLT;
 
 		case "str":
 			return	VarType.STR;
 
+		case "chr":
+			return	VarType.CHR;
+
 		case "bol":
 			return	VarType.BOL;
 
-		case "obj":
-		case "var":
-		case "num":
-		case "flt":
-		case "chr":
 		case "byt":
+			return	VarType.BYT;
+
 		default:
-			throw new RuntimeException("not supported");
+			throw new RuntimeException("assertion");
 		}
 	}
+
+	// qualifiedName
+	// : Identifier ('.' Identifier)*
+	@Override
+	public Object visitQualifiedName(PyriteParser.QualifiedNameContext ctx)
+	{
+		String	fqcnStr = ctx.getText();
+		FQCN	fqcn = _idm.resolveClassName(fqcnStr);
+		if (fqcn == null || _cr.existsFQCN(fqcn) == false)
+		{
+			throw new PyriteSyntaxException("class not found.:" + fqcnStr);
+		}
+		return	ObjectType.getType(fqcn._fqcnStr);
+	}
+
 }

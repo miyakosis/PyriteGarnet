@@ -1,8 +1,7 @@
 /*
  [The "BSD licence"]
- Copyright (c) 2013 Terence Parr, Sam Harwell
- All rights reserved.
-
+ Copyright (c) 2016 MIYAKOSI, Sigeaki
+ All rights reserved.variableDeclarationStatement
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
@@ -26,7 +25,10 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// version 0.0.0
+
 // refer Java1.7.g4
+// commented lines are original Java 1.7 syntax.
 grammar Pyrite;
 
 @header
@@ -243,7 +245,7 @@ inputParameters
     ;
 
 inputParameter
-    :   type Identifier
+    :   'var'? Identifier ':' typeOrArray
     ;
 
 outputParameters
@@ -251,7 +253,7 @@ outputParameters
     ;
 
 outputParameter
-    :   type Identifier?
+    :   ('var'? Identifier ':')? typeOrArray
     ;
 
 
@@ -288,7 +290,7 @@ constructorDeclaration
 //		    ;
 
 fieldDeclaration
-    :   classInstanceModifier? type Identifier ('=' variableInitializer)? ';'
+    :   classInstanceModifier? 'var' variableDeclarationStatement ';'
     ;
 
 
@@ -342,32 +344,51 @@ fieldDeclaration
 //	    :   Identifier ('[' ']')*
 //	    ;
 
-variableInitializer
-    :   arrayInitializer
-    |   expression
-    ;
+//	variableInitializer
+//	    :   arrayInitializer
+//	    |   expression
+//	    ;
 
-arrayInitializer
-    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
-    ;
+//	arrayInitializer
+//	    :   '{' (variableInitializer (',' variableInitializer)* (',')? )? '}'
+//	    ;
 
 //	enumConstantName
 //	    :   Identifier
 //	    ;
 
-type
-    :   primitiveType ('[' ']')*		# TypePrimitiveType
-    |	classOrInterfaceType ('[' ']')*	# TypeClassType
+typeOrArray
+    :   type
+    |   array
     ;
+
+type
+    :   primitiveType
+    |   qualifiedName
+    ;
+
+array
+    :   '[' typeOrArray (':' typeOrArray)? ']'
+    ;
+
+//	array
+//	    :   '[' arraySpec ']'
+//	    ;
+
+//	arraySpec
+//	    :   typeOrArray						# ArraySpecArray		// not used
+//	    |   typeOrArray ':' typeOrArray		# ArraySpecAssoc
+//	    ;
+
 
 //	type
 //	    :   classOrInterfaceType ('[' ']')*
 //	    |   primitiveType ('[' ']')*
 //	    ;
 
-classOrInterfaceType
-    :   Identifier ('.' Identifier)*
-    ;
+//	classOrInterfaceType
+//	    :   Identifier ('.' Identifier)*
+//	    ;
 
 //	classOrInterfaceType
 //	    :   Identifier typeArguments? ('.' Identifier typeArguments? )*
@@ -375,9 +396,9 @@ classOrInterfaceType
 
 primitiveType
     :   'obj'
-    |   'var'
     |   'num'
     |   'int'
+    |   'dec'
     |   'flt'
     |   'str'
     |   'chr'
@@ -439,8 +460,16 @@ methodBody
     ;
 
 constructorBody
-    :   block
+    :   '{' constructorCall? statement* '}'
     ;
+
+constructorCall
+    :   method=('this' | 'super') arguments ';'
+    ;
+
+//	constructorBody
+//	    :   block
+//	    ;
 
 qualifiedName
     :   Identifier ('.' Identifier)*
@@ -534,13 +563,12 @@ literal
 // STATEMENTS / BLOCKS
 
 block
-    :   '{' blockStatement* '}'
+    :   '{' statement* '}'
     ;
 
-blockStatement
-    :   localVariableDeclarationStatement
-    |   statement
-    ;
+//	block
+//	    :   '{' blockStatement* '}'
+//	    ;
 
 //	blockStatement
 //	    :   localVariableDeclarationStatement
@@ -548,13 +576,9 @@ blockStatement
 //	    |   typeDeclaration
 //	    ;
 
-localVariableDeclarationStatement
-    :    localVariableDeclaration ';'
-    ;
-
-localVariableDeclaration
-    :   type Identifier ('=' variableInitializer)?
-    ;
+//	localVariableDeclarationStatement
+//	    :    localVariableDeclaration ';'
+//	    ;
 
 //	localVariableDeclaration
 //	    :   variableModifier* type variableDeclarators
@@ -563,25 +587,31 @@ localVariableDeclaration
 statement
     :   block								# StatementBlock	// not used
     |   ';'									# StatementEmpty	// not used
-    |   expression ';'						# StatementExpression	// not used
-    |   'return' expressionList? ';'		# StatementReturn
-    |   ifStatement							# StatementIf		// not used
-    |   label 'while' parExpression block			# StatementWhile
-    |   label 'for' '(' forControl ')' block		# StatementFor
+    |   expression ';'						# StatementExpression
+    |   'var' variableDeclarationStatement ';' 		# StatementVar
+    |   'return' expression? ';'					# StatementReturn
+    |   'if' ifStatement							# StatementIf		// not used
+    |   (Identifier ':')? 'while' parExpression block			# StatementWhile
+    |   (Identifier ':')? 'for' '(' forControl ')' block		# StatementFor
     |   'switch' parExpression '{' switchBlockStatementGroup* switchLabel* '}'	# StatementSwitch
-    |   'break' label ';'				# StatementBreak
-    |   'continue' label ';'			# StatementContinue
+    |   'break' Identifier? ';'							# StatementBreak
+    |   'continue' Identifier? ';'						# StatementContinue
+    |   'try' block (catchClause+ finallyBlock? | finallyBlock)	# StatementTry
+    |   'throw' expression ';'						# StatementThrow
+    |   'synchronized' parExpression block			# StatementSynchronized
     ;
-//TODO:try-catch, synchronized, throw
 
-label
-    :    Identifier?
+variableDeclarationStatement
+    :   variableDeclaration (',' variableDeclaration)* ('=' expression)?
     ;
+    
+variableDeclaration
+	:   Identifier (':' typeOrArray)?
+	;
 
 ifStatement
-    :   'if' parExpression fulfillmentBlock=block ('else' (ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
+    :	parExpression fulfillmentBlock=block ('else' ('if' ifStatement | elseBlock=block))?	// 'if' parExpression block ('else' (ifStatement | block))?
     ;
-
 
 //	statement
 //	    :   block
@@ -603,9 +633,9 @@ ifStatement
 //	    |   Identifier ':' statement
 //	    ;
 
-//	catchClause
-//	    :   'catch' '(' catchType Identifier ')' block
-//	    ;
+catchClause
+	    :   'catch' '(' 'var' Identifier (':' qualifiedName)? ')' block
+	    ;
 
 //	catchClause
 //	    :   'catch' '(' variableModifier* catchType Identifier ')' block
@@ -616,9 +646,9 @@ ifStatement
 //	    :   qualifiedName ('|' qualifiedName)*
 //	    ;
 
-//	finallyBlock
-//	    :   'finally' block
-//	    ;
+finallyBlock
+    :   'finally' block
+    ;
 
 //	resourceSpecification
 //	    :   '(' resources ';'? ')'
@@ -641,7 +671,7 @@ ifStatement
  */
 
 switchBlockStatementGroup
-    :   switchLabel+ blockStatement+ (fallthrough='fallthrough' ';')?	// switchLabel+ blockStatement+ ('fallthrough' ';')?
+    :   switchLabel+ statement+ (fallthrough='fallthrough' ';')?	// switchLabel+ statement+ ('fallthrough' ';')?
     ;
 
 //	switchBlockStatementGroup
@@ -662,8 +692,8 @@ switchLabel
 
 
 forControl
-    :   type Identifier ':' expression				# ForControlIterator
-    |   forInit? ';' expression? ';' forUpdate?		# ForControlICU	// ICU=Init, Control, Update
+    :   'var' Identifier ':' typeOrArray 'in' expression														# ForControlIterator
+    |   ('var' variableDeclarationStatement | init=expression)? ';' control=expression? ';' update=expression?	# ForControlICU	// ICU=Init, Control, Update
     ;
 
 //	forControl
@@ -671,10 +701,15 @@ forControl
 //	    |   forInit? ';' expression? ';' forUpdate?
 //	    ;
 
-forInit
-    :   localVariableDeclaration
-    |   expressionList
-    ;
+//	forInit
+//		:	'var' variableDeclarationStatement
+//		|	expression
+//		;
+
+//	forInit
+//	    :   localVariableDeclaration
+//	    |   expressionList
+//	    ;
 
 //	enhancedForControl
 //	    :   type variableDeclaratorId ':' expression
@@ -684,9 +719,9 @@ forInit
 //	    :   variableModifier* type variableDeclaratorId ':' expression
 //	    ;
 
-forUpdate
-    :   expressionList
-    ;
+//	forUpdate
+//	    :   expression
+//	    ;
 
 // EXPRESSIONS
 
@@ -694,9 +729,9 @@ parExpression
     :   '(' expression ')'
     ;
 
-expressionList
-    :   expression (',' expression)*
-    ;
+//	expressionList
+//	    :   expression (',' expression)*
+//	    ;
 
 //	statementExpression
 //	    :   expression
@@ -709,32 +744,36 @@ expressionList
 expression
     :   primary                     		# ExpressionPrimary	// not used
     |   expression '.' Identifier			# ExpressionClassFieldRef
+    |   expression '.(' type ')'			# ExpressionCast
     |   expression arguments				# ExpressionInvokeMethod
     |   'new' creator						# ExpressionNew
     |   expression '[' expression ']'		# ExpressionArrayAccess
     |   expression op=('*'|'/'|'%') expression	# ExpressionMulDiv
     |   expression op=('+'|'-') expression	# ExpressionAddSub
-    |   expression op=('<<' | '>>>' | '>>') expression	# ExpressionShift
+    |   expression op=('<<' | '>>' | '>>>') expression	# ExpressionShift
     |   expression op=('<=' | '>=' | '>' | '<') expression	# ExpressionCompare
+    |   expression 'instanceof' type		# ExpressionInstanceof
     |   expression op=('==' | '!=') expression	# ExpressionEqual
     |   expression '&' expression	# ExpressionBitAnd
     |   expression '^' expression	# ExpressionBitExOr
     |   expression '|' expression	# ExpressionBitOr
     |   expression '&&' expression	# ExpressionBolAnd
     |   expression '||' expression	# ExpressionBolOr
+    |   expression ',' expression	# ExpressionPair
+//    |   expression (',' expression)+	# ExpressionList // これはうまく解析できないので、ExpressionPair にて定義
     |   <assoc=right> expression
         op=('='
         |   '+='
         |   '-='
         |   '*='
         |   '/='
+        |   '%='
         |   '&='
         |   '|='
         |   '^='
         |   '>>='
         |   '>>>='
         |   '<<='
-        |   '%='
         )
         expression					# ExpressionAssign
     ;
@@ -785,7 +824,8 @@ expression
 
 primary
     :	'(' expression ')'		# primaryParens
-    |	literal                 # primaryLiteral		// not used
+    |   'this'                  # primaryThis
+    |   literal                 # primaryLiteral		// not used
     |   Identifier              # primaryIdentifier
     ;
 
@@ -801,7 +841,8 @@ primary
 //	    ;
 
 creator
-    :   createdName (arrayCreatorRest | arguments)
+    :   qualifiedName arguments	# CreatorClass
+    |   array '(' ')'			# CreatorArray
     ;
 
 //	creator
@@ -809,10 +850,10 @@ creator
 //	    |   createdName (arrayCreatorRest | classCreatorRest)
 //	    ;
 
-createdName
-    :   Identifier ('.' Identifier)*		# CreatedNameIdentifer
-    |   primitiveType						# CreatedNamePrimitiveType
-    ;
+//	createdName
+//	    :   Identifier ('.' Identifier)*		# CreatedNameIdentifer
+//	    |   primitiveType						# CreatedNamePrimitiveType
+//	    ;
 
 //	createdName
 //	    :   Identifier typeArgumentsOrDiamond? ('.' Identifier typeArgumentsOrDiamond?)*
@@ -827,12 +868,12 @@ createdName
 //	    :   Identifier nonWildcardTypeArgumentsOrDiamond? classCreatorRest
 //	    ;
 
-arrayCreatorRest
-    :   '['
-        (   ']' ('[' ']')* arrayInitializer
-        |   expression ']' ('[' expression ']')* ('[' ']')*
-        )
-    ;
+//	arrayCreatorRest
+//	    :   '['
+//	        (   ']' ('[' ']')* arrayInitializer
+//	        |   expression ']' ('[' expression ']')* ('[' ']')*
+//	        )
+//	    ;
 
 //	classCreatorRest
 //	    :   arguments classBody?
@@ -870,10 +911,13 @@ arrayCreatorRest
 //	    |   Identifier arguments
 //	    ;
 
-arguments
-    :   '(' expressionList? ')'
-    ;
+//	arguments
+//	    :   '(' expressionList? ')'
+//	    ;
 
+arguments
+    :   '(' expression? ')'
+    ;
 
 
 
@@ -921,7 +965,7 @@ integerLiteral
 //	fragment
 DecimalNumeral
     :   '0'
-    |   NonZeroDigit (Digits? | Underscores Digits)
+    |   ('-')? NonZeroDigit (Digits? | Underscores Digits)
     ;
 
 //	fragment
@@ -1100,7 +1144,7 @@ booleanLiteral
 characterLiteral
     :    CharacterLiteral
     ;
-    
+
 CharacterLiteral
     :   '\'' SingleCharacter '\''
     |   '\'' EscapeSequence '\''
@@ -1121,7 +1165,7 @@ SingleCharacter
 stringLiteral
     :    StringLiteral
     ;
-    
+
 StringLiteral
     :   '"' StringCharacters? '"'
     ;
@@ -1146,16 +1190,16 @@ StringCharacter
 fragment
 EscapeSequence
     :   '\\' [btnfr"'\\]
-    |   OctalEscape
+//    |   OctalEscape		// Pyriteでは不使用
     |   UnicodeEscape
     ;
 
-fragment
-OctalEscape
-    :   '\\' OctalDigit
-    |   '\\' OctalDigit OctalDigit
-    |   '\\' ZeroToThree OctalDigit OctalDigit
-    ;
+//fragment
+//OctalEscape
+//    :   '\\' OctalDigit
+//    |   '\\' OctalDigit OctalDigit
+//    |   '\\' ZeroToThree OctalDigit OctalDigit
+//    ;
 
 fragment
 UnicodeEscape
@@ -1232,8 +1276,8 @@ VOID          : 'void';
 //	VOLATILE      : 'volatile';
 WHILE         : 'while';
 
-OBJ : 'obj';
 VAR : 'var';
+OBJ : 'obj';
 NUM : 'num';
 INT : 'int';
 FLT : 'flt';
@@ -1241,6 +1285,8 @@ STR : 'str';
 CHR : 'chr';
 BOL : 'bol';
 BYT : 'byt';
+
+IN : 'in';
 
 
 // §3.11 Separators
@@ -1278,6 +1324,9 @@ MUL             : '*';
 DIV             : '/';
 BITAND          : '&';
 BITOR           : '|';
+LSHIFT          : '<<';
+RSHIFT          : '>>';
+URSHIFT         : '>>>';
 CARET           : '^';
 MOD             : '%';
 

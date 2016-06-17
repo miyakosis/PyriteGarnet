@@ -1,61 +1,28 @@
 package pyrite.compiler.type;
 
-import pyrite.compiler.ClassResolver;
-import pyrite.compiler.CodeGenerationVisitor;
-import pyrite.compiler.ImportDeclarationManager;
-import pyrite.compiler.util.StringUtil;
+import pyrite.compiler.FQCNParser.FQCN;
 
 
 public class PackageType extends VarType
 {
-	// for METHOD, CLASS, PACKAGE
-	protected String	_package;
-
-	public static VarType	getType(String packageName1, String packageName2)
+	// precond:これが呼ばれるときは、必ずImport宣言を考慮したパッケージになっている
+	public static VarType	getType(FQCN fqcn)
 	{
-		String	id = StringUtil.concat(packageName1, packageName2);
-		int	hashCode = createHashCode(TYPE.PACKAGE, id);
-		VarType	varType = __varTypeMap.get(hashCode);
+		StringBuilder	sb = new StringBuilder();
+		sb.append("PACKAGE:").append(fqcn._fqcnStr);
+
+		String	typeId = sb.toString();
+		VarType	varType = __varTypeMap.get(typeId);
 		if (varType == null)
 		{
-			varType = new PackageType(TYPE.PACKAGE, id);
-			__varTypeMap.put(hashCode, varType);
+			varType = new PackageType(typeId, fqcn);
 		}
 
 		return	varType;
 	}
 
-	protected PackageType(TYPE type, String packageName)
+	protected PackageType(String typeId, FQCN fqcn)
 	{
-		super._type = type;
-		super._hashCode = createHashCode(type, packageName);
-
-		_package = packageName;
-	}
-
-	// (自分の型, 続く型)
-	//       (変数, そのクラスのインスタンス変数 | クラス変数 | インスタンスメソッド | クラスメソッド)
-	//       (クラス, クラス変数 | クラスメソッド),
-	//       (クラス, クラス),
-	//       (パッケージ, クラス)
-	//       (パッケージ, パッケージ)
-	@Override
-	public VarType	resolveTrailerType(CodeGenerationVisitor cgv, String id)
-	{
-		ClassResolver	cr = cgv._cr;
-		ImportDeclarationManager	idm = cgv._idm;
-
-		String[]	packageClassName = idm.resolveClassName(_package, id);
-		if (packageClassName != null)
-		{	// class name
-			return	ClassType.getType(packageClassName[0], packageClassName[1]);
-		}
-
-		if (cr.isPackage(_package, id))
-		{
-			return	PackageType.getType(_package, id);
-		}
-
-		throw new RuntimeException("id is not declared." + id);
+		super(TYPE.PACKAGE, typeId, null, null);
 	}
 }

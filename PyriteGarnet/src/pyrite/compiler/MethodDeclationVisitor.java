@@ -1,42 +1,37 @@
 package pyrite.compiler;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import pyrite.compiler.ClassResolver.ClassFieldMember;
+import pyrite.compiler.FQCNParser.FQCN;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
-import pyrite.compiler.util.StringUtil;
 
+// メソッド定義を解析するVisitor
 public class MethodDeclationVisitor extends GrammarCommonVisitor
 {
-	private ConstantPoolManager _cpm;
-	private ClassResolver	_cr;
+	public final ConstantPoolManager _cpm;
+	public final FQCN	_fqcn;
 
 	// このファイルで定義しているメンバー
-	private ClassFieldMember	_declaredMember = new ClassFieldMember();
+	private ClassFieldMember	_declaredMember;
+	private FQCN	_superClassFQCN;
 
-	public String	_packageName;
-	public String	_className;
-	private VarType	_superClass;
-	private List<VarType>	_interfaceTypeList;
-
-
-	public MethodDeclationVisitor(ConstantPoolManager cpm, ClassResolver cr)
+	public MethodDeclationVisitor(
+			ClassResolver cr,
+			ConstantPoolManager cpm,
+			ImportDeclarationManager idm,
+			FQCN fqcn)
 	{
-		super(new ImportDeclarationManager(cr));
+		super(cr, idm);
 		_cpm = cpm;
-		_cr = cr;
-	}
-
-	public ImportDeclarationManager	getImportDeclarationManager()
-	{
-		return	_idm;
+		_fqcn = fqcn;
+		_declaredMember = new ClassFieldMember(fqcn);
 	}
 
 	public ClassFieldMember getDeclaredMember()
@@ -44,49 +39,31 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		return	_declaredMember;
 	}
 
-	public VarType	getSuperClass()
+	public FQCN getSuperClassFQCN()
 	{
-		return	_superClass;
-	}
-
-	public  List<VarType>	getInterfaceTypeList()
-	{
-		return	_interfaceTypeList;
-	}
-
-	public String getFQCN()
-	{
-		if (_packageName != null)
-		{
-			return	_packageName + "." + _className;
-		}
-		else
-		{
-			return	_className;
-		}
+		return	_superClassFQCN;
 	}
 
 
 	// packageDeclaration? importDeclaration* classDeclaration EOF
 	@Override
-	public Object visitCompilationUnit(@NotNull PyriteParser.CompilationUnitContext ctx)
+	public Object visitCompilationUnit(PyriteParser.CompilationUnitContext ctx)
 	{
-		// package
-		if (ctx.packageDeclaration() != null)
-		{
-			visit(ctx.packageDeclaration());
-		}
-
 		// import
-		List<String>	importDeclartionStrList = new ArrayList<String>();
-		importDeclartionStrList.add("java.lang.*");		// デフォルトでインポートされる型
-// TODO		importDeclartionStrList.add("pyrite.lang.*");	// デフォルトでインポートされる型
+		_idm.addImportDeclaretionStr("java.lang.*");		// ソースに記述が無くてもインポートされる型
+
+		// importDeclaration から取得した文字列を追加保持
 		for (PyriteParser.ImportDeclarationContext idctx : ctx.importDeclaration())
 		{
-			importDeclartionStrList.add((String)visit(idctx));
+			_idm.addImportDeclaretionStr((String)visit(idctx));
 		}
 
-		_idm.checkImportDeclaretion(importDeclartionStrList);
+		// import文を展開し、指定されたクラスの存在チェック
+		_idm.checkImportDeclaretion();
+
+		// 自パッケージと、pyrite.lang のクラスは優先してインポートする
+		_idm.overridePackage(_fqcn._packageName);
+		_idm.overridePackage("pyrite.lang");
 
 		// class
 		visit(ctx.classDeclaration());
@@ -94,19 +71,11 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		return	null;
 	}
 
-	// 'package' qualifiedName ';'
-	@Override
-	public Object visitPackageDeclaration(@NotNull PyriteParser.PackageDeclarationContext ctx)
-	{
-		_packageName = ctx.qualifiedName().getText();
-		return	null;
-	}
-
-
 	// 'import' qualifiedName ('.' '*')? ';'
 	@Override
-	public Object visitImportDeclaration(@NotNull PyriteParser.ImportDeclarationContext ctx)
+	public Object visitImportDeclaration(PyriteParser.ImportDeclarationContext ctx)
 	{
+		// 文字列を返す
 		String	packageClassName = ctx.qualifiedName().getText();
 		String	astStr = (ctx.ast != null) ? ".*" : "";
 		return	packageClassName + astStr;
@@ -114,27 +83,38 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 	// 'class' Identifier ('extends' type)? ('implements' typeList)? classBody
 	@Override
-	public Object visitClassDeclaration(@NotNull PyriteParser.ClassDeclarationContext ctx)
+	public Object visitClassDeclaration(PyriteParser.ClassDeclarationContext ctx)
 	{
-		_className = ctx.Identifier().getText();
-		_declaredMember._fqcn = _className;	// TODO:public access を修正
 		if (ctx.type() != null)
 		{
-			_superClass = (VarType)visit(ctx.type());
+			VarType	superClassVarType = (VarType)visit(ctx.type());
+			if (_cr.existsFQCN(superClassVarType._fqcn) == false)
+			{
+				throw new PyriteSyntaxException("super class not exist.");
+			}
+			_superClassFQCN = superClassVarType._fqcn;
 		}
 		else
 		{
-			_superClass = ObjectType.getType("java.lang.Object");
+			_superClassFQCN = FQCNParser.getFQCN("pyrite.lang.Object");
 		}
 
 		if (ctx.typeList() != null)
 		{
-			_interfaceTypeList = (List<VarType>)visit(ctx.typeList());
+			List<VarType>	interfaceTypeList = (List<VarType>)visit(ctx.typeList());
+			for (VarType interfaceVarType : interfaceTypeList)
+			{
+				if (_cr.existsFQCN(interfaceVarType._fqcn) == false)
+				{
+					throw new PyriteSyntaxException("interface not exist.");
+				}
+				_declaredMember._interfaceSet.add(interfaceVarType._fqcn);
+			}
 		}
-		else
-		{
-			_interfaceTypeList = new ArrayList<VarType>();
-		}
+
+		// メソッド定義解析中は FQCN の存在チェックはできるが、中の定義情報のチェックはできないため、
+		// _superClass や _interfaceTypeList で指定されたクラスの存在チェックのみを行う。
+		// それらが適切にクラス/インターフェースであるかは、次のフェーズでチェックする。
 
 		visit(ctx.classBody());
 
@@ -143,38 +123,81 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 
 	//fieldDeclaration
-    //	:   classInstanceModifier? type Identifier ('=' variableInitializer)? ';'
+    //	:   classInstanceModifier? 'var' variableDeclarationStatement ';'
     //	;
 	@Override
-	public Object visitFieldDeclaration(@NotNull PyriteParser.FieldDeclarationContext ctx)
+	public Object visitFieldDeclaration(PyriteParser.FieldDeclarationContext ctx)
 	{
 		boolean	isStatic = (ctx.classInstanceModifier() != null);
 
-		VarType	type = (VarType)visit(ctx.type());
-		String	name = ctx.Identifier().getText();
-
-		_declaredMember.addFieldType(new VarTypeName(type, name), isStatic);
+		VarTypeName	varTypeName = (VarTypeName)visit(ctx.variableDeclarationStatement());
+		if (_declaredMember._classFieldMap.containsKey(varTypeName._name) ||
+				_declaredMember._instanceFieldMap.containsKey(varTypeName._name))
+		{
+			throw new PyriteSyntaxException("field declation duplicated.");
+		}
+		_declaredMember.addFieldType(varTypeName, isStatic);
 
 		return	null;
 	}
+
+	// variableDeclarationStatement
+	//	:  variableDeclaration (',' variableDeclaration)* ('=' expression)?
+	@Override
+	public Object visitVariableDeclarationStatement(PyriteParser.VariableDeclarationStatementContext ctx)
+	{
+		List<VarTypeName>	varTypeNameList = new ArrayList<VarTypeName>();
+		for (PyriteParser.VariableDeclarationContext varCtx : ctx.variableDeclaration())
+		{
+			varTypeNameList.add((VarTypeName)visit(varCtx));
+		}
+
+		if (varTypeNameList.size() > 1)
+		{
+			// TODO:複数フィールドの同時定義を許容するか。
+			// 仕様的には複数許容してもいいが、可読性を考えると一つに制限した方がよいかもしれない。
+			// 一つに制限する場合、expression で複数値が返る場合、二番目以降の値を取得できないが、よいのか？
+			throw new PyriteSyntaxException("field must be single value");
+		}
+
+		VarTypeName	varTypeName = varTypeNameList.get(0);
+		if (varTypeName._type == null)
+		{
+			throw new PyriteSyntaxException("field needs type.");
+		}
+
+		return	varTypeName;
+	}
+
+	// variableDeclaration
+	//	:   Identifier (':' typeOrArray)?
+	@Override
+	public Object visitVariableDeclaration(PyriteParser.VariableDeclarationContext ctx)
+	{
+		String	id = ctx.Identifier().getText();
+		VarType	type;
+		if (ctx.typeOrArray() != null)
+		{
+			type = (VarType)visit(ctx.typeOrArray());
+		}
+		else
+		{
+			type = null;
+		}
+		return	new VarTypeName(type, id);
+	}
+
 
 	//	constructorDeclaration
 	//    :   Identifier inputParameters
 	//        methodBody
 	//    ;
 	@Override
-	public Object visitConstructorDeclaration(@NotNull PyriteParser.ConstructorDeclarationContext ctx)
+	public Object visitConstructorDeclaration(PyriteParser.ConstructorDeclarationContext ctx)
 	{
-		String id = ctx.Identifier().getText();
-		String[]	element = StringUtil.splitLastElement(id, '.');
-		String	packageName = element[0];
-		String	className = element[1];
+		String className = ctx.Identifier().getText();
 
-		if (packageName.equals("") == false && packageName.equals(_packageName) == false)
-		{	// コンストラクタのパッケージ部分と、ファイルのパッケージ宣言に食い違いがある
-			throw new PyriteSyntaxException("constructor name is not matched to package name.");
-		}
-		else if (className.equals(_className) == false)
+		if (className.equals(_fqcn._className) == false)
 		{
 			throw new PyriteSyntaxException("constructor name is not matched to class name.");
 		}
@@ -188,14 +211,14 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 			paramTypes[i] = inParamList.get(i)._type;
 		}
 
-		VarType[] returnTypes = {ObjectType.getType(_className)};
+		VarType[] returnTypes = {ObjectType.getType(_fqcn._fqcnStr)};
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_className, className, paramTypes, returnTypes , false);
+		 MethodType	type = (MethodType)MethodType.getType(_fqcn, "<init>", paramTypes, returnTypes, Modifier.PUBLIC);	// TODO:暫定で public で作成する
 
 		if (_declaredMember._constructorMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
-			throw new RuntimeException("method declation duplicated");
+			throw new PyriteSyntaxException("method declation duplicated");
 		}
 
 		// メソッド定義を追加
@@ -210,9 +233,10 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 	//		methodBody
 	//		;
 	@Override
-	public Object visitMethodDeclaration(@NotNull PyriteParser.MethodDeclarationContext ctx)
+	public Object visitMethodDeclaration(PyriteParser.MethodDeclarationContext ctx)
 	{
-		boolean	isStatic = (ctx.classInstanceModifier() != null);
+		int	modifier = (ctx.classInstanceModifier() != null) ? Modifier.STATIC : 0x00;
+		modifier |= Modifier.PUBLIC;		// TODO:暫定で public で作成する
 
 		String id = ctx.Identifier().getText();
 		List<VarTypeName>	inParamList = (List<VarTypeName>)visit(ctx.inputParameters());
@@ -231,11 +255,11 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 		}
 
 		// メソッド定義を作成
-		 MethodType	type = (MethodType)MethodType.getType(_className, id, paramTypes, returnTypes, isStatic);
+		MethodType	type = (MethodType)MethodType.getType(_fqcn, id, paramTypes, returnTypes, modifier);
 
 		if (_declaredMember._classMethodMap.containsKey(type._methodSignature) || _declaredMember._instanceMethodMap.containsKey(type._methodSignature))
 		{	// 同じ定義のメソッドがすでに登録されている
-			throw new RuntimeException("method declation duplicated");
+			throw new PyriteSyntaxException("method declation duplicated");
 		}
 
 		// メソッド定義を追加
@@ -246,40 +270,26 @@ public class MethodDeclationVisitor extends GrammarCommonVisitor
 
 
 	@Override
-	public Object visitInputParameters(@NotNull PyriteParser.InputParametersContext ctx)
+	public Object visitInputParameters(PyriteParser.InputParametersContext ctx)
 	{
 		return	super.visitInputParameters(ctx);
 	}
 
 	@Override
-	public Object visitInputParameter(@NotNull PyriteParser.InputParameterContext ctx)
+	public Object visitInputParameter(PyriteParser.InputParameterContext ctx)
 	{
 		return	super.visitInputParameter(ctx);
 	}
 
 	@Override
-	public Object visitOutputParameters(@NotNull PyriteParser.OutputParametersContext ctx)
+	public Object visitOutputParameters(PyriteParser.OutputParametersContext ctx)
 	{
 		return	super.visitOutputParameters(ctx);
 	}
 
 	@Override
-	public Object visitOutputParameter(@NotNull PyriteParser.OutputParameterContext ctx)
+	public Object visitOutputParameter(PyriteParser.OutputParameterContext ctx)
 	{
 		return	super.visitOutputParameter(ctx);
 	}
-
-	@Override
-	public Object visitTypePrimitiveType(@NotNull PyriteParser.TypePrimitiveTypeContext ctx)
-	{
-		return	super.visitTypePrimitiveType(ctx);
-	}
-
-	@Override
-	public Object visitTypeClassType(@NotNull PyriteParser.TypeClassTypeContext ctx)
-	{
-		return	super.visitTypeClassType(ctx);
-	}
-
-
 }

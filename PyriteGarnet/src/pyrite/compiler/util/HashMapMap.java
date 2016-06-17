@@ -1,6 +1,9 @@
 package pyrite.compiler.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HashMapMap<TK, TVK, TVV>
@@ -9,15 +12,21 @@ public class HashMapMap<TK, TVK, TVV>
 
 	public TVV	put(TK key, TVK valueKey, TVV valueValue)
 	{
+		Map<TVK, TVV>	map = put(key);
+		map.put(valueKey, valueValue);
+
+		return	valueValue;
+	}
+
+	public Map<TVK, TVV>	put(TK key)
+	{
 		Map<TVK, TVV>	map = _map.get(key);
 		if (map == null)
 		{
 			map = new HashMap<TVK, TVV>();
 			_map.put(key, map);
 		}
-		map.put(valueKey, valueValue);
-
-		return	valueValue;
+		return	map;
 	}
 
 	public Map<TVK, TVV>	get(TK key)
@@ -43,5 +52,25 @@ public class HashMapMap<TK, TVK, TVV>
 		{
 			map.clear();
 		}
+	}
+
+	public void remove(TK key, TVK valueKey)
+	{
+		Map<TVK, TVV>	map = _map.get(key);
+		if (map != null)
+		{
+			map.remove(valueKey);
+		}
+	}
+
+	public Collection<TVV>	values()
+	{
+		List<TVV>	values = new ArrayList<TVV>();
+		for (Map<TVK, TVV> map : _map.values())
+		{
+			values.addAll(map.values());
+		}
+
+		return	values;
 	}
 }

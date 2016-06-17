@@ -1,157 +1,204 @@
 package pyrite.compiler;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import pyrite.compiler.ClassResolver.ClassFieldMember;
+import pyrite.compiler.FQCNParser.FQCN;
+import pyrite.compiler.MethodCodeDeclation.ExceptionTableEntry;
 import pyrite.compiler.antlr.PyriteLexer;
 import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
-import pyrite.compiler.type.VarTypeName;
+import pyrite.compiler.util.StringUtil;
 
-public class SourceFile
+/**
+ * ソースファイルを保持するクラス
+ *
+ * ソースファイルに含まれるクラス名が異なっている場合は、
+ * 「クラス名.class」が作成される。
+ *
+ * FQCNはクラス名を保持する。
+ *
+ *  とりあえずは、１ソース１クラスの前提
+ */
+public class SourceFile extends ClassRelatedFile
 {
-//	public final String	_srcFilePathName;
-
-//	public final String	_srcPath;
-
 	private ParseTree	_tree;
 
 	private ClassResolver	_cr;
-	private ConstantPoolManager	_cpm;
-	private ImportDeclarationManager	_idm;
-	private ClassResolver.ClassFieldMember	_declaredMember;
+	private ConstantPoolManager	_cpm;	// コンスタントプールはクラス単位に保持する
 
-	public String	_className;
-	public String	_srcPath;
+	// パス込みソースファイル名
+	private String	_srcFilePathName;
 
-	public SourceFile(String srcFilePathName, ClassResolver cr) throws IOException
+	// パス込みクラスファイル名
+	private String	_classFilePathName;
+	private String	_pyriteClassFilePathName;
+
+
+	public SourceFile(String srcFilePathName, ClassResolver cr)
 	{
-		_cr = cr;
+		// ソースファイルに含まれるクラス名のみ解析して取得しておく
+		try
+		{
+			_srcFilePathName = srcFilePathName;
+			_cr = cr;
 
-		File	f = new File(srcFilePathName);
-		File	srcPath = f.getParentFile();
-		String	srcFileName = f.getName();
-		_srcPath = srcPath.getName();
+			File	f = new File(srcFilePathName).getCanonicalFile();
+			InputStream	is = new FileInputStream(f);
 
-		InputStream	is = new FileInputStream(f);
+			ANTLRInputStream input = new ANTLRInputStream(is);
+			PyriteLexer lexer = new PyriteLexer(input);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			PyriteParser parser = new PyriteParser(tokens);
+			_tree = parser.compilationUnit(); // parse
 
-		ANTLRInputStream input = new ANTLRInputStream(is);
-		PyriteLexer lexer = new PyriteLexer(input);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		PyriteParser parser = new PyriteParser(tokens);
-		_tree = parser.compilationUnit(); // parse
+			// クラス名の解析
+			ClassNameVisitor	classNameVisitor = new ClassNameVisitor();
+			classNameVisitor.visit(_tree);
+			_fqcn = classNameVisitor.getFQCN();
 
-		// create needed constants
-		_cpm = new ConstantPoolManager();
+			String	fileClassName = f.getName();
+			fileClassName = fileClassName.substring(0, fileClassName.indexOf('.'));
+			if (fileClassName.equals(_fqcn._className) == false)
+			{
+				Logger.getGlobal().warning("source file and class name is unmatched." + fileClassName);
+			}
 
-		_cpm.getClassRef("java/lang/Object");
-		_cpm.getUtf8("<init>");
-		_cpm.getUtf8("()V");
-		_cpm.getUtf8("Code");
-		_cpm.getUtf8("main");
-		_cpm.getUtf8("([Ljava/lang/String;)V");
-		_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
+			String	srcPath = f.getParent();
+			_classFilePathName = srcPath + "/" + _fqcn._className + ".class";
+			_pyriteClassFilePathName = srcPath + "/" + _fqcn._className + ".pyrc";
+
+			// create needed constants
+			_cpm = new ConstantPoolManager();
+
+			_cpm.getClassRef("java/lang/Object");
+			_cpm.getUtf8("<init>");
+			_cpm.getUtf8("()V");
+			_cpm.getUtf8("Code");
+			_cpm.getUtf8("main");
+			_cpm.getUtf8("([Ljava/lang/String;)V");
+			_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
+			_cpm.getUtf8("<clinit>");
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
-	private MethodDeclationVisitor	_methodDeclationVisitor;
-	private MethodCodeDeclation	_defaultConstractor = null;
+	public FQCN	getFQCN()
+	{
+		return	_fqcn;
+	}
+
+
+	private ImportDeclarationManager	_idm;
+	private ClassResolver.ClassFieldMember	_declaredMember;
+	private FQCN	_superClassFQCN;
+
+	private boolean	_isDefaultConstructorCreation = false;
+
+	/**
+	 * ソースファイルに含まれるメソッド定義を解析する
+	 */
 	public void	parseMethodDeclaration()
 	{
-		// メソッド定義の処理
-		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cpm, _cr);
+		_idm = new ImportDeclarationManager(_cr);
+		// メソッド定義の解析
+		MethodDeclationVisitor	methodDeclationVisitor = new MethodDeclationVisitor(_cr, _cpm, _idm, _fqcn);
 		methodDeclationVisitor.visit(_tree);
-		_idm = methodDeclationVisitor.getImportDeclarationManager();
 
-		_declaredMember = methodDeclationVisitor.getDeclaredMember();
-		_className = methodDeclationVisitor._className;
+		_declaredMember = methodDeclationVisitor.getDeclaredMember();	// この時点でソースファイルのメソッドしか解析完了していないため、_declaredMember._superCFM は null
+		_superClassFQCN = methodDeclationVisitor.getSuperClassFQCN();	// 代わりに super class の FQCN を保存しておく
+
 		if (_declaredMember._constructorMap.size() == 0)
-		{	// コンストラクタが定義されていないため、コンストラクタを作成して登録しておく
+		{	// コンストラクタが定義されていない場合は、デフォルトコンストラクタの宣言を作成して登録しておく
 			VarType[]	inParamType = new VarType[0];
-			VarType[]	outParamType = new VarType[]{ObjectType.getType(_className)};
+			VarType[]	outParamType = new VarType[]{ObjectType.getType(_fqcn._fqcnStr)};
 
-			MethodType	constructorType = (MethodType)MethodType.getType(_className, _className, inParamType, outParamType, false);
+			MethodType	constructorType = (MethodType)MethodType.getType(_fqcn, "<init>", inParamType, outParamType, 0);
 			_declaredMember._constructorMap.put(constructorType._methodSignature, constructorType);
 
-			// コンストラクタの実装も作成しておく
-			_defaultConstractor = createDefaultConstractor(_cpm, _className);
+			_isDefaultConstructorCreation = true;
 		}
 
-		// TODO:インターフェースのメソッド実装チェック
+		_cr.putClassFieldMember(_fqcn._fqcnStr, _declaredMember);	// このクラスのメンバーを登録
 
-
-		_cr.putClassFieldMember(methodDeclationVisitor.getFQCN(), _declaredMember);	// このクラスのメンバーを登録
-
-		// 定義されているメソッドのコンスタントプールを作成
+		// 定義されているメソッド/フィールドのコンスタントプールを作成
 		createConstructorConstantPool(_declaredMember._constructorMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._classMethodMap.values(), _cpm);
 		createMethodConstantPool(_declaredMember._instanceMethodMap.values(), _cpm);
-
-		_methodDeclationVisitor = methodDeclationVisitor;
+		createFieldConstantPool(_declaredMember._classFieldMap, _cpm);
+		createFieldConstantPool(_declaredMember._instanceFieldMap, _cpm);
 	}
+
+
 
 	private List<MethodCodeDeclation>	_methodCodeDeclationList;
+	/**
+	 * メソッド本体を解析し、コードを生成する
+	 */
 	public void	parseCodeGeneration()
 	{
+		// _superClassFQCN より、_declaredMember._superCFM を設定する
+		_declaredMember.setSuperCFM(_superClassFQCN, _cr);
+
 		// コード生成
-		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cpm, _cr, _className, _idm, _declaredMember);
+		CodeGenerationVisitor visitor = new CodeGenerationVisitor(_cr, _cpm, _idm, _fqcn, _declaredMember);
 		visitor.visit(_tree);	// parse
-		List<MethodCodeDeclation>	methodCodeDeclationList = visitor.getMethodCodeDeclationList();
-		if (_defaultConstractor != null)
-		{
-			methodCodeDeclationList.add(_defaultConstractor);
+
+		// 解析後の処理
+		if (_isDefaultConstructorCreation)
+		{	// デフォルトコンストラクタの実装を作成する
+			visitor.createDefaultConstractor();
 		}
-		_methodCodeDeclationList = methodCodeDeclationList;
+		// フィールド初期化コードを設定する
+		visitor.setFieldInitializationCode();
+		// static main(var args : [str])() がある場合に、JVMから起動できる public static void main(String[] args) を作成する
+		visitor.createMainMethod();
+
+		_methodCodeDeclationList = visitor.getAllMethodCodeDeclationList();
 	}
+
 
 	// ファイル出力
 	public void	createClassFile() throws IOException
 	{
 		_cpm.setFrozen(true);
-		String	classFilePathName =_srcPath + "/" + _className + ".class";
-		ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(classFilePathName)));
-		createClassFile(os,
-				_className,
-				_methodDeclationVisitor.getSuperClass(),
-				_methodDeclationVisitor.getInterfaceTypeList(),
-				_cpm,
-				_declaredMember,
-				_methodCodeDeclationList);
-		os.close();
+		// .class
+		try (ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName))))
+		{
+			createClassFile(os,
+					_cpm,
+					_declaredMember,
+					_methodCodeDeclationList);
+		}
+		// .pyrc
+		try (BufferedWriter	writer = new BufferedWriter(new FileWriter(_pyriteClassFilePathName)))
+		{
+			createPyriteClassFile(writer, _declaredMember);
+		}
 	}
 
 
 
-	private static MethodCodeDeclation createDefaultConstractor(ConstantPoolManager cpm, String className)
-	{
-		MethodCodeDeclation	defaultConstractor = new MethodCodeDeclation();
-
-		defaultConstractor.setClassName(className);
-		defaultConstractor.setMethodName("<init>");
-		defaultConstractor.setStatic(false);
-		defaultConstractor.setInParamList(new ArrayList<VarTypeName>());
-		defaultConstractor.setOutParamList(new ArrayList<VarTypeName>());
-
-		defaultConstractor.addCodeOp(BC.ALOAD_0);
-		defaultConstractor.addCodeOp(BC.INVOKESPECIAL);
-		defaultConstractor.addCodeU2(cpm.getMethodRef("java/lang/Object", "<init>", "()V"));
-		defaultConstractor.addCodeOp(BC.RETURN);
-
-		return	defaultConstractor;
-	}
 
 
 	// 定義されているコンストラクタのコンスタントプールを作成
@@ -159,7 +206,7 @@ public class SourceFile
 	{
 		for (MethodType method : methodTypes)
 		{	// 定義されているメソッドのコンスタントプールを作成
-			String	methodClassName = method._packageClassName.replace('.', '/');
+			String	methodClassName = method._fqcn._fqcnStr.replace('.', '/');
 			String	methodName = method._methodName;
 			String	paramStr = method.createConstructorJvmMethodParamExpression();
 			cpm.getMethodRef(methodClassName, methodName, paramStr);
@@ -171,10 +218,20 @@ public class SourceFile
 	{
 		for (MethodType method : methodTypes)
 		{	// 定義されているメソッドのコンスタントプールを作成
-			String	methodClassName = method._packageClassName.replace('.', '/');
+			String	methodClassName = method._fqcn._fqcnStr.replace('.', '/');
 			String	methodName = method._methodName;
-			String	paramStr = method.getParamStr();
+			String	paramStr = MethodType.createJvmMethodParamExpression(method._paramTypes, method._returnTypes);
 			cpm.getMethodRef(methodClassName, methodName, paramStr);
+		}
+	}
+
+	// 定義されているフィールドのコンスタントプールを作成
+	private static void createFieldConstantPool(Map<String, VarType> map, ConstantPoolManager cpm)
+	{
+		for (Map.Entry<String, VarType> entry : map.entrySet())
+		{
+			cpm.getUtf8(entry.getKey());
+			cpm.getUtf8(entry.getValue()._jvmExpression.replace('.', '/'));
 		}
 	}
 
@@ -184,9 +241,6 @@ public class SourceFile
 
 	private static void createClassFile(
 			ClassFileOutputStream os,
-			String className,
-			VarType superClassType,
-			List<VarType> interfaceTypeList,
 			ConstantPoolManager cpm,
 			ClassResolver.ClassFieldMember declaredMember,
 			List<MethodCodeDeclation> methodCodeDeclationList) throws IOException
@@ -208,19 +262,17 @@ public class SourceFile
 		os.write2(0x0020);
 
 //		u2 this_class;
-		os.write2(cpm.getClassRef(className));
+		os.write2(cpm.getClassRef(declaredMember._fqcn._fqcnStr));
 
 //		u2 super_class;
-		String	superClassName = ((ObjectType)superClassType)._packageClassName;
-		os.write2(cpm.getClassRef(superClassName));
+		os.write2(cpm.getClassRef(declaredMember._superCFM._fqcn._fqcnStr));
 
 //		u2 interfaces_count;
-		os.write2(interfaceTypeList.size());
+		os.write2(declaredMember._interfaceSet.size());
 //		u2 interfaces[interfaces_count];
-		for (VarType interfaceType : interfaceTypeList)
+		for (FQCN interfaceFQCN : declaredMember._interfaceSet)
 		{
-			String	interfaceClassName = ((ObjectType)interfaceType)._packageClassName;
-			os.write2(cpm.getClassRef(interfaceClassName));
+			os.write2(cpm.getClassRef(interfaceFQCN._fqcnStr));
 		}
 
 //		u2 fields_count;
@@ -273,14 +325,26 @@ public class SourceFile
 			//	u2 attributes_count;	   //<= 00 01
 			//	attribute_info attributes[attributes_count];
 			//}
-				byte[]	code = method.getCodeByteArray();
+				byte[]	code = StringUtil.toByteArray(method._code.getCodeList());
+				List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
+				int	attrubuteLength = 2 + 2 + 4 + code.length + 2 + (exceptionTableEntryList.size() * 2 * 4) + 2 + 0;	// max_stack ～ attribute_info の長さ
+
 				os.write2(cpm.getUtf8("Code"));
-				os.write4(2 + 2 + 4 + code.length + 2 + 0 + 2 + 0);	// max_stack 以降の長さ
+				os.write4(attrubuteLength);
 				os.write2(method.getMaxStack());
 				os.write2(method.getMaxLocal());
 				os.write4(code.length);
 				os.write(code);
-				os.write2(0);	// exception_table_length
+
+				os.write2(exceptionTableEntryList.size());	// exception_table_length
+				for (ExceptionTableEntry entry : exceptionTableEntryList)
+				{
+					os.write2(entry._startPc);
+					os.write2(entry._endPc);
+					os.write2(entry._handlerPc);
+					os.write2(entry._catchType);
+				}
+
 				os.write2(0);	// attributes_count
 			}
 		}
@@ -290,6 +354,7 @@ public class SourceFile
 //		attribute_info attributes[attributes_count];
 		// none
 	}
+
 
 
 //	field_info {
@@ -305,16 +370,49 @@ public class SourceFile
 		for (String name : fieldMap.keySet())
 		{
 			VarType	type = fieldMap.get(name);
-			int	acc = BC.ACC_PUBLIC;	// TODO
+			int	acc = BC.ACC_PUBLIC;	// TODO メソッド公開子対応
 			if (isStatic)
 			{
 				acc |= BC.ACC_STATIC;
 			}
 			os.write2(acc);
 			os.write2(cpm.getUtf8(name));
-			os.write2(cpm.getUtf8(type._jvmExpression));
+			os.write2(cpm.getUtf8(type._jvmExpression.replace('.', '/')));
 			os.write2(0);
 		}
 	}
 
+	private void createPyriteClassFile(BufferedWriter writer, ClassFieldMember cfm) throws IOException
+	{
+		for (MethodType m : cfm._classMethodMap.values())
+		{
+			if (m._returnTypes.length > 1)
+			{
+				writer.write(m._methodSignature);
+				writer.write('\t');
+				writer.write(m._returnTypes[0]._jvmExpression);
+				for (int i = 1; i < m._returnTypes.length; ++i)
+				{
+					writer.write('\t');
+					writer.write(m._returnTypes[i]._jvmExpression);
+				}
+				writer.newLine();
+			}
+		}
+		for (MethodType m : cfm._instanceMethodMap.values())
+		{
+			if (m._returnTypes.length > 1)
+			{
+				writer.write(m._methodSignature);
+				writer.write('\t');
+				writer.write(m._returnTypes[0]._jvmExpression);
+				for (int i = 1; i < m._returnTypes.length; ++i)
+				{
+					writer.write('\t');
+					writer.write(m._returnTypes[i]._jvmExpression);
+				}
+				writer.newLine();
+			}
+		}
+	}
 }

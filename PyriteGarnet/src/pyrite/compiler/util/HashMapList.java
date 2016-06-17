@@ -23,8 +23,24 @@ public class HashMapList<TK, TV>
 		return	value;
 	}
 
+	public boolean	remove(TK key, TV value)
+	{
+		List<TV>	list = _map.get(key);
+		if (list == null)
+		{
+			return	false;
+		}
+		return	list.remove(value);
+	}
+
 	public List<TV>	get(TK key)
 	{
 		return	_map.get(key);
+	}
+
+
+	public boolean	containsKey(TK key)
+	{
+		return	_map.containsKey(key);
 	}
 }

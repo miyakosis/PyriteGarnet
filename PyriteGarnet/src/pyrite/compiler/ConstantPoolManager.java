@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/*
+ * コンスタントプールを管理するクラス
+ */
 public class ConstantPoolManager
 {
 	private List<Constant>	_constantList = new ArrayList<Constant>();
@@ -45,7 +47,7 @@ public class ConstantPoolManager
 		className = className.replace('.', '/');
 
 		String	tag = "A";
-		String	key = tag + ":" + className + ":" + type;
+		String	key = tag + ":" + className + ":" + methodName + ":" + type;
 		Integer	num = _constantNumberMap.get(key);
 		if (num == null)
 		{	// create constant
@@ -69,7 +71,7 @@ public class ConstantPoolManager
 		className = className.replace('.', '/');
 
 		String	tag = "9";
-		String	key = tag + ":" + className + ":" + type;
+		String	key = tag + ":" + className + ":" + fieldName + ":" + type;
 		Integer	num = _constantNumberMap.get(key);
 		if (num == null)
 		{	// create constant
