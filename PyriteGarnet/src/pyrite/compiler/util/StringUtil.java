@@ -3,6 +3,8 @@ package pyrite.compiler.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import pyrite.compiler.PyriteSyntaxException;
+
 public class StringUtil
 {
 	public static String	concat(String s1, String s2)
@@ -30,10 +32,53 @@ public class StringUtil
 		return	s.substring(1, s.length() - 1);
 	}
 
-	// 両端のダブルクォーテーションを除去する
+	// エスケープシーケンスを考慮して文字列を変換する
 	public static String	strLiteral(String s)
 	{
-		return	stripEndChar(s);
+		// 両端のダブルクォーテーションを除去する
+		StringBuilder	sb = new StringBuilder(stripEndChar(s));
+
+		for (int i = 0; i < sb.length(); i += 1)
+		{
+			char c = sb.charAt(i);
+			if (c == '\\')
+			{
+				if (i + 1 >= sb.length())
+				{
+					throw new PyriteSyntaxException("invalid escape sequence.");
+				}
+				c = sb.charAt(i + 1);
+				char	newC;
+				switch (c)
+				{
+				case 'b':	newC = '\b';	break;
+				case 't':	newC = '\t';	break;
+				case 'n':	newC = '\n';	break;
+				case 'r':	newC = '\r';	break;
+				case 'f':	newC = '\f';	break;
+				case '\'':	newC = '\'';	break;
+				case '"':	newC = '"';		break;
+				case '\\':	newC = '\\';	break;
+				case 'u':	// uHHHH
+					if ((i + 1) + 4 >= sb.length())
+					{
+						throw new PyriteSyntaxException("invalid escape sequence.");
+					}
+					int	start = i + 2;
+					int	end = start + 4;
+					newC = (char)Integer.parseInt(sb.substring(start, end), 16);
+					sb.delete(start, end);
+					break;
+
+				default:
+					throw new RuntimeException("assertion");
+				}
+				sb.setCharAt(i, newC);
+				sb.deleteCharAt(i + 1);
+			}
+		}
+
+		return	sb.toString();
 	}
 
 	// s に含まれる最後の splitChar で分離した前半と後半を返す。

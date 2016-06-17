@@ -356,7 +356,10 @@ public class BCContainer
 
 		public void	addMax(int n)
 		{
-			_maxStack += n;
+			if (n > 0)
+			{
+				_maxStack += n;
+			}
 		}
 
 		public void	pop()

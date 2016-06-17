@@ -2917,6 +2917,20 @@ public class PyriteParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
+	public static class ExpressionInstanceofContext extends ExpressionContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public TypeContext type() {
+			return getRuleContext(TypeContext.class,0);
+		}
+		public ExpressionInstanceofContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PyriteVisitor ) return ((PyriteVisitor<? extends T>)visitor).visitExpressionInstanceof(this);
+			else return visitor.visitChildren(this);
+		}
+	}
 	public static class ExpressionEqualContext extends ExpressionContext {
 		public Token op;
 		public List<ExpressionContext> expression() {
@@ -3046,7 +3060,7 @@ public class PyriteParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			_ctx.stop = _input.LT(-1);
-			setState(509);
+			setState(512);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,52,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
@@ -3054,7 +3068,7 @@ public class PyriteParser extends Parser {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					setState(507);
+					setState(510);
 					_errHandler.sync(this);
 					switch ( getInterpreter().adaptivePredict(_input,51,_ctx) ) {
 					case 1:
@@ -3062,7 +3076,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionMulDivContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(456);
-						if (!(precpred(_ctx, 12))) throw new FailedPredicateException(this, "precpred(_ctx, 12)");
+						if (!(precpred(_ctx, 13))) throw new FailedPredicateException(this, "precpred(_ctx, 13)");
 						setState(457);
 						((ExpressionMulDivContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
@@ -3072,7 +3086,7 @@ public class PyriteParser extends Parser {
 							consume();
 						}
 						setState(458);
-						expression(13);
+						expression(14);
 						}
 						break;
 					case 2:
@@ -3080,7 +3094,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionAddSubContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(459);
-						if (!(precpred(_ctx, 11))) throw new FailedPredicateException(this, "precpred(_ctx, 11)");
+						if (!(precpred(_ctx, 12))) throw new FailedPredicateException(this, "precpred(_ctx, 12)");
 						setState(460);
 						((ExpressionAddSubContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
@@ -3090,7 +3104,7 @@ public class PyriteParser extends Parser {
 							consume();
 						}
 						setState(461);
-						expression(12);
+						expression(13);
 						}
 						break;
 					case 3:
@@ -3098,7 +3112,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionShiftContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(462);
-						if (!(precpred(_ctx, 10))) throw new FailedPredicateException(this, "precpred(_ctx, 10)");
+						if (!(precpred(_ctx, 11))) throw new FailedPredicateException(this, "precpred(_ctx, 11)");
 						setState(463);
 						((ExpressionShiftContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
@@ -3108,7 +3122,7 @@ public class PyriteParser extends Parser {
 							consume();
 						}
 						setState(464);
-						expression(11);
+						expression(12);
 						}
 						break;
 					case 4:
@@ -3116,7 +3130,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionCompareContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(465);
-						if (!(precpred(_ctx, 9))) throw new FailedPredicateException(this, "precpred(_ctx, 9)");
+						if (!(precpred(_ctx, 10))) throw new FailedPredicateException(this, "precpred(_ctx, 10)");
 						setState(466);
 						((ExpressionCompareContext)_localctx).op = _input.LT(1);
 						_la = _input.LA(1);
@@ -3126,7 +3140,7 @@ public class PyriteParser extends Parser {
 							consume();
 						}
 						setState(467);
-						expression(10);
+						expression(11);
 						}
 						break;
 					case 5:
@@ -3242,7 +3256,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionClassFieldRefContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(492);
-						if (!(precpred(_ctx, 17))) throw new FailedPredicateException(this, "precpred(_ctx, 17)");
+						if (!(precpred(_ctx, 18))) throw new FailedPredicateException(this, "precpred(_ctx, 18)");
 						setState(493);
 						match(DOT);
 						setState(494);
@@ -3254,7 +3268,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionCastContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(495);
-						if (!(precpred(_ctx, 16))) throw new FailedPredicateException(this, "precpred(_ctx, 16)");
+						if (!(precpred(_ctx, 17))) throw new FailedPredicateException(this, "precpred(_ctx, 17)");
 						setState(496);
 						match(T__2);
 						setState(497);
@@ -3268,7 +3282,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionInvokeMethodContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(500);
-						if (!(precpred(_ctx, 15))) throw new FailedPredicateException(this, "precpred(_ctx, 15)");
+						if (!(precpred(_ctx, 16))) throw new FailedPredicateException(this, "precpred(_ctx, 16)");
 						setState(501);
 						arguments();
 						}
@@ -3278,7 +3292,7 @@ public class PyriteParser extends Parser {
 						_localctx = new ExpressionArrayAccessContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(502);
-						if (!(precpred(_ctx, 13))) throw new FailedPredicateException(this, "precpred(_ctx, 13)");
+						if (!(precpred(_ctx, 14))) throw new FailedPredicateException(this, "precpred(_ctx, 14)");
 						setState(503);
 						match(LBRACK);
 						setState(504);
@@ -3287,10 +3301,22 @@ public class PyriteParser extends Parser {
 						match(RBRACK);
 						}
 						break;
+					case 17:
+						{
+						_localctx = new ExpressionInstanceofContext(new ExpressionContext(_parentctx, _parentState));
+						pushNewRecursionContext(_localctx, _startState, RULE_expression);
+						setState(507);
+						if (!(precpred(_ctx, 9))) throw new FailedPredicateException(this, "precpred(_ctx, 9)");
+						setState(508);
+						match(INSTANCEOF);
+						setState(509);
+						type();
+						}
+						break;
 					}
 					} 
 				}
-				setState(511);
+				setState(514);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,52,_ctx);
 			}
@@ -3362,17 +3388,17 @@ public class PyriteParser extends Parser {
 		PrimaryContext _localctx = new PrimaryContext(_ctx, getState());
 		enterRule(_localctx, 72, RULE_primary);
 		try {
-			setState(519);
+			setState(522);
 			switch (_input.LA(1)) {
 			case LPAREN:
 				_localctx = new PrimaryParensContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(512);
+				setState(515);
 				match(LPAREN);
-				setState(513);
+				setState(516);
 				expression(0);
-				setState(514);
+				setState(517);
 				match(RPAREN);
 				}
 				break;
@@ -3380,7 +3406,7 @@ public class PyriteParser extends Parser {
 				_localctx = new PrimaryThisContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(516);
+				setState(519);
 				match(THIS);
 				}
 				break;
@@ -3398,7 +3424,7 @@ public class PyriteParser extends Parser {
 				_localctx = new PrimaryLiteralContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(517);
+				setState(520);
 				literal();
 				}
 				break;
@@ -3406,7 +3432,7 @@ public class PyriteParser extends Parser {
 				_localctx = new PrimaryIdentifierContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(518);
+				setState(521);
 				match(Identifier);
 				}
 				break;
@@ -3466,15 +3492,15 @@ public class PyriteParser extends Parser {
 		CreatorContext _localctx = new CreatorContext(_ctx, getState());
 		enterRule(_localctx, 74, RULE_creator);
 		try {
-			setState(528);
+			setState(531);
 			switch (_input.LA(1)) {
 			case Identifier:
 				_localctx = new CreatorClassContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(521);
+				setState(524);
 				qualifiedName();
-				setState(522);
+				setState(525);
 				arguments();
 				}
 				break;
@@ -3482,11 +3508,11 @@ public class PyriteParser extends Parser {
 				_localctx = new CreatorArrayContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(524);
+				setState(527);
 				array();
-				setState(525);
+				setState(528);
 				match(LPAREN);
-				setState(526);
+				setState(529);
 				match(RPAREN);
 				}
 				break;
@@ -3527,18 +3553,18 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(530);
+			setState(533);
 			match(LPAREN);
-			setState(532);
+			setState(535);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__4) | (1L << T__5) | (1L << DecimalNumeral) | (1L << Digits) | (1L << HexNumeral) | (1L << OctalNumeral) | (1L << BinaryNumeral) | (1L << CharacterLiteral) | (1L << StringLiteral) | (1L << NEW) | (1L << THIS) | (1L << LPAREN))) != 0) || _la==DOT || _la==Identifier) {
 				{
-				setState(531);
+				setState(534);
 				expression(0);
 				}
 			}
 
-			setState(534);
+			setState(537);
 			match(RPAREN);
 			}
 		}
@@ -3605,13 +3631,13 @@ public class PyriteParser extends Parser {
 		IntegerLiteralContext _localctx = new IntegerLiteralContext(_ctx, getState());
 		enterRule(_localctx, 78, RULE_integerLiteral);
 		try {
-			setState(540);
+			setState(543);
 			switch (_input.LA(1)) {
 			case DecimalNumeral:
 				_localctx = new IntegerLiteralDecimalContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(536);
+				setState(539);
 				match(DecimalNumeral);
 				}
 				break;
@@ -3619,7 +3645,7 @@ public class PyriteParser extends Parser {
 				_localctx = new IntegerLiteralHexContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(537);
+				setState(540);
 				match(HexNumeral);
 				}
 				break;
@@ -3627,7 +3653,7 @@ public class PyriteParser extends Parser {
 				_localctx = new IntegerLiteralOctalContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(538);
+				setState(541);
 				match(OctalNumeral);
 				}
 				break;
@@ -3635,7 +3661,7 @@ public class PyriteParser extends Parser {
 				_localctx = new IntegerLiteralBinaryContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(539);
+				setState(542);
 				match(BinaryNumeral);
 				}
 				break;
@@ -3677,18 +3703,18 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(543);
+			setState(546);
 			_la = _input.LA(1);
 			if (_la==Digits) {
 				{
-				setState(542);
+				setState(545);
 				match(Digits);
 				}
 			}
 
-			setState(545);
+			setState(548);
 			match(DOT);
-			setState(546);
+			setState(549);
 			match(Digits);
 			}
 		}
@@ -3722,7 +3748,7 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(548);
+			setState(551);
 			_la = _input.LA(1);
 			if ( !(_la==T__3 || _la==T__4) ) {
 			_errHandler.recoverInline(this);
@@ -3761,7 +3787,7 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(550);
+			setState(553);
 			match(CharacterLiteral);
 			}
 		}
@@ -3795,7 +3821,7 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(552);
+			setState(555);
 			match(StringLiteral);
 			}
 		}
@@ -3828,7 +3854,7 @@ public class PyriteParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(554);
+			setState(557);
 			match(T__5);
 			}
 		}
@@ -3853,13 +3879,13 @@ public class PyriteParser extends Parser {
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0:
-			return precpred(_ctx, 12);
+			return precpred(_ctx, 13);
 		case 1:
-			return precpred(_ctx, 11);
+			return precpred(_ctx, 12);
 		case 2:
-			return precpred(_ctx, 10);
+			return precpred(_ctx, 11);
 		case 3:
-			return precpred(_ctx, 9);
+			return precpred(_ctx, 10);
 		case 4:
 			return precpred(_ctx, 8);
 		case 5:
@@ -3877,19 +3903,21 @@ public class PyriteParser extends Parser {
 		case 11:
 			return precpred(_ctx, 1);
 		case 12:
-			return precpred(_ctx, 17);
+			return precpred(_ctx, 18);
 		case 13:
-			return precpred(_ctx, 16);
+			return precpred(_ctx, 17);
 		case 14:
-			return precpred(_ctx, 15);
+			return precpred(_ctx, 16);
 		case 15:
-			return precpred(_ctx, 13);
+			return precpred(_ctx, 14);
+		case 16:
+			return precpred(_ctx, 9);
 		}
 		return true;
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3o\u022f\4\2\t\2\4"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3o\u0232\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -3926,22 +3954,22 @@ public class PyriteParser extends Parser {
 		"#\3#\3#\5#\u01b9\n#\3#\3#\5#\u01bd\n#\5#\u01bf\n#\3$\3$\3$\3$\3%\3%\3"+
 		"%\3%\5%\u01c9\n%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3"+
 		"%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3"+
-		"%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\7%\u01fe\n%\f%\16%\u0201\13%\3&\3&\3&"+
-		"\3&\3&\3&\3&\5&\u020a\n&\3\'\3\'\3\'\3\'\3\'\3\'\3\'\5\'\u0213\n\'\3("+
-		"\3(\5(\u0217\n(\3(\3(\3)\3)\3)\3)\5)\u021f\n)\3*\5*\u0222\n*\3*\3*\3*"+
-		"\3+\3+\3,\3,\3-\3-\3.\3.\3.\2\3H/\2\4\6\b\n\f\16\20\22\24\26\30\32\34"+
-		"\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\2\13\4\2\3\3\63:\4\2)),,\4"+
-		"\2VW^^\3\2TU\3\2Z\\\4\2FGMN\4\2LLOO\4\2EE_i\3\2\6\7\u0261\2]\3\2\2\2\4"+
-		"h\3\2\2\2\6l\3\2\2\2\bt\3\2\2\2\nv\3\2\2\2\f\u0082\3\2\2\2\16\u008a\3"+
-		"\2\2\2\20\u0097\3\2\2\2\22\u009a\3\2\2\2\24\u00a1\3\2\2\2\26\u00af\3\2"+
-		"\2\2\30\u00b5\3\2\2\2\32\u00c7\3\2\2\2\34\u00cb\3\2\2\2\36\u00d0\3\2\2"+
-		"\2 \u00d8\3\2\2\2\"\u00dc\3\2\2\2$\u00de\3\2\2\2&\u00e6\3\2\2\2(\u00e8"+
+		"%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\7%\u0201\n%\f%\16%\u0204\13%"+
+		"\3&\3&\3&\3&\3&\3&\3&\5&\u020d\n&\3\'\3\'\3\'\3\'\3\'\3\'\3\'\5\'\u0216"+
+		"\n\'\3(\3(\5(\u021a\n(\3(\3(\3)\3)\3)\3)\5)\u0222\n)\3*\5*\u0225\n*\3"+
+		"*\3*\3*\3+\3+\3,\3,\3-\3-\3.\3.\3.\2\3H/\2\4\6\b\n\f\16\20\22\24\26\30"+
+		"\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\2\13\4\2\3\3\63:\4\2"+
+		")),,\4\2VW^^\3\2TU\3\2Z\\\4\2FGMN\4\2LLOO\4\2EE_i\3\2\6\7\u0265\2]\3\2"+
+		"\2\2\4h\3\2\2\2\6l\3\2\2\2\bt\3\2\2\2\nv\3\2\2\2\f\u0082\3\2\2\2\16\u008a"+
+		"\3\2\2\2\20\u0097\3\2\2\2\22\u009a\3\2\2\2\24\u00a1\3\2\2\2\26\u00af\3"+
+		"\2\2\2\30\u00b5\3\2\2\2\32\u00c7\3\2\2\2\34\u00cb\3\2\2\2\36\u00d0\3\2"+
+		"\2\2 \u00d8\3\2\2\2\"\u00dc\3\2\2\2$\u00de\3\2\2\2&\u00e6\3\2\2\2(\u00e8"+
 		"\3\2\2\2*\u00ea\3\2\2\2,\u00f6\3\2\2\2.\u00fa\3\2\2\2\60\u0108\3\2\2\2"+
 		"\62\u010a\3\2\2\2\64\u0165\3\2\2\2\66\u0167\3\2\2\28\u0173\3\2\2\2:\u0178"+
 		"\3\2\2\2<\u0182\3\2\2\2>\u018d\3\2\2\2@\u0191\3\2\2\2B\u01a8\3\2\2\2D"+
-		"\u01be\3\2\2\2F\u01c0\3\2\2\2H\u01c8\3\2\2\2J\u0209\3\2\2\2L\u0212\3\2"+
-		"\2\2N\u0214\3\2\2\2P\u021e\3\2\2\2R\u0221\3\2\2\2T\u0226\3\2\2\2V\u0228"+
-		"\3\2\2\2X\u022a\3\2\2\2Z\u022c\3\2\2\2\\^\5\4\3\2]\\\3\2\2\2]^\3\2\2\2"+
+		"\u01be\3\2\2\2F\u01c0\3\2\2\2H\u01c8\3\2\2\2J\u020c\3\2\2\2L\u0215\3\2"+
+		"\2\2N\u0217\3\2\2\2P\u0221\3\2\2\2R\u0224\3\2\2\2T\u0229\3\2\2\2V\u022b"+
+		"\3\2\2\2X\u022d\3\2\2\2Z\u022f\3\2\2\2\\^\5\4\3\2]\\\3\2\2\2]^\3\2\2\2"+
 		"^b\3\2\2\2_a\5\6\4\2`_\3\2\2\2ad\3\2\2\2b`\3\2\2\2bc\3\2\2\2ce\3\2\2\2"+
 		"db\3\2\2\2ef\5\n\6\2fg\7\2\2\3g\3\3\2\2\2hi\7#\2\2ij\5.\30\2jk\7B\2\2"+
 		"k\5\3\2\2\2lm\7\37\2\2mp\5.\30\2no\7D\2\2oq\7V\2\2pn\3\2\2\2pq\3\2\2\2"+
@@ -4056,46 +4084,47 @@ public class PyriteParser extends Parser {
 		"\u01aa\3\2\2\2\u01be\u01b4\3\2\2\2\u01bfE\3\2\2\2\u01c0\u01c1\7<\2\2\u01c1"+
 		"\u01c2\5H%\2\u01c2\u01c3\7=\2\2\u01c3G\3\2\2\2\u01c4\u01c5\b%\1\2\u01c5"+
 		"\u01c9\5J&\2\u01c6\u01c7\7\"\2\2\u01c7\u01c9\5L\'\2\u01c8\u01c4\3\2\2"+
-		"\2\u01c8\u01c6\3\2\2\2\u01c9\u01ff\3\2\2\2\u01ca\u01cb\f\16\2\2\u01cb"+
-		"\u01cc\t\4\2\2\u01cc\u01fe\5H%\17\u01cd\u01ce\f\r\2\2\u01ce\u01cf\t\5"+
-		"\2\2\u01cf\u01fe\5H%\16\u01d0\u01d1\f\f\2\2\u01d1\u01d2\t\6\2\2\u01d2"+
-		"\u01fe\5H%\r\u01d3\u01d4\f\13\2\2\u01d4\u01d5\t\7\2\2\u01d5\u01fe\5H%"+
-		"\f\u01d6\u01d7\f\n\2\2\u01d7\u01d8\t\b\2\2\u01d8\u01fe\5H%\13\u01d9\u01da"+
-		"\f\t\2\2\u01da\u01db\7X\2\2\u01db\u01fe\5H%\n\u01dc\u01dd\f\b\2\2\u01dd"+
-		"\u01de\7]\2\2\u01de\u01fe\5H%\t\u01df\u01e0\f\7\2\2\u01e0\u01e1\7Y\2\2"+
-		"\u01e1\u01fe\5H%\b\u01e2\u01e3\f\6\2\2\u01e3\u01e4\7P\2\2\u01e4\u01fe"+
-		"\5H%\7\u01e5\u01e6\f\5\2\2\u01e6\u01e7\7Q\2\2\u01e7\u01fe\5H%\6\u01e8"+
-		"\u01e9\f\4\2\2\u01e9\u01ea\7C\2\2\u01ea\u01fe\5H%\5\u01eb\u01ec\f\3\2"+
-		"\2\u01ec\u01ed\t\t\2\2\u01ed\u01fe\5H%\3\u01ee\u01ef\f\23\2\2\u01ef\u01f0"+
-		"\7D\2\2\u01f0\u01fe\7j\2\2\u01f1\u01f2\f\22\2\2\u01f2\u01f3\7\5\2\2\u01f3"+
-		"\u01f4\5\"\22\2\u01f4\u01f5\7=\2\2\u01f5\u01fe\3\2\2\2\u01f6\u01f7\f\21"+
-		"\2\2\u01f7\u01fe\5N(\2\u01f8\u01f9\f\17\2\2\u01f9\u01fa\7@\2\2\u01fa\u01fb"+
-		"\5H%\2\u01fb\u01fc\7A\2\2\u01fc\u01fe\3\2\2\2\u01fd\u01ca\3\2\2\2\u01fd"+
-		"\u01cd\3\2\2\2\u01fd\u01d0\3\2\2\2\u01fd\u01d3\3\2\2\2\u01fd\u01d6\3\2"+
-		"\2\2\u01fd\u01d9\3\2\2\2\u01fd\u01dc\3\2\2\2\u01fd\u01df\3\2\2\2\u01fd"+
-		"\u01e2\3\2\2\2\u01fd\u01e5\3\2\2\2\u01fd\u01e8\3\2\2\2\u01fd\u01eb\3\2"+
-		"\2\2\u01fd\u01ee\3\2\2\2\u01fd\u01f1\3\2\2\2\u01fd\u01f6\3\2\2\2\u01fd"+
-		"\u01f8\3\2\2\2\u01fe\u0201\3\2\2\2\u01ff\u01fd\3\2\2\2\u01ff\u0200\3\2"+
-		"\2\2\u0200I\3\2\2\2\u0201\u01ff\3\2\2\2\u0202\u0203\7<\2\2\u0203\u0204"+
-		"\5H%\2\u0204\u0205\7=\2\2\u0205\u020a\3\2\2\2\u0206\u020a\7,\2\2\u0207"+
-		"\u020a\5\60\31\2\u0208\u020a\7j\2\2\u0209\u0202\3\2\2\2\u0209\u0206\3"+
-		"\2\2\2\u0209\u0207\3\2\2\2\u0209\u0208\3\2\2\2\u020aK\3\2\2\2\u020b\u020c"+
-		"\5.\30\2\u020c\u020d\5N(\2\u020d\u0213\3\2\2\2\u020e\u020f\5$\23\2\u020f"+
-		"\u0210\7<\2\2\u0210\u0211\7=\2\2\u0211\u0213\3\2\2\2\u0212\u020b\3\2\2"+
-		"\2\u0212\u020e\3\2\2\2\u0213M\3\2\2\2\u0214\u0216\7<\2\2\u0215\u0217\5"+
-		"H%\2\u0216\u0215\3\2\2\2\u0216\u0217\3\2\2\2\u0217\u0218\3\2\2\2\u0218"+
-		"\u0219\7=\2\2\u0219O\3\2\2\2\u021a\u021f\7\t\2\2\u021b\u021f\7\13\2\2"+
-		"\u021c\u021f\7\f\2\2\u021d\u021f\7\r\2\2\u021e\u021a\3\2\2\2\u021e\u021b"+
-		"\3\2\2\2\u021e\u021c\3\2\2\2\u021e\u021d\3\2\2\2\u021fQ\3\2\2\2\u0220"+
-		"\u0222\7\n\2\2\u0221\u0220\3\2\2\2\u0221\u0222\3\2\2\2\u0222\u0223\3\2"+
-		"\2\2\u0223\u0224\7D\2\2\u0224\u0225\7\n\2\2\u0225S\3\2\2\2\u0226\u0227"+
-		"\t\n\2\2\u0227U\3\2\2\2\u0228\u0229\7\16\2\2\u0229W\3\2\2\2\u022a\u022b"+
-		"\7\17\2\2\u022bY\3\2\2\2\u022c\u022d\7\b\2\2\u022d[\3\2\2\2<]bpz~\u0087"+
+		"\2\u01c8\u01c6\3\2\2\2\u01c9\u0202\3\2\2\2\u01ca\u01cb\f\17\2\2\u01cb"+
+		"\u01cc\t\4\2\2\u01cc\u0201\5H%\20\u01cd\u01ce\f\16\2\2\u01ce\u01cf\t\5"+
+		"\2\2\u01cf\u0201\5H%\17\u01d0\u01d1\f\r\2\2\u01d1\u01d2\t\6\2\2\u01d2"+
+		"\u0201\5H%\16\u01d3\u01d4\f\f\2\2\u01d4\u01d5\t\7\2\2\u01d5\u0201\5H%"+
+		"\r\u01d6\u01d7\f\n\2\2\u01d7\u01d8\t\b\2\2\u01d8\u0201\5H%\13\u01d9\u01da"+
+		"\f\t\2\2\u01da\u01db\7X\2\2\u01db\u0201\5H%\n\u01dc\u01dd\f\b\2\2\u01dd"+
+		"\u01de\7]\2\2\u01de\u0201\5H%\t\u01df\u01e0\f\7\2\2\u01e0\u01e1\7Y\2\2"+
+		"\u01e1\u0201\5H%\b\u01e2\u01e3\f\6\2\2\u01e3\u01e4\7P\2\2\u01e4\u0201"+
+		"\5H%\7\u01e5\u01e6\f\5\2\2\u01e6\u01e7\7Q\2\2\u01e7\u0201\5H%\6\u01e8"+
+		"\u01e9\f\4\2\2\u01e9\u01ea\7C\2\2\u01ea\u0201\5H%\5\u01eb\u01ec\f\3\2"+
+		"\2\u01ec\u01ed\t\t\2\2\u01ed\u0201\5H%\3\u01ee\u01ef\f\24\2\2\u01ef\u01f0"+
+		"\7D\2\2\u01f0\u0201\7j\2\2\u01f1\u01f2\f\23\2\2\u01f2\u01f3\7\5\2\2\u01f3"+
+		"\u01f4\5\"\22\2\u01f4\u01f5\7=\2\2\u01f5\u0201\3\2\2\2\u01f6\u01f7\f\22"+
+		"\2\2\u01f7\u0201\5N(\2\u01f8\u01f9\f\20\2\2\u01f9\u01fa\7@\2\2\u01fa\u01fb"+
+		"\5H%\2\u01fb\u01fc\7A\2\2\u01fc\u0201\3\2\2\2\u01fd\u01fe\f\13\2\2\u01fe"+
+		"\u01ff\7 \2\2\u01ff\u0201\5\"\22\2\u0200\u01ca\3\2\2\2\u0200\u01cd\3\2"+
+		"\2\2\u0200\u01d0\3\2\2\2\u0200\u01d3\3\2\2\2\u0200\u01d6\3\2\2\2\u0200"+
+		"\u01d9\3\2\2\2\u0200\u01dc\3\2\2\2\u0200\u01df\3\2\2\2\u0200\u01e2\3\2"+
+		"\2\2\u0200\u01e5\3\2\2\2\u0200\u01e8\3\2\2\2\u0200\u01eb\3\2\2\2\u0200"+
+		"\u01ee\3\2\2\2\u0200\u01f1\3\2\2\2\u0200\u01f6\3\2\2\2\u0200\u01f8\3\2"+
+		"\2\2\u0200\u01fd\3\2\2\2\u0201\u0204\3\2\2\2\u0202\u0200\3\2\2\2\u0202"+
+		"\u0203\3\2\2\2\u0203I\3\2\2\2\u0204\u0202\3\2\2\2\u0205\u0206\7<\2\2\u0206"+
+		"\u0207\5H%\2\u0207\u0208\7=\2\2\u0208\u020d\3\2\2\2\u0209\u020d\7,\2\2"+
+		"\u020a\u020d\5\60\31\2\u020b\u020d\7j\2\2\u020c\u0205\3\2\2\2\u020c\u0209"+
+		"\3\2\2\2\u020c\u020a\3\2\2\2\u020c\u020b\3\2\2\2\u020dK\3\2\2\2\u020e"+
+		"\u020f\5.\30\2\u020f\u0210\5N(\2\u0210\u0216\3\2\2\2\u0211\u0212\5$\23"+
+		"\2\u0212\u0213\7<\2\2\u0213\u0214\7=\2\2\u0214\u0216\3\2\2\2\u0215\u020e"+
+		"\3\2\2\2\u0215\u0211\3\2\2\2\u0216M\3\2\2\2\u0217\u0219\7<\2\2\u0218\u021a"+
+		"\5H%\2\u0219\u0218\3\2\2\2\u0219\u021a\3\2\2\2\u021a\u021b\3\2\2\2\u021b"+
+		"\u021c\7=\2\2\u021cO\3\2\2\2\u021d\u0222\7\t\2\2\u021e\u0222\7\13\2\2"+
+		"\u021f\u0222\7\f\2\2\u0220\u0222\7\r\2\2\u0221\u021d\3\2\2\2\u0221\u021e"+
+		"\3\2\2\2\u0221\u021f\3\2\2\2\u0221\u0220\3\2\2\2\u0222Q\3\2\2\2\u0223"+
+		"\u0225\7\n\2\2\u0224\u0223\3\2\2\2\u0224\u0225\3\2\2\2\u0225\u0226\3\2"+
+		"\2\2\u0226\u0227\7D\2\2\u0227\u0228\7\n\2\2\u0228S\3\2\2\2\u0229\u022a"+
+		"\t\n\2\2\u022aU\3\2\2\2\u022b\u022c\7\16\2\2\u022cW\3\2\2\2\u022d\u022e"+
+		"\7\17\2\2\u022eY\3\2\2\2\u022f\u0230\7\b\2\2\u0230[\3\2\2\2<]bpz~\u0087"+
 		"\u008e\u0097\u009a\u00a7\u00aa\u00af\u00bb\u00be\u00c3\u00c7\u00d0\u00d8"+
 		"\u00dc\u00e2\u00ec\u00f1\u00ff\u0108\u010e\u011e\u0125\u012d\u013b\u0141"+
 		"\u0148\u014d\u0155\u0158\u015b\u0165\u016c\u0171\u0176\u017e\u0180\u0188"+
-		"\u0193\u0198\u019c\u01a8\u01b4\u01b8\u01bc\u01be\u01c8\u01fd\u01ff\u0209"+
-		"\u0212\u0216\u021e\u0221";
+		"\u0193\u0198\u019c\u01a8\u01b4\u01b8\u01bc\u01be\u01c8\u0200\u0202\u020c"+
+		"\u0215\u0219\u0221\u0224";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

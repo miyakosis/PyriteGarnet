@@ -751,6 +751,7 @@ expression
     |   expression op=('+'|'-') expression	# ExpressionAddSub
     |   expression op=('<<' | '>>' | '>>>') expression	# ExpressionShift
     |   expression op=('<=' | '>=' | '>' | '<') expression	# ExpressionCompare
+    |   expression 'instanceof' type		# ExpressionInstanceof
     |   expression op=('==' | '!=') expression	# ExpressionEqual
     |   expression '&' expression	# ExpressionBitAnd
     |   expression '^' expression	# ExpressionBitExOr
@@ -758,7 +759,7 @@ expression
     |   expression '&&' expression	# ExpressionBolAnd
     |   expression '||' expression	# ExpressionBolOr
     |   expression ',' expression	# ExpressionPair
-//    |   expression (',' expression)+	# ExpressionList // これはうまく解析できない
+//    |   expression (',' expression)+	# ExpressionList // これはうまく解析できないので、ExpressionPair にて定義
     |   <assoc=right> expression
         op=('='
         |   '+='
@@ -1188,16 +1189,16 @@ StringCharacter
 fragment
 EscapeSequence
     :   '\\' [btnfr"'\\]
-    |   OctalEscape
+//    |   OctalEscape		// Pyriteでは不使用
     |   UnicodeEscape
     ;
 
-fragment
-OctalEscape
-    :   '\\' OctalDigit
-    |   '\\' OctalDigit OctalDigit
-    |   '\\' ZeroToThree OctalDigit OctalDigit
-    ;
+//fragment
+//OctalEscape
+//    :   '\\' OctalDigit
+//    |   '\\' OctalDigit OctalDigit
+//    |   '\\' ZeroToThree OctalDigit OctalDigit
+//    ;
 
 fragment
 UnicodeEscape

@@ -429,6 +429,13 @@ public interface PyriteVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpressionAssign(PyriteParser.ExpressionAssignContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code ExpressionInstanceof}
+	 * labeled alternative in {@link PyriteParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionInstanceof(PyriteParser.ExpressionInstanceofContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code ExpressionEqual}
 	 * labeled alternative in {@link PyriteParser#expression}.
 	 * @param ctx the parse tree

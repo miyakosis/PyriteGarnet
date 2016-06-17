@@ -1180,6 +1180,9 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 				varType = _cr.dispatchVariableC(expressionVarType._fqcn, id);
 				if (varType != null)
 				{	// クラスフィールド
+					// スタックに乗っているオブジェクト参照を除去する
+					_currentMethodCodeDeclation._code.addCodeOp(BC.POP);
+
 					_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
 					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(expressionVarType._fqcn._fqcnStr, id, varType._jvmExpression));
 
@@ -1261,14 +1264,17 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		MethodType	methodType = methodParamSignature.getMethodType();
 		byte	opCode;
 		if (methodType._isStatic)
-		{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに積むコードを除外する。
-			// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
-			// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
-			_currentMethodCodeDeclation._code.removeCode(expressionCodePosFrom, expressionCodePosTo);
-
-			// TODO:削除対象コードに含まれる副作用の解決
-
+		{
 			opCode = BC.INVOKESTATIC;
+
+			if (expressionCodePosFrom != expressionCodePosTo)
+			{	// クラスメソッド呼び出しの場合は、レシーバの解析中に追加されたオブジェクトをスタックに積むコードを除外する。
+				// (メソッド引数にてメソッド呼び出しがある場合、余分なオブジェクトがスタックにあると引数がずれてしまうため、適正なオブジェクトのみをスタックに残さなければならない)
+				// (引数の解析が終わらないと呼び出しメソッドがクラスメソッドかインスタンスメソッドかわからない)
+				BCContainer	addCode = new BCContainer();
+				addCode.addCodeOp(BC.POP);
+				_currentMethodCodeDeclation._code.addCodeBlock(addCode, expressionCodePosTo);
+			}
 		}
 		else
 		{
@@ -2462,6 +2468,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		{
 			throw new PyriteSyntaxException("type different.");
 		}
+		else if (lType._type == TYPE.VOID)
+		{
+			throw new PyriteSyntaxException("invalid type.");
+		}
 
 		byte op = 0x00;
 		switch (lType._type)
@@ -2770,6 +2780,39 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(lType._fqcn._fqcnStr, methodName, "(L" + rType._fqcn._fqcnStr + ";)L" + lType._fqcn._fqcnStr + ";"));
 
 		return	lType;
+	}
+
+	// expression 'instanceof' type
+	@Override
+	public Object visitExpressionInstanceof(PyriteParser.ExpressionInstanceofContext ctx)
+	{
+		if (isLValueExpressionElement(ctx))
+		{
+			throw new PyriteSyntaxException("LValue must be a variable or field.");
+		}
+
+		VarType	lType = toSingleValueType((VarType)visit(ctx.expression()));	// get value of left subexpression
+		// NULLはOK
+		if (lType._type == TYPE.VOID)
+		{
+			throw new RuntimeException("operation needs class reference.");
+		}
+		VarType	rType = (VarType)visit(ctx.type());
+
+		_currentMethodCodeDeclation._code.addCodeOp(BC.INSTANCEOF);
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getClassRef(rType._fqcn._fqcnStr));
+
+		// trueのとき1, false のとき0 がスタックに乗っている
+		_currentMethodCodeDeclation._code.addCodeOp(BC.IFEQ);	// 0のときジャンプ
+		_currentMethodCodeDeclation._code.addCodeU2(9);				// FALSEの位置
+		_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "TRUE", VarType.BOL._jvmExpression));
+		_currentMethodCodeDeclation._code.addCodeOp(BC.GOTO);
+		_currentMethodCodeDeclation._code.addCodeU2(6);				// この文の末尾位置
+		_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.BOL._fqcn._fqcnStr, "FALSE", VarType.BOL._jvmExpression));
+
+		return	VarType.BOL;
 	}
 
 
@@ -4811,7 +4854,6 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		return	VarType.DEC;
 	}
 
-
 	//	CharacterLiteral
     //	:   '\'' SingleCharacter '\''
     //	|   '\'' EscapeSequence '\''
@@ -4819,24 +4861,16 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	public Object visitCharacterLiteral(@NotNull PyriteParser.CharacterLiteralContext ctx)
 	{
 		String	literal = ctx.getText();
-		literal = StringUtil.stripEndChar(literal);
+		literal = StringUtil.strLiteral(literal);
 
 		assert(literal.length() >= 1);
 		char	c = literal.charAt(0);
-		if (c == '\\')
-		{	// escape sequence
-			// TODO escape sequence
-			throw new RuntimeException("not implemented");
-		}
-		else
-		{
-			// methodParameter
-			addCodeIPush(c);
+		// methodParameter
+		addCodeIPush(c);
 
-			// create object
-			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
-			_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteCharacter", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
-		}
+		// create object
+		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
+		_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteCharacter", "(C)L" + pyrite.lang.Character.CLASS_NAME + ";"));
 
 		return	VarType.CHR;
 	}
