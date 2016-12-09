@@ -98,41 +98,44 @@ public class VarType
 		switch (type)
 		{
 		case NULL:
+			_fqcn = null;
+			_jvmExpression = null;
+			break;
 		case VOID:
+			_fqcn = null;
+			_jvmExpression = "V";
+			break;
 		case JVM_INT:
+			_fqcn = FQCNParser.getFQCN(int.class.getName());
+			_jvmExpression = "I";
+			break;
 		case JVM_LONG:
+			_fqcn = FQCNParser.getFQCN(long.class.getName());
+			_jvmExpression = "J";
+			break;
 		case JVM_SHORT:
+			_fqcn = FQCNParser.getFQCN(short.class.getName());
+			_jvmExpression = "S";
+			break;
 		case JVM_FLOAT:
+			_fqcn = FQCNParser.getFQCN(float.class.getName());
+			_jvmExpression = "F";
+			break;
 		case JVM_DOUBLE:
+			_fqcn = FQCNParser.getFQCN(double.class.getName());
+			_jvmExpression = "D";
+			break;
 		case JVM_CHAR:
+			_fqcn = FQCNParser.getFQCN(char.class.getName());
+			_jvmExpression = "C";
+			break;
 		case JVM_BYTE:
+			_fqcn = FQCNParser.getFQCN(byte.class.getName());
+			_jvmExpression = "B";
+			break;
 		case JVM_BOOLEAN:
-			switch (type)
-			{
-			case NULL:
-				_jvmExpression = null;	break;
-			case VOID:
-				_jvmExpression = "V";	break;
-			case JVM_INT:
-				_jvmExpression = "I";	break;
-			case JVM_LONG:
-				_jvmExpression = "J";	break;
-			case JVM_SHORT:
-				_jvmExpression = "S";	break;
-			case JVM_FLOAT:
-				_jvmExpression = "F";	break;
-			case JVM_DOUBLE:
-				_jvmExpression = "D";	break;
-			case JVM_CHAR:
-				_jvmExpression = "C";	break;
-			case JVM_BYTE:
-				_jvmExpression = "B";	break;
-			case JVM_BOOLEAN:
-				_jvmExpression = "Z";	break;
-			default:
-				throw new RuntimeException("assertion");
-			}
-			_fqcn = null;			// なくてok
+			_fqcn = FQCNParser.getFQCN(boolean.class.getName());
+			_jvmExpression = "Z";
 			break;
 
 		case OBJ:

@@ -4,9 +4,6 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import pyrite.compiler.type.ObjectType;
-import pyrite.compiler.type.VarType;
-
 /*
  * 実行時型変換などの機能を提供するクラス
  */
@@ -172,56 +169,20 @@ public class PyriteRuntime
 
 
 	// array
-	public static Object	toJVMArray(pyrite.lang.Array arr, VarType pyriteType, VarType jvmType, int dimension)
+	public static Object	toJVMArray(pyrite.lang.Array arr, Class<?> pyriteArrayClass, Class<?> jvmArrayClass, int dimension)
 	{
 		// 配列のそれぞれの次元の要素数を取得する
 		int[]	size = new int[dimension];
 		getJVMArraySize(arr, dimension, 0, size);
 
-		// 変換後の配列を作成する
-		Class	jvmArrayClass;
-		switch (jvmType._type)
-		{
-		case JVM_INT:
-			jvmArrayClass = int.class;	break;
-		case JVM_LONG:
-			jvmArrayClass = long.class;	break;
-		case JVM_SHORT:
-			jvmArrayClass = short.class;	break;
-		case JVM_FLOAT:
-			jvmArrayClass = float.class;	break;
-		case JVM_DOUBLE:
-			jvmArrayClass = double.class;	break;
-		case JVM_CHAR:
-			jvmArrayClass = char.class;	break;
-		case JVM_BYTE:
-			jvmArrayClass = byte.class;	break;
-		case JVM_BOOLEAN:
-			jvmArrayClass = boolean.class;	break;
-		case OBJ:
-			try
-			{
-				jvmArrayClass = Class.forName(jvmType._fqcn._fqcnStr);
-				break;
-			}
-			catch (ClassNotFoundException e)
-			{
-				throw new RuntimeException("assertion");
-			}
-
-		default:
-			throw new RuntimeException("assertion");
-		}
-
-		// 配列オブジェクト生成
+		// 変換後の配列オブジェクト生成
 		Object	result = Array.newInstance(jvmArrayClass, size);
 
 		// 配列に値設定
-		setJVMArrayValue(arr, pyriteType, jvmType, dimension, size, 0, result);
+		setJVMArrayValue(arr, pyriteArrayClass, jvmArrayClass, dimension, size, 0, result);
 
 		return	result;
 	}
-
 
 	protected static void	getJVMArraySize(pyrite.lang.Array arr, int dimension, int currentDimension, int[] size)
 	{
@@ -239,7 +200,7 @@ public class PyriteRuntime
 		}
 	}
 
-	protected static void setJVMArrayValue(pyrite.lang.Array arr, VarType pyriteType, VarType jvmType, int dimension, int[] size, int currentDimension, Object result)
+	protected static void setJVMArrayValue(pyrite.lang.Array arr, Class<?> pyriteArrayClass, Class<?> jvmArrayClass, int dimension, int[] size, int currentDimension, Object result)
 	{
 		if (currentDimension == dimension - 1)
 		{	// 末端要素なので値を設定する
@@ -247,113 +208,119 @@ public class PyriteRuntime
 			{
 				Object	src = arr.get(toPyriteInteger(i));
 				// 入力パラメータの型と、解決されたメソッド引数の型を比べて、必要があれば(Javaのメソッド呼び出しならば)型変換する。
-				switch (pyriteType._type)
+				if (pyriteArrayClass == pyrite.lang.Integer.class)
 				{
-				case INT:
-					switch (jvmType._type)
+					if (jvmArrayClass == int.class)
 					{
-					case JVM_INT:
 						int	iv = toJavaInt((pyrite.lang.Integer)src);
 						Array.setInt(result, i, iv);
-						continue;
-
-					case JVM_LONG:
+					}
+					else if (jvmArrayClass == long.class)
+					{
 						long	lv = toJavaLong((pyrite.lang.Integer)src);
 						Array.setLong(result, i, lv);
-						continue;
-
-					case JVM_SHORT:
+					}
+					else if (jvmArrayClass == short.class)
+					{
 						short	sv = toJavaShort((pyrite.lang.Integer)src);
 						Array.setShort(result, i, sv);
-						continue;
-
-					default:
-						break;
 					}
-					break;
-
-				case DEC:
-					switch (jvmType._type)
+					else
 					{
-					case JVM_DOUBLE:
+						throw new RuntimeException("assertion");
+					}
+				}
+				else if (pyriteArrayClass == pyrite.lang.Decimal.class)
+				{
+					if (jvmArrayClass == double.class)
+					{
 						double	dv = toJavaDouble((pyrite.lang.Decimal)src);
 						Array.setDouble(result, i, dv);
-						continue;
-
-					case JVM_FLOAT:
+					}
+					else if (jvmArrayClass == float.class)
+					{
 						float	fv = toJavaFloat((pyrite.lang.Decimal)src);
 						Array.setFloat(result, i, fv);
-						continue;
-
-					default:
-						break;
 					}
-					break;
-
-				case STR:
-					if (jvmType == ObjectType.getType("java.lang.String"))
+					else
 					{
-						src = toJavaString((pyrite.lang.String)src);
+						throw new RuntimeException("assertion");
 					}
-					break;
-
-				case CHR:
-					if (jvmType._type == VarType.TYPE.JVM_CHAR)
+				}
+				else if (pyriteArrayClass == pyrite.lang.String.class)
+				{
+					if (jvmArrayClass == String.class)
+					{
+						String	sv = toJavaString((pyrite.lang.String)src);
+						Array.set(result, i, sv);
+					}
+					else
+					{
+						throw new RuntimeException("assertion");
+					}
+				}
+				else if (pyriteArrayClass == pyrite.lang.Character.class)
+				{
+					if (jvmArrayClass == char.class)
 					{
 						char	cv = toJavaChar((pyrite.lang.Character)src);
 						Array.setChar(result, i, cv);
-						continue;
 					}
-					break;
-
-				case BOL:
-					if (jvmType._type == VarType.TYPE.JVM_BOOLEAN)
+					else
+					{
+						throw new RuntimeException("assertion");
+					}
+				}
+				else if (pyriteArrayClass == pyrite.lang.Boolean.class)
+				{
+					if (jvmArrayClass == boolean.class)
 					{
 						boolean	bolv = toJavaBoolean((pyrite.lang.Boolean)src);
 						Array.setBoolean(result, i, bolv);
-						continue;
 					}
-					break;
-
-				case BYT:
-					if (jvmType._type == VarType.TYPE.JVM_BYTE)
+					else
+					{
+						throw new RuntimeException("assertion");
+					}
+				}
+				else if (pyriteArrayClass == pyrite.lang.Byte.class)
+				{
+					if (jvmArrayClass == byte.class)
 					{
 						byte	bv = toJavaByte((pyrite.lang.Byte)src);
 						Array.setByte(result, i, bv);
-						continue;
 					}
-					break;
-
-				case ARRAY:
-					throw new RuntimeException("assertion");
-
-				default:
-					break;
+					else
+					{
+						throw new RuntimeException("assertion");
+					}
 				}
-
-				// オブジェクトとして値設定
-				Array.set(result, i, src);
+				else
+				{
+					// オブジェクトとして値設定
+					Array.set(result, i, src);
+				}
 			}
-
-			return;
 		}
-
-		// 次の配列要素に値を設定する
-		for (int i = 0; i < arr.size(); ++i)
+		else
 		{
-			pyrite.lang.Array	nextArr = (pyrite.lang.Array)arr.get(toPyriteInteger(i));
-			Object	nextResult = Array.get(result, i);
+			// 次の配列要素に値を設定する
+			for (int i = 0; i < arr.size(); ++i)
+			{
+				pyrite.lang.Array	nextArr = (pyrite.lang.Array)arr.get(toPyriteInteger(i));
+				Object	nextResult = Array.get(result, i);
 
-			setJVMArrayValue(nextArr, pyriteType, jvmType, dimension, size, currentDimension + 1, nextResult);
+				setJVMArrayValue(nextArr, pyriteArrayClass, jvmArrayClass, dimension, size, currentDimension + 1, nextResult);
+			}
 		}
 	}
 
-	public static pyrite.lang.Array	toPyriteArray(Object arr, VarType jvmType, int dimension)
+	public static pyrite.lang.Array	toPyriteArray(Object arr, Class<?> jvmArrayClass, int dimension)
 	{
-		return	setPyriteArrayValue(arr, jvmType, dimension, 0);
+		return	setPyriteArrayValue(arr, jvmArrayClass, dimension, 0);
 	}
 
-	protected static pyrite.lang.Array	setPyriteArrayValue(Object arr, VarType jvmType, int dimension, int currentDimension)
+	protected static pyrite.lang.Array	setPyriteArrayValue(Object arr, Class<?> jvmArrayClass, int dimension, int currentDimension)
 	{
 		pyrite.lang.Array	result = new pyrite.lang.Array();
 		int	len = Array.getLength(arr);
@@ -363,34 +330,48 @@ public class PyriteRuntime
 			for (int i = 0; i < len; ++i)
 			{
 				Object	target;
-				switch (jvmType._type)
+				if (jvmArrayClass == int.class)
 				{
-				case JVM_INT:
-					target = toPyriteInteger(Array.getInt(arr, i));	break;
-				case JVM_LONG:
-					target = toPyriteInteger(Array.getLong(arr, i));	break;
-				case JVM_SHORT:
-					target = toPyriteInteger(Array.getShort(arr, i));	break;
-				case JVM_FLOAT:
-					target = toPyriteDecimal(Array.getFloat(arr, i));	break;
-				case JVM_DOUBLE:
-					target = toPyriteDecimal(Array.getDouble(arr, i));	break;
-				case JVM_CHAR:
-					target = toPyriteCharacter(Array.getChar(arr, i));	break;
-				case JVM_BYTE:
-					target = toPyriteByte(Array.getByte(arr, i));	break;
-				case JVM_BOOLEAN:
-					target = toPyriteBoolean(Array.getBoolean(arr, i));	break;
-				case OBJ:
-					target = Array.get(arr, i);
-					if (jvmType.equals(VarType.JVM_STRING))
-					{
-						target = toPyriteString((java.lang.String)target);	break;
-					}
-					break;
-				default:
-					throw new RuntimeException("assertion");
+					target = toPyriteInteger(Array.getInt(arr, i));
 				}
+				else if (jvmArrayClass == long.class)
+				{
+					target = toPyriteInteger(Array.getLong(arr, i));
+				}
+				else if (jvmArrayClass == short.class)
+				{
+					target = toPyriteInteger(Array.getShort(arr, i));
+				}
+				else if (jvmArrayClass == double.class)
+				{
+					target = toPyriteDecimal(Array.getDouble(arr, i));
+				}
+				else if (jvmArrayClass == float.class)
+				{
+					target = toPyriteDecimal(Array.getFloat(arr, i));
+				}
+				else if (jvmArrayClass == String.class)
+				{
+					target = Array.get(arr, i);
+					target = toPyriteString((java.lang.String)target);
+				}
+				else if (jvmArrayClass == char.class)
+				{
+					target = toPyriteCharacter(Array.getChar(arr, i));
+				}
+				else if (jvmArrayClass == boolean.class)
+				{
+					target = toPyriteBoolean(Array.getBoolean(arr, i));
+				}
+				else if (jvmArrayClass == byte.class)
+				{
+					target = toPyriteByte(Array.getByte(arr, i));
+				}
+				else
+				{
+					target = Array.get(arr, i);
+				}
+
 				result.set(toPyriteInteger(i), target);
 			}
 		}
@@ -399,7 +380,7 @@ public class PyriteRuntime
 			for (int i = 0; i < len; ++i)
 			{
 				Object	nextArr = Array.get(arr, i);
-				pyrite.lang.Array	nextResult = setPyriteArrayValue(nextArr, jvmType, dimension, currentDimension + 1);
+				pyrite.lang.Array	nextResult = setPyriteArrayValue(nextArr, jvmArrayClass, dimension, currentDimension + 1);
 				result.set(toPyriteInteger(i), nextResult);
 			}
 		}

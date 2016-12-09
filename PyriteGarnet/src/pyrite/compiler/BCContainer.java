@@ -162,6 +162,40 @@ public class BCContainer
 		}
 	}
 
+	public void	addCodeLDC(int n)
+	{
+		if (n <= 0xff)
+		{
+			addCodeOp(BC.LDC);
+			addCodeU1(n);
+		}
+		else
+		{
+			addCodeOp(BC.LDC_W);
+			addCodeU2(n);
+		}
+	}
+
+	public void	addCodeIPush(int value)
+	{
+		// int をスタックに積む
+		if (-128 <= value && value <= 127)
+		{
+			addCodeOpBIPUSH(value);
+		}
+		else if (-32768 <= value && value <= 32767)
+		{
+			addCodeOp(BC.SIPUSH);
+			addCodeU2(value);
+		}
+		else
+		{	// ldcを使う
+			throw new RuntimeException("not implemented yet.");
+		}
+	}
+
+
+
 	public void	addCodePadding()
 	{	// 4バイト境界まで0をつめる
 		while (getCodePos() % 4 != 0)

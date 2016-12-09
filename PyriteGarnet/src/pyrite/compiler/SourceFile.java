@@ -2,10 +2,10 @@ package pyrite.compiler;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -25,7 +25,9 @@ import pyrite.compiler.antlr.PyriteParser;
 import pyrite.compiler.type.MethodType;
 import pyrite.compiler.type.ObjectType;
 import pyrite.compiler.type.VarType;
+import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.StringUtil;
+import pyrite.runtime.type.MultipleValueAnnotation;
 
 /**
  * ソースファイルを保持するクラス
@@ -88,14 +90,22 @@ public class SourceFile extends ClassRelatedFile
 			// create needed constants
 			_cpm = new ConstantPoolManager();
 
-			_cpm.getClassRef("java/lang/Object");
-			_cpm.getUtf8("<init>");
-			_cpm.getUtf8("()V");
+			/*
 			_cpm.getUtf8("Code");
+			_cpm.getUtf8("RuntimeVisibleAnnotations");
+			_cpm.getUtf8("value");
 			_cpm.getUtf8("main");
+
+			_cpm.getUtf8("<init>");
+			_cpm.getUtf8("<clinit>");
+
+			_cpm.getUtf8(StringUtil.toJVMClassNameExpression(MultipleValueAnnotation.class.getName()));
+
+			_cpm.getClassRef("java/lang/Object");
+			_cpm.getUtf8("()V");
 			_cpm.getUtf8("([Ljava/lang/String;)V");
 			_cpm.getMethodRef("java/lang/Object", "<init>", "()V");
-			_cpm.getUtf8("<clinit>");
+			*/
 		}
 		catch (IOException e)
 		{
@@ -178,22 +188,32 @@ public class SourceFile extends ClassRelatedFile
 	}
 
 
-	// ファイル出力
+	public final static byte[]	MAGIC = {(byte)0xCA, (byte)0xFE, (byte)0xBA, (byte)0xBE,};
+	public final static byte[]	MINOR_VERSION = {(byte)0x00, (byte)0x00,};
+	public final static byte[]	MAJOR_VERSION = {(byte)0x00, (byte)0x31,};	// 0x31 -> J2SE 5.0 0x33 -> J2SE 7
+
+	// クラスファイル出力
 	public void	createClassFile() throws IOException
 	{
-		_cpm.setFrozen(true);
-		// .class
+//		_cpm.setFrozen(true);
+		byte[]	classFileBody = createClassFileBody(_cpm, _declaredMember, _methodCodeDeclationList);
+
 		try (ClassFileOutputStream	os = new ClassFileOutputStream(new BufferedOutputStream(new FileOutputStream(_classFilePathName))))
 		{
-			createClassFile(os,
-					_cpm,
-					_declaredMember,
-					_methodCodeDeclationList);
-		}
-		// .pyrc
-		try (BufferedWriter	writer = new BufferedWriter(new FileWriter(_pyriteClassFilePathName)))
-		{
-			createPyriteClassFile(writer, _declaredMember);
+//			u4 magic;
+			os.write(MAGIC);
+//			u2 minor_version;
+			os.write(MINOR_VERSION);
+//			u2 major_version;
+			os.write(MAJOR_VERSION);
+
+//			u2 constant_pool_count;
+			os.write2(_cpm.size() + 1);
+
+//			cp_info constant_pool[constant_pool_count-1];
+			os.write(_cpm.toByteArray());
+
+			os.write(classFileBody);
 		}
 	}
 
@@ -235,124 +255,167 @@ public class SourceFile extends ClassRelatedFile
 		}
 	}
 
-	public final static byte[]	MAGIC = {(byte)0xCA, (byte)0xFE, (byte)0xBA, (byte)0xBE,};
-	public final static byte[]	MINOR_VERSION = {(byte)0x00, (byte)0x00,};
-	public final static byte[]	MAJOR_VERSION = {(byte)0x00, (byte)0x31,};	// 0x31 -> J2SE 5.0 0x33 -> J2SE 7
 
-	private static void createClassFile(
-			ClassFileOutputStream os,
+	private static byte[] createClassFileBody(
 			ConstantPoolManager cpm,
 			ClassResolver.ClassFieldMember declaredMember,
 			List<MethodCodeDeclation> methodCodeDeclationList) throws IOException
 	{
-//		u4 magic;
-		os.write(MAGIC);
-//		u2 minor_version;
-		os.write(MINOR_VERSION);
-//		u2 major_version;
-		os.write(MAJOR_VERSION);
-
-//		u2 constant_pool_count;
-		os.write2(cpm.size() + 1);
-
-//		cp_info constant_pool[constant_pool_count-1];
-		os.write(cpm.toByteArray());
-
-//		u2 access_flags;
-		os.write2(0x0020);
-
-//		u2 this_class;
-		os.write2(cpm.getClassRef(declaredMember._fqcn._fqcnStr));
-
-//		u2 super_class;
-		os.write2(cpm.getClassRef(declaredMember._superCFM._fqcn._fqcnStr));
-
-//		u2 interfaces_count;
-		os.write2(declaredMember._interfaceSet.size());
-//		u2 interfaces[interfaces_count];
-		for (FQCN interfaceFQCN : declaredMember._interfaceSet)
+		ByteArrayOutputStream	baos;
+		try (ClassFileOutputStream	os = new ClassFileOutputStream(baos = new ByteArrayOutputStream()))
 		{
-			os.write2(cpm.getClassRef(interfaceFQCN._fqcnStr));
-		}
+//			u2 access_flags;
+			os.write2(0x0020);
 
-//		u2 fields_count;
-		os.write2(declaredMember._instanceFieldMap.size() + declaredMember._classFieldMap.size());
+//			u2 this_class;
+			os.write2(cpm.getClassRef(declaredMember._fqcn._fqcnStr));
 
-//		field_info fields[fields_count];
-//		field_info {
-//			u2			   access_flags;
-//			u2			   name_index;
-//			u2			   descriptor_index;
-//			u2			   attributes_count;
-//			attribute_info attributes[attributes_count];
-//		}
-		writeFieldInfo(os, cpm, declaredMember._classFieldMap, true);
-		writeFieldInfo(os, cpm, declaredMember._instanceFieldMap, false);
-		// none
+//			u2 super_class;
+			os.write2(cpm.getClassRef(declaredMember._superCFM._fqcn._fqcnStr));
 
-//		u2 methods_count;
-		os.write2(methodCodeDeclationList.size());
-
-//		method_info methods[methods_count];
-		for (MethodCodeDeclation method : methodCodeDeclationList)
-		{
-			// public static final void main(java.lang.String[]);
-			//		method_info {
-			//			u2			   access_flags;
-			//			u2			   name_index;
-			//			u2			   descriptor_index;
-			//			u2			   attributes_count;
-			//			attribute_info attributes[attributes_count];
-			//		}
-			os.write2(method.getAccessFlag());
-			os.write2(cpm.getUtf8(method._methodName));
-			os.write2(cpm.getUtf8(method.getJvmMethodParamExpression().replace('.', '/')));
-			os.write2(1);
+//			u2 interfaces_count;
+			os.write2(declaredMember._interfaceSet.size());
+//			u2 interfaces[interfaces_count];
+			for (FQCN interfaceFQCN : declaredMember._interfaceSet)
 			{
-			//Code_attribute {
-			//	u2 attribute_name_index;   //<= 前述の00 09(Code)
-			//	u4 attribute_length;	   //<= 前述の00 00 00 25(37)
-			//	u2 max_stack;			   //<= 00 02(2)
-			//	u2 max_locals;			   //<= 00 01(1)
-			//	u4 code_length;			   //<= 00 00 00 09(9)
-			//	u1 code[code_length];	   //<= b2 00 02 12 03 b6 00 04 b1
-			//	u2 exception_table_length; //<= 00 00
-			//	{ u2 start_pc;
-			//		u2 end_pc;
-			//		u2	handler_pc;
-			//		u2	catch_type;
-			//	} exception_table[exception_table_length];
-			//	u2 attributes_count;	   //<= 00 01
-			//	attribute_info attributes[attributes_count];
-			//}
-				byte[]	code = StringUtil.toByteArray(method._code.getCodeList());
-				List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
-				int	attrubuteLength = 2 + 2 + 4 + code.length + 2 + (exceptionTableEntryList.size() * 2 * 4) + 2 + 0;	// max_stack ～ attribute_info の長さ
+				os.write2(cpm.getClassRef(interfaceFQCN._fqcnStr));
+			}
 
-				os.write2(cpm.getUtf8("Code"));
-				os.write4(attrubuteLength);
-				os.write2(method.getMaxStack());
-				os.write2(method.getMaxLocal());
-				os.write4(code.length);
-				os.write(code);
+//			u2 fields_count;
+			os.write2(declaredMember._instanceFieldMap.size() + declaredMember._classFieldMap.size());
 
-				os.write2(exceptionTableEntryList.size());	// exception_table_length
-				for (ExceptionTableEntry entry : exceptionTableEntryList)
+//			field_info fields[fields_count];
+//			field_info {
+//				u2			   access_flags;
+//				u2			   name_index;
+//				u2			   descriptor_index;
+//				u2			   attributes_count;
+//				attribute_info attributes[attributes_count];
+//			}
+			writeFieldInfo(os, cpm, declaredMember._classFieldMap, true);
+			writeFieldInfo(os, cpm, declaredMember._instanceFieldMap, false);
+			// none
+
+//			u2 methods_count;
+			os.write2(methodCodeDeclationList.size());
+
+//			method_info methods[methods_count];
+			for (MethodCodeDeclation method : methodCodeDeclationList)
+			{
+				//		method_info {
+				//			u2			   access_flags;
+				//			u2			   name_index;
+				//			u2			   descriptor_index;
+				//			u2			   attributes_count;
+				//			attribute_info attributes[attributes_count];
+				//		}
+				int	attributesCount = (method._outParamList.size() <= 1) ? 1 : 2;	// Code or Code + RuntimeVisibleAnnotations
+
+				os.write2(method.getAccessFlag());
+				os.write2(cpm.getUtf8(method._methodName));
+				os.write2(cpm.getUtf8(method.getJvmMethodParamExpression().replace('.', '/')));
+				os.write2(attributesCount);
 				{
-					os.write2(entry._startPc);
-					os.write2(entry._endPc);
-					os.write2(entry._handlerPc);
-					os.write2(entry._catchType);
+				//Code_attribute {
+				//	u2 attribute_name_index;   //<= 前述の00 09(Code)
+				//	u4 attribute_length;	   //<= 前述の00 00 00 25(37)
+				//	u2 max_stack;			   //<= 00 02(2)
+				//	u2 max_locals;			   //<= 00 01(1)
+				//	u4 code_length;			   //<= 00 00 00 09(9)
+				//	u1 code[code_length];	   //<= b2 00 02 12 03 b6 00 04 b1 etc...
+				//	u2 exception_table_length; //<= 00 00
+				//	{ u2 start_pc;
+				//		u2 end_pc;
+				//		u2	handler_pc;
+				//		u2	catch_type;
+				//	} exception_table[exception_table_length];
+				//	u2 attributes_count;	   //<= 00 00
+				//	attribute_info attributes[attributes_count];
+				//}
+					byte[]	code = StringUtil.toByteArray(method._code.getCodeList());
+					List<ExceptionTableEntry>	exceptionTableEntryList = method.getExceptionTableList();
+					int	attrubuteLength = 2 + 2 + 4 + code.length + 2 + (exceptionTableEntryList.size() * 2 * 4) + 2 + 0;	// max_stack ～ attribute_info の長さ
+
+					os.write2(cpm.getUtf8("Code"));
+					os.write4(attrubuteLength);
+					os.write2(method.getMaxStack());
+					os.write2(method.getMaxLocal());
+					os.write4(code.length);
+					os.write(code);
+
+					os.write2(exceptionTableEntryList.size());	// exception_table_length
+					for (ExceptionTableEntry entry : exceptionTableEntryList)
+					{
+						os.write2(entry._startPc);
+						os.write2(entry._endPc);
+						os.write2(entry._handlerPc);
+						os.write2(entry._catchType);
+					}
+
+					os.write2(0);	// attributes_count
 				}
 
-				os.write2(0);	// attributes_count
-			}
-		}
+				if (attributesCount > 1)
+				{	// 複数帰り値の型を Annotation で保持する。
+					//	RuntimeVisibleAnnotations_attribute {
+					//	    u2         attribute_name_index;
+					//	    u4         attribute_length;
+					//	    u2         num_annotations;
+					//	    annotation annotations[num_annotations];
+					//	}
 
-//		u2 attributes_count;
-		os.write2(0);
-//		attribute_info attributes[attributes_count];
-		// none
+					//	annotation {
+					//	    u2 type_index;
+					//	    u2 num_element_value_pairs;
+					//	    {   u2            element_name_index;
+					//	        element_value value;
+					//	    } element_value_pairs[num_element_value_pairs];
+					//	}
+
+					//	element_value {
+					//	    u1 tag;										// [ (array)
+					//		{	u2            num_values;
+					//			element_value values[num_values];
+					//	    } array_value;
+					//	}
+
+					//	element_value {
+					//	    u1 tag;										// c (class)
+					//		u2 class_info_index;
+					//	}
+
+					int	attrubuteLength = 2 + (2 + 2 + 2 + (1 + 2 + (1 + 2) * method._outParamList.size()));	// num_annotations ～ の長さ
+
+					// RuntimeVisibleAnnotations_attribute
+					os.write2(cpm.getUtf8("RuntimeVisibleAnnotations"));
+					os.write4(attrubuteLength);
+					os.write2(1);	// num_annotations
+
+					// annotation
+					os.write2(cpm.getUtf8(StringUtil.toJVMClassNameExpression(MultipleValueAnnotation.class.getName())));
+					os.write2(1);	// num_element_value_pairs
+					os.write2(cpm.getUtf8("value"));	// element_name_index
+
+					// element_value (array)
+					os.write('[');							// tag
+					os.write2(method._outParamList.size());	// num_values
+					for (VarTypeName varTypeName : method._outParamList)
+					{
+						// element_value (class)
+						os.write('c');												// tag
+						os.write2(cpm.getUtf8(varTypeName._type._jvmExpression.replace('.', '/')));	// class_info_index
+					}
+				}
+			}
+
+//			u2 attributes_count;
+			os.write2(0);
+//			attribute_info attributes[attributes_count];
+			// none
+
+			os.flush();
+			return	baos.toByteArray();
+		}
 	}
 
 

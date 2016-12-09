@@ -426,13 +426,12 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					mainMethod.putLocalVar("args", JVMArrayType.getType(VarType.JVM_STRING, 1));
 
 					// String[] -> [str] 変換
-					// toPyriteArray(Object arr, VarType jvmType, int dimension) を呼び出す
+					// toPyriteArray(Object arr, Class<?> jvmArrayClass, int dimension) を呼び出す
 					// arr
 					mainMethod._code.addCodeOp(BC.ALOAD_0);
 
-					// jvmType
-					mainMethod._code.addCodeOp(BC.GETSTATIC);
-					mainMethod._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_STRING", "L" + VarType.CLASS_NAME + ";"));
+					// jvmArrayClass
+					mainMethod._code.addCodeLDC(_cpm.getClassRef(VarType.JVM_STRING._fqcn._fqcnStr));
 
 					// dimension
 					mainMethod._code.addCodeOpBIPUSH(1);
@@ -440,7 +439,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					// 変換メソッド呼び出し
 					mainMethod._code.addCodeOp(BC.INVOKESTATIC, -3 + 1);
 					mainMethod._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteArray", "(" +
-							"Ljava.lang.Object;" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
+							("L" + "java.lang.Object" + ";") + ("L" + "java.lang.Class" + ";") + "I" + ")" + "Lpyrite.lang.Array;"));
 
 					// main(var args : [str])() の呼び出し
 					mainMethod._code.addCodeOp(BC.INVOKESTATIC, -1);
@@ -500,12 +499,10 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			}
 		}
 
-
 		_currentMethodCodeDeclation.setInParamList(inParamList);
 		_currentMethodCodeDeclation.setOutParamList(outParamList);
 
 		_controlBlockManager = new ControlBlockManager();	// 制御構文ジャンプ位置管理オブジェクト
-
 
 		// メソッド本体
 		visit(ctx.methodBody());
@@ -1199,41 +1196,35 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					break;
 
 				case JVM_ARRAY:
-					// toPyriteArray(Object arr, VarType jvmType, int dimension) を呼び出す
-					// jvmType
+					// toPyriteArray(Object arr, Class<?> jvmArrayClass, int dimension) を呼び出す
+					// この時点で、arr の参照がスタック上に乗っているため、残りのパラメータをスタックに読み込み、メソッドを起動する
+					// jvmArrayClass
 					JVMArrayType	jvmArrayType = (JVMArrayType)returnType;
 					VarType	jvmType = jvmArrayType._arrayVarType;
-					_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
-					switch (jvmType._type)
+
+					// jvmArrayClass
+					if (jvmType._type == TYPE.OBJ)
 					{
-					case JVM_INT:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_INT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_LONG:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_LONG", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_SHORT:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_SHORT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_FLOAT:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_FLOAT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_DOUBLE:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_DOUBLE", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_CHAR:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_CHAR", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_BYTE:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BYTE", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_BOOLEAN:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BOOLEAN", "L" + VarType.CLASS_NAME + ";"));	break;
-					case OBJ:
-						if (jvmType == VarType.JVM_STRING)
+						_currentMethodCodeDeclation._code.addCodeLDC(_cpm.getClassRef(jvmType._fqcn._fqcnStr));
+					}
+					else
+					{
+						_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+						switch (jvmType._type)
 						{
-							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_STRING", "L" + VarType.CLASS_NAME + ";"));
+						case JVM_INT:
+						case JVM_LONG:
+						case JVM_SHORT:
+						case JVM_DOUBLE:
+						case JVM_FLOAT:
+						case JVM_CHAR:
+						case JVM_BYTE:
+						case JVM_BOOLEAN:
+							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(jvmType._fqcn._fqcnStr, "TYPE", "L" + "java.lang.Class" + ";"));
+							break;
+						default:
+							throw new RuntimeException("assertion");
 						}
-						else
-						{
-							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));
-						}
-						break;
-					default:
-						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));	break;
 					}
 
 					// dimension
@@ -1242,10 +1233,56 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					// メソッド呼び出し
 					_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -2);
 					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteArray", "(" +
-							"Ljava.lang.Object;" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
+							("L" + "java.lang.Object" + ";") + ("L" + "java.lang.Class" + ";") + "I" + ")" + "Lpyrite.lang.Array;"));
 
 					return	ArrayType.getType(jvmArrayType);
 
+//					// toPyriteArray(Object arr, VarType jvmType, int dimension) を呼び出す
+//					// jvmType
+//					JVMArrayType	jvmArrayType = (JVMArrayType)returnType;
+//					VarType	jvmType = jvmArrayType._arrayVarType;
+//					_currentMethodCodeDeclation._code.addCodeOp(BC.GETSTATIC);
+//					switch (jvmType._type)
+//					{
+//					case JVM_INT:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_INT", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_LONG:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_LONG", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_SHORT:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_SHORT", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_FLOAT:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_FLOAT", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_DOUBLE:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_DOUBLE", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_CHAR:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_CHAR", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_BYTE:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BYTE", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case JVM_BOOLEAN:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BOOLEAN", "L" + VarType.CLASS_NAME + ";"));	break;
+//					case OBJ:
+//						if (jvmType == VarType.JVM_STRING)
+//						{
+//							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_STRING", "L" + VarType.CLASS_NAME + ";"));
+//						}
+//						else
+//						{
+//							_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));
+//						}
+//						break;
+//					default:
+//						_currentMethodCodeDeclation._code.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));	break;
+//					}
+//
+//					// dimension
+//					_currentMethodCodeDeclation._code.addCodeOpBIPUSH(jvmArrayType._nArrayDimension);
+//
+//					// メソッド呼び出し
+//					_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -2);
+//					_currentMethodCodeDeclation._code.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toPyriteArray", "(" +
+//							"Ljava.lang.Object;" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Lpyrite.lang.Array;"));
+//
+//					return	ArrayType.getType(jvmArrayType);
 				default:
 					break;
 				}
@@ -1352,7 +1389,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			case ARRAY:
 				if (resolvedVarType._type == VarType.TYPE.JVM_ARRAY)
 				{
-					// public static Object	toJVMArray(pyrite.lang.Array arr, VarType pyriteType, VarType jvmType, int dimension) の呼び出し
+					// public static Object	toJVMArray(pyrite.lang.Array arr, Class<?> pyriteArrayClass, Class<?> jvmArrayClass, int dimension) の呼び出し
 					// この時点で、arr の参照がスタック上に乗っているため、残りのパラメータをスタックに読み込み、メソッドを起動する
 					ArrayType	arrayType = (ArrayType)inputParamType;
 					VarType	pyriteType = ArrayType.getContentVarType(arrayType);
@@ -1362,69 +1399,41 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 					VarType	jvmType = jvmArrayType._arrayVarType;
 					assert (dimension == jvmArrayType._nArrayDimension);
 
-					// pyriteType
-					cnvCode.addCodeOp(BC.GETSTATIC);
-					switch (pyriteType._type)
-					{
-					case INT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "INT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case DEC:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "DEC", "L" + VarType.CLASS_NAME + ";"));	break;
-					case FLT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "FLT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case STR:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "STR", "L" + VarType.CLASS_NAME + ";"));	break;
-					case CHR:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "CHR", "L" + VarType.CLASS_NAME + ";"));	break;
-					case BOL:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "BOL", "L" + VarType.CLASS_NAME + ";"));	break;
-					case BYT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "BYT", "L" + VarType.CLASS_NAME + ";"));	break;
-					default:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));	break;
-					}
+					// pyriteArrayClass
+					cnvCode.addCodeLDC(_cpm.getClassRef(pyriteType._fqcn._fqcnStr));
 
-					// jvmType
-					cnvCode.addCodeOp(BC.GETSTATIC);
-					switch (jvmType._type)
+					// jvmArrayClass
+					if (jvmType._type == TYPE.OBJ)
 					{
-					case JVM_INT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_INT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_LONG:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_LONG", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_SHORT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_SHORT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_FLOAT:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_FLOAT", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_DOUBLE:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_DOUBLE", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_CHAR:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_CHAR", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_BYTE:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BYTE", "L" + VarType.CLASS_NAME + ";"));	break;
-					case JVM_BOOLEAN:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_BOOLEAN", "L" + VarType.CLASS_NAME + ";"));	break;
-					case OBJ:
-						if (jvmType == VarType.JVM_STRING)
+						cnvCode.addCodeLDC(_cpm.getClassRef(jvmType._fqcn._fqcnStr));
+					}
+					else
+					{
+						cnvCode.addCodeOp(BC.GETSTATIC);
+						switch (jvmType._type)
 						{
-							cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "JVM_STRING", "L" + VarType.CLASS_NAME + ";"));
+						case JVM_INT:
+						case JVM_LONG:
+						case JVM_SHORT:
+						case JVM_DOUBLE:
+						case JVM_FLOAT:
+						case JVM_CHAR:
+						case JVM_BYTE:
+						case JVM_BOOLEAN:
+							cnvCode.addCodeU2(_cpm.getFieldRef(jvmType._fqcn._fqcnStr, "TYPE", "L" + "java.lang.Class" + ";"));
+							break;
+						default:
+							throw new RuntimeException("assertion");
 						}
-						else
-						{
-							cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));
-						}
-						break;
-					default:
-						cnvCode.addCodeU2(_cpm.getFieldRef(VarType.CLASS_NAME, "OBJ", "L" + VarType.CLASS_NAME + ";"));	break;
 					}
 
 					// dimension
 					cnvCode.addCodeOpBIPUSH(dimension);
 
 					// メソッド呼び出し
-					cnvCode.addCodeOp(BC.INVOKESTATIC, -2);
+					cnvCode.addCodeOp(BC.INVOKESTATIC, -3);
 					cnvCode.addCodeU2(_cpm.getMethodRef(PyriteRuntime.CLASS_NAME, "toJVMArray", "(" +
-							"L" + VarType.CLASS_NAME + ";" + "L" + VarType.CLASS_NAME + ";" + "I" + ")" + "Ljava.lang.Object;"));
+							("L" + "pyrite.lang.Array" + ";") + ("L" + "java.lang.Class" + ";") + ("L" + "java.lang.Class" + ";") + "I" + ")" + "Ljava.lang.Object;"));
 
 					// TODO: castが必要か?
 				}
@@ -3887,7 +3896,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 			int	n = Short.parseShort(value, radix);
 
 			// methodParameter
-			addCodeIPush(n);
+			_currentMethodCodeDeclation._code.addCodeIPush(n);
 
 			// create object
 			_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
@@ -3940,7 +3949,7 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 		assert(literal.length() >= 1);
 		char	c = literal.charAt(0);
 		// methodParameter
-		addCodeIPush(c);
+		_currentMethodCodeDeclation._code.addCodeIPush(c);
 
 		// create object
 		_currentMethodCodeDeclation._code.addCodeOp(BC.INVOKESTATIC, -1 + 1);
@@ -4005,36 +4014,27 @@ public class CodeGenerationVisitor extends GrammarCommonVisitor
 	protected void	addCodeLDC(String literal)
 	{
 		int	num = _cpm.getString(literal);
-		if (num <= 0xff)
-		{
-			_currentMethodCodeDeclation._code.addCodeOp(BC.LDC);
-			_currentMethodCodeDeclation._code.addCodeU1(num);
-		}
-		else
-		{
-			_currentMethodCodeDeclation._code.addCodeOp(BC.LDC_W);
-			_currentMethodCodeDeclation._code.addCodeU2(num);
-		}
+		_currentMethodCodeDeclation._code.addCodeLDC(num);
 	}
 
 	// memo
 	// _currentMethodCodeDeclation に当メソッドを定義しない
 	// ldc を使う場合、_cpm へのアクセスが発生するため
-	protected void	addCodeIPush(int value)
-	{
-		// int をスタックに積む
-		if (-128 <= value && value <= 127)
-		{
-			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(value);
-		}
-		else if (-32768 <= value && value <= 32767)
-		{
-			_currentMethodCodeDeclation._code.addCodeOp(BC.SIPUSH);
-			_currentMethodCodeDeclation._code.addCodeU2(value);
-		}
-		else
-		{	// ldcを使う
-			throw new RuntimeException("only small number supported.");
-		}
-	}
+//	protected void	addCodeIPush(int value)
+//	{
+//		// int をスタックに積む
+//		if (-128 <= value && value <= 127)
+//		{
+//			_currentMethodCodeDeclation._code.addCodeOpBIPUSH(value);
+//		}
+//		else if (-32768 <= value && value <= 32767)
+//		{
+//			_currentMethodCodeDeclation._code.addCodeOp(BC.SIPUSH);
+//			_currentMethodCodeDeclation._code.addCodeU2(value);
+//		}
+//		else
+//		{	// ldcを使う
+//			throw new RuntimeException("only small number supported.");
+//		}
+//	}
 }

@@ -7,6 +7,16 @@ import pyrite.compiler.PyriteSyntaxException;
 
 public class StringUtil
 {
+	public static String	toJVMClassNameExpression(String className)
+	{
+		StringBuilder	sb = new StringBuilder();
+
+		sb.append("L").append(className.replace('.', '/')).append(";");
+
+		return	sb.toString();
+	}
+
+
 	public static String	concat(String s1, String s2)
 	{
 		return (s1.equals("") == false) ? new StringBuilder(s1).append(".").append(s2).toString() : s2;

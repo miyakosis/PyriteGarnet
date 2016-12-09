@@ -1,8 +1,6 @@
 package pyrite.compiler;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -31,7 +29,7 @@ import pyrite.compiler.type.VarType;
 import pyrite.compiler.type.VarTypeName;
 import pyrite.compiler.util.HashMapList;
 import pyrite.compiler.util.HashMapMap;
-import pyrite.lang.MultipleValue;
+import pyrite.runtime.type.MultipleValueAnnotation;
 
 //クラス名やクラスに含まれるフィールド・メソッドを解決するクラス
 /*
@@ -111,19 +109,6 @@ public class ClassResolver
 		addClassPathEntry(System.getProperty(PROPERTY_KEY_JAVA_HOME) + JAVA_LIB_PATH);
 
 		// TODO: pyrite.jarの展開
-
-		// 解決した結果、.pyrc のみしか存在せず、class参照もコンパイルもできないものを除外する
-		for (ClassRelatedFile crf : _packageMapMap.values())
-		{
-			if (crf instanceof ClassPathFile)
-			{
-				ClassPathFile	cpf = (ClassPathFile)crf;
-				if (cpf.existsPyriteClassFile() && cpf.existsSourceFile() == false)
-				{
-					_packageMapMap.remove(cpf._fqcn._packageName, cpf._fqcn._className);
-				}
-			}
-		}
 	}
 
 	private void	addClassPathEntry(String classPathEntry) throws IOException
@@ -346,10 +331,10 @@ public class ClassResolver
 						Class<?>	c = Class.forName(fqcn._fqcnStr);
 						cls = new ClassFieldMember(fqcn, c, this);
 
-						if (cpf.existsPyriteClassFile())
-						{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
-							cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
-						}
+//						if (cpf.existsPyriteClassFile())
+//						{	// Pyrite 型情報ファイルがあれば、その情報を読み込む
+//							cls.readPyriteClassFile(cpf.getPyriteClassFilePath());
+//						}
 						_classCache.put(fqcn._fqcnStr, cls);
 						return	cls;
 					}
@@ -923,8 +908,9 @@ public class ClassResolver
 				Class<?>[]	paramTypeClasses = m.getParameterTypes();
 				Class<?>	returnTypeClass = m.getReturnType();
 				int	modifier = m.getModifiers();
+				MultipleValueAnnotation anno = m.getAnnotation(MultipleValueAnnotation.class);
 
-				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, modifier));
+				addMethodType(createMethodType(fqcn, methodName, paramTypeClasses, returnTypeClass, modifier, anno));
 			}
 
 			for (Constructor<?> cn : c.getDeclaredConstructors())
@@ -933,7 +919,7 @@ public class ClassResolver
 				Class<?>[]	paramTypeClasses = cn.getParameterTypes();
 				int	modifier = cn.getModifiers();
 
-				addConstructorType(createMethodType(fqcn, methodName, paramTypeClasses, c, modifier));
+				addConstructorType(createMethodType(fqcn, methodName, paramTypeClasses, c, modifier, null));
 			}
 
 			for (Class<?> interfaceClass : c.getInterfaces())
@@ -946,7 +932,8 @@ public class ClassResolver
 				String	methodName,
 				Class<?>[]	paramTypeClasses,
 				Class<?>	returnTypeClass,
-				int	modifier)
+				int	modifier,
+				MultipleValueAnnotation	anno)
 		{
 			VarType[]	paramTypes = new VarType[paramTypeClasses.length];
 			for (int i = 0; i < paramTypeClasses.length; ++i)
@@ -959,10 +946,19 @@ public class ClassResolver
 			{
 				returnTypes = new VarType[0];
 			}
-			else
+			else if (anno == null)
 			{
 				returnTypes = new VarType[1];
 				returnTypes[0] = VarType.parseJavaTypeName(returnTypeClass.getName());
+			}
+			else
+			{	// アノテーションによって複数戻り値の指定がある
+				Class<?>[]	returnTypeClasses = anno.value();
+				returnTypes = new VarType[returnTypeClasses.length];
+				for (int i = 0; i < returnTypes.length; ++i)
+				{
+					returnTypes[i] = VarType.parseJavaTypeName(returnTypeClasses[i].getName());
+				}
 			}
 
 			return	(MethodType)MethodType.getType(fqcn, methodName, paramTypes, returnTypes, modifier);
@@ -1020,64 +1016,64 @@ public class ClassResolver
 			return	!(Modifier.isInterface(_modifier) || Modifier.isAbstract(_modifier) || (_modifier & (BC.ACC_ANNOTATION | BC.ACC_ENUM)) != 0);
 		}
 
-		// Pyrite class file を読み込み、そこに記載された型情報(複数の戻り値の情報)でメソッド戻り値を上書きする
-		public void readPyriteClassFile(String pyriteClassFilePath)
-		{
-			try (BufferedReader reader = new BufferedReader(new FileReader(pyriteClassFilePath)))
-			{
-				String	line;	// Signature {\t} return type
-				while ((line = reader.readLine()) != null)
-				{
-					String[]	elm = line.split("\t");
-					String	signature = elm[0];
-					VarType[]	returnTypes = new VarType[elm.length - 1];
-					for (int i = 0; i < returnTypes.length; ++i)
-					{
-						returnTypes[i] = VarType.parseJavaTypeName(elm[i + 1]);
-					}
-
-					MethodType	methodType;
-					if ((methodType = _classMethodMap.get(signature)) != null)
-					{
-						assert (_instanceMethodMap.get(signature) == null);
-						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
-						{
-							throw new PyriteSyntaxException(".pyrc info unmatched.");
-						}
-						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
-
-						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
-						boolean result = _classMethodNameMapList.remove(methodType._methodName, methodType);
-						assert(result);
-						addMethodType(newMethodType);
-					}
-					else if ((methodType = _instanceMethodMap.get(signature)) != null)
-					{
-						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
-						{
-							throw new PyriteSyntaxException(".pyrc info unmatched.");
-						}
-						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
-
-						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
-						boolean result = _instanceMethodNameMapList.remove(methodType._methodName, methodType);
-						assert(result);
-						addMethodType(newMethodType);
-					}
-					else
-					{
-						throw new PyriteSyntaxException(".pyrc info unmatched.");
-					}
-
-				}
-			}
-			catch (IOException e)
-			{
-				PyriteSyntaxException	pyrEx = new PyriteSyntaxException("invalid .pyrc");
-				pyrEx.initCause(e);
-				throw	pyrEx;
-			}
-		}
+//		// Pyrite class file を読み込み、そこに記載された型情報(複数の戻り値の情報)でメソッド戻り値を上書きする
+//		public void readPyriteClassFile(String pyriteClassFilePath)
+//		{
+//			try (BufferedReader reader = new BufferedReader(new FileReader(pyriteClassFilePath)))
+//			{
+//				String	line;	// Signature {\t} return type
+//				while ((line = reader.readLine()) != null)
+//				{
+//					String[]	elm = line.split("\t");
+//					String	signature = elm[0];
+//					VarType[]	returnTypes = new VarType[elm.length - 1];
+//					for (int i = 0; i < returnTypes.length; ++i)
+//					{
+//						returnTypes[i] = VarType.parseJavaTypeName(elm[i + 1]);
+//					}
+//
+//					MethodType	methodType;
+//					if ((methodType = _classMethodMap.get(signature)) != null)
+//					{
+//						assert (_instanceMethodMap.get(signature) == null);
+//						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
+//						{
+//							throw new PyriteSyntaxException(".pyrc info unmatched.");
+//						}
+//						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
+//
+//						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
+//						boolean result = _classMethodNameMapList.remove(methodType._methodName, methodType);
+//						assert(result);
+//						addMethodType(newMethodType);
+//					}
+//					else if ((methodType = _instanceMethodMap.get(signature)) != null)
+//					{
+//						if (methodType._returnTypes.length != 1 || methodType._returnTypes[0] != ObjectType.getType(MultipleValue.CLASS_NAME))
+//						{
+//							throw new PyriteSyntaxException(".pyrc info unmatched.");
+//						}
+//						MethodType	newMethodType = (MethodType)MethodType.getType(methodType._fqcn, methodType._methodName, methodType._paramTypes, returnTypes, methodType._modifier);
+//
+//						// MethodMap からは要素が置き換えられるので特に除去はしなくてよいが、MethodNameMapListからは明示的にオブジェクトを除去する必要がある
+//						boolean result = _instanceMethodNameMapList.remove(methodType._methodName, methodType);
+//						assert(result);
+//						addMethodType(newMethodType);
+//					}
+//					else
+//					{
+//						throw new PyriteSyntaxException(".pyrc info unmatched.");
+//					}
+//
+//				}
+//			}
+//			catch (IOException e)
+//			{
+//				PyriteSyntaxException	pyrEx = new PyriteSyntaxException("invalid .pyrc");
+//				pyrEx.initCause(e);
+//				throw	pyrEx;
+//			}
+//		}
 	}
 
 
