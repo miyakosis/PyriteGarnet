@@ -16,6 +16,7 @@ import pyrite.compiler.FQCNParser.FQCN;
  * 2014/06/18  0.0-0  開発開始
  * 2016/06/18  0.0.0  初版リリース
  * 2016/12/09  1.0.0  Annotationでメソッドの複数戻り値情報を保持するようにし、.pyrc を廃止、runtime から compiler パッケージの内容を参照しないようにした。(pyrite.lang および pyrite.runtime のみで Pyrite プログラムを実行可能にした)
+ * xxx
  */
 
 /**
