@@ -1,0 +1,24 @@
+/*
+  多値演算(割り算)、複数の戻り値
+*/
+class	PyrT04
+{
+	static main(var args : [str])()
+	{
+		var y : int, z : int = 10 / 6;	// 1, 4
+/*
+		var y : int;
+		var z : int;
+		
+		var result : MultipleValue = PyriteRuntime.createMultipleValue(2);
+		PyriteRuntime.setValue(result, 0, 11);
+		PyriteRuntime.setValue(result, 1, 12);
+		y = PyriteRuntime.getValue(result, 0);
+		z = PyriteRuntime.getValue(result, 1);
+*/		
+		System.out.println("result:" + " " + y.toStr() + " " + z.toStr());
+		
+		y, z = 11 / 5;	// 2, 1
+		System.out.println("result:" + " " + y.toStr() + " " + z.toStr());
+	}
+}

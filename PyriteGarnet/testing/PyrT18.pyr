@@ -1,0 +1,23 @@
+/*
+  基底クラス
+*/
+class	PyrT18
+{
+	static var sf1 : int;
+	static var sf2 : int = 9;
+	static var sf3 : int;
+	var if1 : int;
+	var if2 : int = 20;
+	var if3 : int;
+
+	
+	print()()
+	{
+		System.out.println("PyrT18");
+	}
+	
+	printT18()()
+	{
+		System.out.println("PyrT18");
+	}
+}

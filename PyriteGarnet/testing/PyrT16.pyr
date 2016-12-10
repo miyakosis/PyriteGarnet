@@ -1,0 +1,35 @@
+/*
+  多値戻り値のメソッド呼び出し
+*/
+class	PyrT16
+{
+	static main(var args : [str])()
+	{
+		var o:PyrT16 = new PyrT16();
+		
+		System.out.println(o.f1(2, 3));
+		
+		var r1 : int, r2 : int = o.f2(2, 3);
+		
+		System.out.println(r1.toStr() + " " + r2.toStr());
+
+		r1, r2 = 10 / 3;
+		System.out.println(r1.toStr() + " " + r2.toStr());
+
+		System.out.println((10 / 3).toStr());
+		
+		var x = 10/3;
+		System.out.println(x.toStr());
+	}
+	
+	
+	f1(n1:int, n2:int)(result:int)
+	{
+		return	n1 * n2;
+	}
+	
+	f2(n1:int, n2:int)(int, int)
+	{
+		return	n1 + n2, n1 - n2;
+	}
+}

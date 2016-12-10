@@ -1,0 +1,10 @@
+/*
+  単純な足し算と Java メソッド(System.out.println())呼び出し
+*/
+class	PyrT01
+{
+	static main(var args : [str])()
+	{
+		System.out.println("output:" + (1 + 2).toStr());
+	}
+}

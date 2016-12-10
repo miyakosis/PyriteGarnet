@@ -1,0 +1,16 @@
+/*
+  while 文
+*/
+class	PyrT07
+{
+	static main(var args : [str])()
+	{
+		System.out.println("args:" + args.size().toStr());
+		var i = 0;
+		while (i < args.size())
+		{
+			System.out.println(":" + args[i] + ":");
+			i += 1;
+		}
+	}
+}

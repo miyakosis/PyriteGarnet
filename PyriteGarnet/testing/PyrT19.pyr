@@ -1,0 +1,35 @@
+/*
+  サブクラス
+*/
+class	PyrT19 extends PyrT18
+{
+	static var sf3 : str = "aaa";
+	var if3 : str = "bbb";
+
+	static main(var args : [str])()
+	{
+		var o:PyrT19 = new PyrT19();
+		o.invoke();
+	}
+
+	invoke()()
+	{
+		sf1 = 1;
+		System.out.println(sf1);
+		System.out.println(sf2);
+		System.out.println(sf3);
+		
+		if1 = 10;
+		System.out.println(if1);
+		System.out.println(if2);
+		System.out.println(if3);
+		
+		print();
+		printT18();
+	}
+	
+	print()()
+	{
+		System.out.println("PyrT19");
+	}	
+}

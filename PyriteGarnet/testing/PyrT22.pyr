@@ -1,0 +1,70 @@
+/*
+  stacktrace?
+*/
+
+import	java.io.*;
+
+class	PyrT22
+{
+	static main(var args : [str])()
+	{
+		try
+		{
+			System.out.println(f("/tmp/pyrite/PyrT21.pyr"));
+		}
+		catch (var e : Exception)
+		{
+			e.printStackTrace();
+		}
+	
+		try
+		{
+			System.out.println(f("/tmp/pyrite/PyrTXX.pyr"));
+		}
+		catch (var e : Exception)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			System.out.println(f(null));
+		}
+		catch (var e : Exception)
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	
+	static f(s : str)(int)
+	{
+		var n : int = 0;
+		try
+		{
+			var f : FileReader = new FileReader(s);
+			f.close();
+			
+			n = 0;
+			throw new RuntimeException("message");
+		}
+		catch (var ioe : IOException)
+		{
+			n = 1;
+			throw ioe;
+		}
+		catch (var npe : NullPointerException)
+		{
+			n = 2;
+			throw npe;
+		}
+		finally
+		{	// finally で return で返す値を変更しても、反映されない
+			// nをスタックに積む → n+=1 を実行する → スタック上の n が return で返される
+			n += 1;
+			System.out.println("finally:" + n.toStr());
+		}
+		
+		return	n;
+	}
+}

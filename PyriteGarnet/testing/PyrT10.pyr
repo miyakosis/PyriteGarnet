@@ -1,0 +1,21 @@
+/*
+  連想配列
+*/
+class	PyrT10
+{
+	static main(var args : [str])()
+	{
+		var	l : [str:str] = new [str:str]();
+		
+		l["a"] = "abc";
+		l["d"] = "de";
+		l["f"] = "fig";
+		
+		var key = "d";
+		
+		System.out.println(":" + l["a"] + ":");
+		System.out.println(":" + l[key] + ":");
+		
+		System.out.println(":" + l["xxx"] + ":");
+	}
+}

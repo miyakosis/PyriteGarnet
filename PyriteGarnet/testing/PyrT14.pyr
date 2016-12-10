@@ -1,0 +1,49 @@
+/*
+  label break, continue 文
+*/
+class	PyrT14
+{
+	static main(var args : [str])()
+	{
+L1:		for(var i = 0; i < 10; i += 1)
+		{
+			System.out.println(i.toStr());
+L2:			for (var j = i; j < 10; j += 1)
+			{
+				System.out.println(i.toStr() + " " + j.toStr());
+L3:				for (var k = j; k < 10; k += 1)
+				{
+					System.out.println(i.toStr() + " " + j.toStr() + " " + k.toStr() + "S");
+					
+					if (k == 1)
+					{
+						continue;
+					}
+					if (k == 2)
+					{
+						break;
+					}
+					if (k == 3)
+					{
+						continue L2;
+					}
+					if (k == 4)
+					{
+						break L2;
+					}
+					if (k == 5)
+					{
+						continue L1;
+					}
+					if (k == 6)
+					{
+						break L1;
+					}
+			
+					System.out.println(i.toStr() + " " + j.toStr() + " " + k.toStr() + "E");
+				}
+			}
+		}
+	
+	}
+}

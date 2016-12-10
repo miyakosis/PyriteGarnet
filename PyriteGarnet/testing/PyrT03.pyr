@@ -1,0 +1,17 @@
+/*
+  多値代入
+*/
+
+class	PyrT03
+{
+	static main(var args : [str])()
+	{
+		var a : int, b : int, c : int = 1,2,3;		
+		var x : int, y : int;
+		
+		x, y = 4, 5;
+
+		System.out.println("result:" + a.toStr() + " " + b.toStr() + " " + c.toStr());
+		System.out.println("result:" + x.toStr() + " " + y.toStr());
+	}
+}

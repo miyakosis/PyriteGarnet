@@ -1,0 +1,16 @@
+/*
+  別ファイルのメソッド呼び出し
+*/
+class	PyrT20
+{
+	static main(var args : [str])()
+	{
+		var o:PyrT16 = new PyrT16();
+		var x , y = o.f2(2, 3);
+
+//		var z : str = o.f2(2, 3);	// 型が異なるのでコンパイルエラーになる
+
+
+		System.out.println(x.toStr() + " " + y.toStr());
+	}
+}

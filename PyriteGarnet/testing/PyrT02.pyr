@@ -1,0 +1,18 @@
+/*
+  四則演算、変数代入
+*/
+class	PyrT02
+{
+	static main(var args : [str])()
+	{
+		var x : int = 1 + 2 - 3 * 4;	// -9
+		var y : int = 0xff & 0x0f;
+		var z : int = 0x01 | 0x02;
+		var v : int = -1;
+		
+		System.out.println(x);
+		System.out.println(y);
+		System.out.println(z);
+		System.out.println(v);
+	}
+}

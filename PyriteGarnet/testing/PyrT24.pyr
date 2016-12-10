@@ -1,0 +1,26 @@
+/*
+  instanceof 節
+*/
+class	PyrT24
+{
+	static main(var args : [str])()
+	{
+		var p = new PyrT24();
+		System.out.println((p instanceof PyrT24).toStr());
+		System.out.println((p instanceof Object).toStr());
+		System.out.println((p instanceof java.lang.Object).toStr());
+		System.out.println((p instanceof java.lang.String).toStr());
+		
+		p = null;
+		System.out.println();
+		System.out.println((p instanceof PyrT24).toStr());
+		System.out.println((null instanceof PyrT24).toStr());
+		System.out.println();
+		
+		var o = new Object();
+		System.out.println((o instanceof PyrT24).toStr());
+		System.out.println((o instanceof Object).toStr());
+		System.out.println((o instanceof java.lang.Object).toStr());
+		System.out.println((o instanceof java.lang.String).toStr());
+	}
+}

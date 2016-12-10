@@ -1,0 +1,14 @@
+/*
+  配列を返す Java メソッドの呼び出し
+*/
+class	PyrT25
+{
+	static main(var args : [str])()
+	{
+		var s : java.lang.String = new java.lang.String("aaa bbb ccc ddd");
+		var sa = s.split(" ");
+		
+		System.out.println(sa[0]);
+		System.out.println(sa[2]);
+	}
+}

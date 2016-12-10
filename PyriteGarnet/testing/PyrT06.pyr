@@ -1,0 +1,29 @@
+/*
+  if 文
+*/
+class	PyrT06
+{
+	static main(var args : [str])()
+	{
+		var s : str;
+		System.out.println("args:" + args.size().toStr());
+		if (args.size() == 0)
+		{
+			s = "no args";
+		}
+		else if (args.size() == 1)
+		{
+			s = args[0];
+		}
+		else
+		{
+			s = args[1];
+		}
+		System.out.println(s);
+		
+		if (args.size() > 2)
+		{
+			System.out.println(args[2]);
+		}
+	}
+}

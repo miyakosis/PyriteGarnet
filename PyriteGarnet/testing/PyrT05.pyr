@@ -1,0 +1,12 @@
+/*
+  プログラム引数
+*/
+class	PyrT05
+{
+	static main(var args : [str])()
+	{
+		System.out.println("args:" + args.size().toStr());
+		System.out.println("arg:" + args[0]);
+		System.out.println("arg:" + args[1]);
+	}
+}

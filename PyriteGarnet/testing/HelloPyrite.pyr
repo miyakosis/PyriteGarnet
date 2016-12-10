@@ -1,0 +1,7 @@
+class	HelloPyrite
+{
+	static main(var args : [str])()
+	{
+		System.out.println("Hello Pyrite");
+	}
+}

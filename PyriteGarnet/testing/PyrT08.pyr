@@ -1,0 +1,19 @@
+/*
+  for 文
+*/
+class	PyrT08
+{
+	static main(var args : [str])()
+	{
+		System.out.println("args:" + args.size().toStr());
+		for (var i = 0; i < args.size(); i += 1)
+		{
+			System.out.println(":" + args[i] + ":");
+		}
+		
+		for (var s : str in args)
+		{
+			System.out.println(":" + s + ":");
+		}
+	}
+}

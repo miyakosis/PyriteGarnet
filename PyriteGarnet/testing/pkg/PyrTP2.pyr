@@ -1,0 +1,19 @@
+/*
+  package éQè∆
+*/
+
+package	pkg;
+
+import	pyrite.runtime.*;
+import	java.io.*;
+
+class	PyrTP2
+{
+	static var f : str = "TP2";
+	
+	static main(var args : [str])()
+	{
+		var tp1 = new PyrTP1();
+		System.out.println(tp1.f);
+	}
+}

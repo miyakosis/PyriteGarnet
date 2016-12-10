@@ -1,0 +1,17 @@
+/*
+  文字リテラル
+*/
+class	PyrT23
+{
+	static main(var args : [str])()
+	{
+		System.out.println("\"abc\tdef\nghi\u0040\\\'");
+		
+		System.out.print('x');
+		System.out.print('\t');
+		System.out.print('y');
+		System.out.print('\n');
+		System.out.print('\\');
+		System.out.print('\u0041');
+	}
+}

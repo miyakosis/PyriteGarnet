@@ -1,0 +1,19 @@
+/*
+  配列アクセス
+*/
+class	PyrT09
+{
+	static main(var args : [str])()
+	{
+		var	l : [str] = new [str]();
+		
+		l[0] = "abc";
+		l[1] = "de";
+		l[3] = "f";
+		
+		for (var s : str in l)
+		{
+			System.out.println(":" + s + ":");
+		}
+	}
+}

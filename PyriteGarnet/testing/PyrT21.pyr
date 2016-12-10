@@ -1,0 +1,100 @@
+/*
+  Exception
+*/
+
+import	java.io.*;
+
+class	PyrT21
+{
+	static main(var args : [str])()
+	{
+		System.out.println(f("/tmp/pyrite/PyrT21.pyr"));
+		System.out.println(f("/tmp/pyrite/PyrTXX.pyr"));
+		System.out.println(f(null));
+		
+		System.out.println(f2("/tmp/pyrite/PyrT21.pyr"));
+		System.out.println(f2("/tmp/pyrite/PyrTXX.pyr"));
+		System.out.println(f2(null));
+		
+		System.out.println(f3("/tmp/pyrite/PyrT21.pyr"));
+		System.out.println(f3("/tmp/pyrite/PyrTXX.pyr"));
+		System.out.println(f3(null));
+	}
+	
+	static f(s : str)(int)
+	{
+		var n : int;
+		try
+		{
+			var f : FileReader = new FileReader(s);
+			f.close();
+			
+			n = 0;
+		}
+		catch (var ioe : IOException)
+		{
+			n = 1;
+		}
+		catch (var npe : NullPointerException)
+		{
+			n = 2;
+		}
+		
+		return	n;
+	}
+
+	static f2(s : str)(int)
+	{
+		var n : int = 0;
+		try
+		{
+			var f : FileReader = new FileReader(s);
+			f.close();
+			
+			n = 10;
+		}
+		catch (var ioe : IOException)
+		{
+			n = 1;
+		}
+		catch (var npe : NullPointerException)
+		{
+			n = 2;
+		}
+		finally
+		{
+			n += 1;
+		}
+		
+		return	n;
+	}
+
+	static f3(s : str)(int)
+	{
+		var n : int = 0;
+		try
+		{
+			var f : FileReader = new FileReader(s);
+			f.close();
+			
+			n = 10;
+			return	n;
+		}
+		catch (var ioe : IOException)
+		{
+			n = 1;
+			return	n;
+		}
+		catch (var npe : NullPointerException)
+		{
+			n = 2;
+			return	n;
+		}
+		finally
+		{	// finally で return で返す値を変更しても、反映されない
+			// nをスタックに積む → n+=1 を実行する → スタック上の n が return で返される
+			n += 1;
+			System.out.println("finally:" + n.toStr());
+		}
+	}
+}

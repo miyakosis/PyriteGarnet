@@ -1,0 +1,60 @@
+/*
+  メソッド呼び出し
+*/
+class	PyrT15
+{
+	static main(var args : [str])()
+	{
+		PyrT15.sf();
+		PyrT15.sf("aaa");
+		PyrT15.sf(10);
+		
+		sf();
+		sf("aaa");
+		sf(10);
+		
+		var ins = new PyrT15();
+		
+		ins.f();
+		ins.f("bbb");
+		ins.f(100);
+
+		ins.fall();
+	}
+	
+	static sf()()
+	{
+		System.out.println("sf");
+	} 
+	static sf(s:str)()
+	{
+		System.out.println("sf(str):" + s);
+	}
+	 
+	static sf(n:int)()
+	{
+		System.out.println("sf(int):" + n.toStr());
+	} 
+	
+	f()()
+	{
+		System.out.println("f");
+	}
+	
+	f(s : str)()
+	{
+		System.out.println("f(str):" + s);
+	}
+	
+	f(n : int)()
+	{
+		System.out.println("f(int):" + n.toStr());
+	}
+
+	fall()()
+	{
+		f();
+		f("fall");
+		f(1000);
+	}
+}
